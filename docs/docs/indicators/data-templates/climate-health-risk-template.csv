@@ -1,0 +1,2 @@
+record_id,date,reported_by,organization,location_name,latitude,longitude,risk_category,risk_description,affected_group,children_potentially_exposed,proximity_to_school,proximity_to_health_facility,evidence_available,response_action,responsible_institution,status,verification_notes
+1,YYYY-MM-DD,Name,Organization,Example location,-0.0000,-0.0000,waste_pollution,Description of the risk,children/community,0,yes/no,yes/no,photo/report/none,Action taken or planned,Institution name,open/in_progress/closed,Notes
