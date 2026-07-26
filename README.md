@@ -53,6 +53,26 @@ Documentation and content may be released under a Creative Commons Attribution l
 
 This project is currently in prototype design and pilot-readiness stage. The next phase is MVP software development, pilot testing, documentation and validation with local users.
 
+## Sprint 0 Foundation
+
+Sprint 0 adds an executable technical foundation for the Climate & Health MRV Toolkit:
+
+- React/Vite frontend with English default and Spanish selectable;
+- FastAPI backend/API;
+- SQLAlchemy data model and Alembic migration;
+- synthetic demo seed data marked with `is_synthetic=true`;
+- local SQLite execution path;
+- Docker Compose configuration for PostgreSQL/PostGIS, pending validation;
+- documentation for architecture, backlog, risks, decisions, data model, dependencies and checkpoint publication.
+
+The development seed endpoint `POST /api/v1/admin/seed` is available only in local/development/test environments. It is hidden and disabled outside those environments.
+
+Sprint 0 technical documents:
+
+- `docs/sprint-0-delivery.md`
+- `docs/checkpoint-publication-report.md`
+- `docs/dependencies-and-licenses.md`
+
 ## 12-Month Roadmap
 
 1. Finalize climate-health risk taxonomy and indicator framework.
