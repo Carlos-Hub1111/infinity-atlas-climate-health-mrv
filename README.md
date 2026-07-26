@@ -73,6 +73,71 @@ Sprint 0 technical documents:
 - `docs/checkpoint-publication-report.md`
 - `docs/dependencies-and-licenses.md`
 
+## Sprint 1A Climate and Observation Flow
+
+Sprint 1A adds the first persistent functional workflow:
+
+- San Cristobal, Galapagos as a public reference territory;
+- current public weather conditions from the Open-Meteo Weather Forecast API;
+- a 15-minute database-backed climate cache;
+- fallback to the last stored public record with a visible stale status;
+- bilingual territorial observation form;
+- server-side provenance rules for `public_real`, `controlled_test` and `synthetic_demo`;
+- external URL evidence references without uploading files to this repository;
+- persistent observation list with initial status `pending`;
+- mocked backend provider tests and frontend component tests.
+
+Open-Meteo data are model-based weather conditions, not a local station measurement. API data are
+licensed under [CC BY 4.0](https://open-meteo.com/en/license). The free endpoint is currently
+restricted to non-commercial use and documented request limits; review
+[Open-Meteo Terms](https://open-meteo.com/en/terms) before a commercial or high-volume deployment.
+
+### Run locally
+
+Backend:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m alembic upgrade head
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Frontend, in a second terminal:
+
+```powershell
+cd frontend
+pnpm install --frozen-lockfile
+pnpm dev --host 127.0.0.1 --port 5173
+```
+
+Open:
+
+- application: `http://127.0.0.1:5173`
+- API documentation: `http://127.0.0.1:8000/docs`
+
+Run checks:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v
+
+cd ..\frontend
+pnpm test
+pnpm build
+```
+
+The synthetic seed remains optional and local-development only:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.seed
+```
+
+It is never executed by the normal Docker startup command.
+
 ## 12-Month Roadmap
 
 1. Finalize climate-health risk taxonomy and indicator framework.

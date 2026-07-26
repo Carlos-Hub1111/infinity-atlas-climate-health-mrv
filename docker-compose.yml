@@ -23,6 +23,8 @@ services:
       APP_ENV: docker
       AUTO_CREATE_TABLES: "false"
       AUTO_SEED_DEMO_DATA: "false"
+      CLIMATE_API_TIMEOUT_SECONDS: "8"
+      CLIMATE_CACHE_TTL_SECONDS: "900"
     ports:
       - "8000:8000"
     depends_on:

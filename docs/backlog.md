@@ -2,44 +2,45 @@
 
 ## Sprint 0 - Architecture and skeleton
 
-Status: completed by this repository baseline.
+Status: completed and frozen at commit `00e0bb268c677899a9fd728a971ce246643b37ca`.
 
-- Create repository structure.
-- Create frontend initial shell.
-- Create backend/API initial shell.
-- Create minimum data model.
-- Add Alembic migration.
-- Add synthetic seed data.
-- Add Docker Compose.
-- Add `.env.example`.
-- Add README install instructions.
-- Add architecture diagram.
-- Add risks and decisions.
+## Sprint 1A - Climate, territory and observation
 
-## Sprint 1 - Minimum functional MRV flow
+Status: implemented on `feature/sprint-1a-climate-observation`, pending final review.
 
-- Select first public climate source for Ecuador or San Cristobal.
-- Build climate source adapter with timestamp and cache.
-- Add observation creation UI.
-- Add validation UI.
-- Add evidence placeholder flow using URL first.
-- Calculate and store risk score on observation creation.
-- Show dashboard and map from real API data.
-- Export first CSV report.
+- Public San Cristobal reference territory.
+- Open-Meteo adapter with timeout and validation.
+- Database-backed climate cache and stale fallback.
+- Attributed climate endpoint and OpenAPI description.
+- Bilingual observation form.
+- URL evidence reference.
+- Pending observation persistence and list.
+- Backend and frontend automated tests.
+- Demonstration screenshots.
 
-## Sprint 2 - Demo hardening
+## Sprint 1B - Validation, risk score and traceability
 
-- Replace synthetic climate placeholder with real source data.
-- Add minimal automated API tests.
-- Add frontend build validation.
-- Improve README for UNICEF evaluator.
-- Add release checklist.
-- Prepare demo script.
+Status: not authorized and not started.
 
-## Sprint 3 - Proposal evidence package
+- Reviewer workflow and role boundary.
+- Validation records and comments.
+- Transparent risk formula and versioning.
+- Confidence and audit events.
+- Full state transition rules.
 
-- Document user testing plan.
-- Record test results.
-- Prepare screenshots/video.
-- Align GitHub README with UNICEF templates.
-- Confirm open-source license files.
+## Sprint 1C - Dashboard, map, report and public view
+
+Status: not authorized and not started.
+
+- Operational dashboard.
+- Real geospatial map.
+- Report generation.
+- Public-safe observation view.
+
+## Later hardening
+
+- Authentication and role-based access.
+- Private evidence object storage and malware scanning.
+- PostgreSQL/PostGIS Docker validation.
+- Accessibility and user testing.
+- Production provider and commercial-use review.

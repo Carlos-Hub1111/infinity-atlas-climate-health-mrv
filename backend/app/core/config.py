@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     auto_create_tables: bool = False
     auto_seed_demo_data: bool = False
     demo_data_is_synthetic: bool = True
+    climate_api_timeout_seconds: float = 8.0
+    climate_cache_ttl_seconds: int = 900
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

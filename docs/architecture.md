@@ -1,51 +1,59 @@
-# Sprint 0 architecture
+# Sprint 1A architecture
 
-The first prototype uses a modular monolith approach:
+The prototype remains a modular monolith:
 
-- one frontend application;
-- one backend API;
+- one React/Vite frontend;
+- one FastAPI backend;
 - one relational database;
-- documented modules that can later evolve without becoming microservices now.
+- one isolated external climate adapter;
+- no microservices and no future modules.
 
-## Diagram
+## Runtime flow
 
 ```mermaid
 flowchart LR
-    User["User / Product review"] --> Frontend["Frontend React / Vite"]
+    User["Territorial user"] --> Frontend["React / Vite UI"]
     Frontend --> API["FastAPI backend"]
-    API --> DB["Database: SQLite local / PostgreSQL PostGIS via Docker"]
-    API --> Seed["Synthetic seed data"]
-    API --> Docs["OpenAPI docs"]
+    API --> DB["SQLite local or PostgreSQL/PostGIS"]
+    API --> Adapter["Open-Meteo adapter"]
+    Adapter --> Provider["Open-Meteo Weather Forecast API"]
+    API --> OpenAPI["OpenAPI documentation"]
 ```
 
-## Why this architecture
+## Climate request behavior
 
-The UNICEF deadline requires a small executable product, not an enterprise system. A modular monolith keeps the prototype fast, portable and reviewable while preserving clear domains:
+```mermaid
+flowchart TD
+    Request["GET current climate"] --> Cache{"Fresh public record under 15 minutes?"}
+    Cache -->|Yes| Stored["Return stored record · current"]
+    Cache -->|No| Provider["Call Open-Meteo with timeout"]
+    Provider -->|Valid response| Save["Transform, attribute and store"]
+    Save --> Current["Return public_real · current"]
+    Provider -->|Failure| Fallback{"Last public record exists?"}
+    Fallback -->|Yes| Stale["Return stored record · is_stale=true"]
+    Fallback -->|No| Unavailable["Return 503; observation form remains usable"]
+```
 
-- users and roles;
-- projects and territories;
-- observations and evidence;
-- validation;
-- climate data;
-- risk scoring;
-- dashboard summary.
+## Data boundaries
 
-## Local database decision
+The frontend never connects directly to the database or Open-Meteo. The backend owns:
 
-Sprint 0 supports SQLite for immediate local validation because Docker is not installed in the current environment. Docker Compose is included for PostgreSQL/PostGIS so the project can move to the intended geospatial stack when Docker is available.
+- provider timeout and response validation;
+- climate data transformation and source attribution;
+- cache and stale fallback behavior;
+- observation status and provenance rules;
+- evidence URL validation and persistence.
 
-## API first rule
+Evidence uses external URL references in Sprint 1A. Files, photographs and documents are not uploaded
+to the repository or local application storage. This keeps personal, clinical and confidential material
+outside the prototype until a reviewed private storage design exists.
 
-The frontend does not connect directly to the database. It reads data through the backend API.
+## Internationalization
 
-## Local seed guard
+English remains the default for the UNICEF demonstration. Spanish is selectable. Visible interface text
+is stored under `frontend/src/i18n/`; code, endpoints and technical documentation remain in English.
 
-`POST /api/v1/admin/seed` is a development utility only. It is available in local/development/test environments and hidden/disabled outside those environments until an administrative permission model exists.
+## Security guard
 
-## Internationalization baseline
-
-The frontend defaults to English for the UNICEF demo and exposes Spanish as a selectable language. Visible UI text is stored under `frontend/src/i18n/`; code, endpoints and technical documentation remain in English.
-
-## Open source boundary
-
-This repository must contain only the open-source UNICEF toolkit scope. It must not include confidential UNICEF documents, secrets, private InfinityAtlas Core assets, or data that identifies children.
+`POST /api/v1/admin/seed` is hidden and returns 404 outside local/development/test environments.
+Automatic startup seeding is also limited to those environments and remains disabled by default.

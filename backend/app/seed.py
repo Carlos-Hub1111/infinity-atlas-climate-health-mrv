@@ -66,9 +66,13 @@ def seed_demo_data() -> dict[str, int | bool]:
             source_name="Synthetic Open-Meteo placeholder",
             source_url="https://open-meteo.com/",
             observed_at=datetime.now(timezone.utc),
+            retrieved_at=datetime.now(timezone.utc),
             temperature_c=25.6,
+            apparent_temperature_c=27.4,
             precipitation_mm=1.2,
             humidity_percent=78,
+            weather_code=61,
+            data_provenance="synthetic_demo",
             raw_payload='{"synthetic": true, "note": "Replace with real API adapter in Sprint 1."}',
             is_synthetic=True,
         )
@@ -86,6 +90,11 @@ def seed_demo_data() -> dict[str, int | bool]:
             latitude=-0.904,
             longitude=-89.617,
             observed_at=datetime.now(timezone.utc),
+            created_at=datetime.now(timezone.utc),
+            source_name="Synthetic controlled demonstration",
+            responsible_role="Synthetic community monitor",
+            data_provenance="synthetic_demo",
+            synthetic_confirmed=True,
             status="validated",
             is_synthetic=True,
         )
@@ -97,6 +106,9 @@ def seed_demo_data() -> dict[str, int | bool]:
             evidence_type="url",
             uri="https://example.local/synthetic-evidence",
             description="Synthetic evidence placeholder. No real child or community sensitive data.",
+            source_name="Synthetic controlled demonstration",
+            observed_at=datetime.now(timezone.utc),
+            data_provenance="synthetic_demo",
             is_synthetic=True,
         )
         db.add(evidence)

@@ -10,14 +10,15 @@ The Sprint 0 local source uses MIT License. When integrating into the existing p
 
 | Package | Version | License metadata |
 | --- | --- | --- |
-| alembic | 1.16.4 | Not declared in local metadata; verify upstream license before production release. |
-| fastapi | 0.140.0 | Not declared in local metadata; verify upstream license before production release. |
-| starlette | 1.3.1 | BSD |
+| alembic | 1.16.4 | MIT |
+| fastapi | 0.140.0 | MIT |
+| httpx | 0.28.1 | BSD-3-Clause |
+| starlette | 1.3.1 | BSD-3-Clause |
 | pg8000 | 1.31.5 | BSD 3-Clause |
 | pydantic | 2.11.7 | MIT |
 | pydantic-settings | 2.10.1 | MIT |
 | SQLAlchemy | 2.0.41 | MIT |
-| uvicorn | 0.51.0 | Not declared in local metadata; verify upstream license before production release. |
+| uvicorn | 0.51.0 | BSD-3-Clause |
 
 ## Backend notable transitive dependencies
 
@@ -31,7 +32,9 @@ The Sprint 0 local source uses MIT License. When integrating into the existing p
 
 ## Frontend dependencies
 
-The frontend license scan reported MIT, BSD-3-Clause, Apache-2.0, ISC and MPL-2.0 packages. No GPL/AGPL dependency was reported by `pnpm licenses list`.
+The full frontend license scan reported Apache-2.0, BlueOak-1.0.0, BSD-2-Clause,
+BSD-3-Clause, CC0-1.0, ISC, MIT, MIT-0 and MPL-2.0 packages. No GPL/AGPL dependency was
+reported by `pnpm licenses list`.
 
 Direct frontend dependencies:
 
@@ -45,6 +48,20 @@ Direct frontend dependencies:
 | lucide-react | ISC |
 | @types/react | MIT |
 | @types/react-dom | MIT |
+| @testing-library/jest-dom | MIT |
+| @testing-library/react | MIT |
+| jsdom | MIT |
+| vitest | MIT |
+
+## External data source
+
+Open-Meteo Weather Forecast API data are offered under CC BY 4.0 and require visible attribution with
+a link to Open-Meteo where data are displayed. The free API terms currently limit use to non-commercial
+purposes and document request limits. No API key is used or stored.
+
+- Licence: https://open-meteo.com/en/license
+- Terms: https://open-meteo.com/en/terms
+- Weather API documentation: https://open-meteo.com/en/docs
 
 ## Security checks run
 

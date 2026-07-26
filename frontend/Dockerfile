@@ -2,8 +2,8 @@ FROM node:24-slim
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml* ./
-RUN corepack enable && pnpm install
+COPY package.json pnpm-lock.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
 
 COPY index.html vite.config.ts tsconfig.json ./
 COPY src ./src
