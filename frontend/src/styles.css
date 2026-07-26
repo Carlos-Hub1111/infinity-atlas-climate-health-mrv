@@ -148,6 +148,33 @@ h2 {
   background: #fff5f4;
 }
 
+.saveNotification {
+  position: sticky;
+  top: 12px;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: min(620px, 100%);
+  margin: 14px 0 0 auto;
+  padding: 14px 16px;
+  border: 2px solid #4a9a70;
+  background: #f1fbf5;
+  color: #155b39;
+  box-shadow: 0 8px 22px rgba(23, 33, 38, 0.16);
+}
+
+.saveNotification button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
 .territoryBar {
   display: flex;
   align-items: center;
@@ -176,10 +203,42 @@ h2 {
   font-size: 0.9rem;
 }
 
+.prototypeNotice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+  padding: 11px 13px;
+  border: 1px solid #d49b62;
+  background: #fff7ed;
+  color: #744217;
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.prototypeNotice svg {
+  flex: 0 0 auto;
+}
+
 .climateSection {
   padding: 22px;
   border: 1px solid #b7c9cd;
   background: #ffffff;
+}
+
+.climateQueryFeedback {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 8px;
+  margin: -7px 0 14px;
+  color: #17613e;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.climateQueryFeedback.errorFeedback {
+  color: #9d2f2a;
 }
 
 .sectionHeading {
@@ -556,6 +615,33 @@ fieldset legend {
   margin: 13px 0;
   color: #344249;
   overflow-wrap: anywhere;
+}
+
+.legacySyntheticNotice {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: -3px 0 13px;
+  padding: 9px 10px;
+  border: 1px solid #d28f4c;
+  background: #fff6eb;
+  color: #7c4412;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.evidenceReference {
+  display: grid;
+  gap: 2px;
+}
+
+.evidenceReference + .evidenceReference {
+  margin-top: 7px;
+}
+
+.evidenceReference small {
+  color: #68767c;
+  font-size: 0.72rem;
 }
 
 .observationItem dt {

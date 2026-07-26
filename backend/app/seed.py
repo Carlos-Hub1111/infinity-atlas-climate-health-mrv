@@ -2,9 +2,13 @@ from datetime import datetime, timezone
 
 from sqlalchemy import select
 
+from app.bootstrap import (
+    LEGACY_SYNTHETIC_NOTICE,
+    SYNTHETIC_EVIDENCE_MARKER_DESCRIPTION,
+    SYNTHETIC_EVIDENCE_MARKER_URI,
+)
 from app.core.database import SessionLocal
-from app.models import ClimateData, Evidence, Observation, Project, RiskScore, Role, Territory, User, Validation
-from app.services.risk import calculate_risk
+from app.models import ClimateData, Evidence, Observation, Project, Role, Territory, User
 
 
 def seed_demo_data() -> dict[str, int | bool]:
@@ -91,11 +95,11 @@ def seed_demo_data() -> dict[str, int | bool]:
             longitude=-89.617,
             observed_at=datetime.now(timezone.utc),
             created_at=datetime.now(timezone.utc),
-            source_name="Synthetic controlled demonstration",
+            source_name=LEGACY_SYNTHETIC_NOTICE,
             responsible_role="Synthetic community monitor",
             data_provenance="synthetic_demo",
             synthetic_confirmed=True,
-            status="validated",
+            status="pending",
             is_synthetic=True,
         )
         db.add(observation)
@@ -104,35 +108,14 @@ def seed_demo_data() -> dict[str, int | bool]:
         evidence = Evidence(
             observation_id=observation.id,
             evidence_type="url",
-            uri="https://example.local/synthetic-evidence",
-            description="Synthetic evidence placeholder. No real child or community sensitive data.",
-            source_name="Synthetic controlled demonstration",
+            uri=SYNTHETIC_EVIDENCE_MARKER_URI,
+            description=SYNTHETIC_EVIDENCE_MARKER_DESCRIPTION,
+            source_name="Synthetic marker",
             observed_at=datetime.now(timezone.utc),
             data_provenance="synthetic_demo",
             is_synthetic=True,
         )
         db.add(evidence)
-
-        validation = Validation(
-            observation_id=observation.id,
-            status="validated",
-            comment="Synthetic validation for Sprint 0 seed.",
-            validated_by_id=validator.id,
-            validated_at=datetime.now(timezone.utc),
-        )
-        db.add(validation)
-
-        score, level = calculate_risk(observation.hazard, observation.exposure, observation.vulnerability)
-        db.add(
-            RiskScore(
-                observation_id=observation.id,
-                risk_score=score,
-                risk_level=level,
-                confidence_score=60,
-                formula_version="sprint-0-simple-sum-v1",
-                calculated_at=datetime.now(timezone.utc),
-            )
-        )
 
         db.commit()
         return {"created": True, "project_id": project.id}

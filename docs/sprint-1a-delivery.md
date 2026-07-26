@@ -16,6 +16,11 @@ Status: implemented and pending final branch review.
 - Required evidence URL reference.
 - Initial observation status `pending`.
 - Visible provenance for public real, controlled test and synthetic demo data.
+- Manual idempotent reference-data bootstrap.
+- Explicit prototype notice: no validated territorial field pilot is claimed.
+- Visible save confirmation with the created observation number.
+- Climate refresh progress, outcome and last query time.
+- Safe synthetic evidence marker and technical Open-Meteo link labels.
 
 ## Endpoints
 
@@ -39,7 +44,10 @@ Migration `0002_sprint_1a` adds:
 - observation creation time, source and responsible role;
 - explicit synthetic confirmation;
 - evidence source, date and provenance;
-- public reference project and San Cristobal territory.
+
+Reference project and territory data are intentionally absent from migrations. Run
+`python -m app.bootstrap` after migrations to create or update the reference prototype and San
+Cristobal. Existing controlled observations are preserved.
 
 ## Evidence implementation
 
@@ -58,13 +66,20 @@ malware scanning and privacy review are not yet available.
 - Scale validation from 1 to 4.
 - Synthetic confirmation and visible provenance.
 - Persistence across separate API requests.
-- Frontend form, climate display, attribution, translations and visible error state.
+- Bootstrap idempotence and migration without operational data.
+- Local-only confirmed clean-demo procedure.
+- Synthetic evidence without a fictitious external link.
+- Frontend form, climate display, refresh feedback, numbered save confirmation, translations and
+  visible error state.
 - Frontend production build.
 
 ## Known limits
 
 - Open-Meteo output is model-based, not a local weather station reading.
-- Free API use is non-commercial and rate-limited under current terms.
+- Open-Meteo data are CC BY 4.0. Its free endpoint is used only for evaluation/prototyping and is
+  non-commercial and rate-limited under current terms.
+- A funded stage requires a commercial plan, self-hosting, or a reviewed alternative source. The
+  isolated climate adapter supports provider replacement.
 - URL evidence can change or disappear.
 - Authentication, technical validation, final risk score, advanced dashboard, map and PDF report are
   intentionally outside Sprint 1A.
@@ -103,12 +118,15 @@ Controlled observation example:
 
 Screenshots:
 
+- `docs/demo/sprint-1a-uat-hardening-desktop.png`
 - `docs/demo/sprint-1a-climate-desktop.png`
 - `docs/demo/sprint-1a-observation-desktop.png`
 - `docs/demo/sprint-1a-mobile-es.png`
 - `docs/demo/sprint-1a-mobile-form-es.png`
 
 ![Desktop climate and provenance](demo/sprint-1a-climate-desktop.png)
+
+![Desktop UAT hardening with prototype notice and climate query feedback](demo/sprint-1a-uat-hardening-desktop.png)
 
 ![Desktop observation form and saved record](demo/sprint-1a-observation-desktop.png)
 

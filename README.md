@@ -85,12 +85,16 @@ Sprint 1A adds the first persistent functional workflow:
 - server-side provenance rules for `public_real`, `controlled_test` and `synthetic_demo`;
 - external URL evidence references without uploading files to this repository;
 - persistent observation list with initial status `pending`;
+- manual, idempotent bootstrap for the reference prototype and San Cristobal;
 - mocked backend provider tests and frontend component tests.
 
 Open-Meteo data are model-based weather conditions, not a local station measurement. API data are
-licensed under [CC BY 4.0](https://open-meteo.com/en/license). The free endpoint is currently
-restricted to non-commercial use and documented request limits; review
-[Open-Meteo Terms](https://open-meteo.com/en/terms) before a commercial or high-volume deployment.
+licensed under [CC BY 4.0](https://open-meteo.com/en/license). The free endpoint is used only for
+evaluation and prototyping and is currently restricted to non-commercial use with documented request
+limits. A funded deployment must use an appropriate commercial plan, self-host Open-Meteo, or select
+another reviewed source. The provider adapter is isolated under `backend/app/services/climate/` so it
+can be replaced without rewriting the observation workflow. Review the
+[Open-Meteo Terms](https://open-meteo.com/en/terms) before deployment.
 
 ### Run locally
 
@@ -102,8 +106,16 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python -m alembic upgrade head
+python -m app.bootstrap
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+`python -m app.bootstrap` is manual and idempotent. It creates or updates:
+
+- project: `Infinity Atlas Climate & Health MRV Prototype`;
+- status: `prototype_reference`;
+- territory: San Cristobal, Galapagos;
+- prototype notice: this is a controlled test, not a validated field pilot.
 
 Frontend, in a second terminal:
 
@@ -137,6 +149,21 @@ cd backend
 ```
 
 It is never executed by the normal Docker startup command.
+
+### Prepare a clean local demonstration database
+
+Back up `backend/local.db` first. The following explicit command preserves the reference project and
+San Cristobal, removes legacy/demo observations, and creates one `controlled_test` record with
+`pending` status:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.bootstrap --clean-demo --confirm-clean-demo
+```
+
+This command is blocked outside local/development/test environments. It is never executed by normal
+application or Docker startup. Do not run it against a database containing acceptance or field records
+that must be retained.
 
 ## 12-Month Roadmap
 

@@ -6,11 +6,13 @@ Impact: PostgreSQL/PostGIS cannot be validated in this environment today.
 
 Mitigation: Sprint 0 runs with SQLite and includes Docker Compose for later validation on a machine with Docker.
 
-## R2 - Synthetic seed data can be confused with real pilot evidence
+## R2 - Synthetic seed data can be confused with real territorial evidence
 
 Impact: UNICEF may misunderstand the maturity of the data if it is not marked clearly.
 
-Mitigation: every seed record uses `is_synthetic=true`, and README states that seed data is synthetic.
+Mitigation: every seed record uses `is_synthetic=true`, remains `pending`, has no validation or risk
+score, and uses a non-clickable internal evidence marker. The reference project is visibly labeled
+as a prototype/controlled test, not a validated field pilot.
 
 ## R3 - Scope expansion before August 10
 
@@ -54,8 +56,9 @@ and documentation states that the values are model-based. The full provider requ
 
 Impact: non-commercial limits or attribution requirements may not fit a later commercial deployment.
 
-Mitigation: Sprint 1A documents CC BY 4.0 attribution and current free-tier limits. Reassess terms and
-select a paid or alternative provider before commercial production use.
+Mitigation: Sprint 1A documents CC BY 4.0 attribution and uses the free tier only for
+evaluation/prototyping. A funded stage must select a commercial plan, self-hosting, or a reviewed
+alternative. The provider adapter is decoupled from the observation workflow.
 
 ## R10 - External evidence link changes or exposes sensitive content
 

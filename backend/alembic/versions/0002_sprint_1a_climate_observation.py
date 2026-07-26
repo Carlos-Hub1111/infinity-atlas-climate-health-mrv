@@ -15,10 +15,6 @@ down_revision: Union[str, None] = "0001_initial_schema"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-REFERENCE_PROJECT_NAME = "Infinity Atlas Climate & Health MRV Pilot"
-REFERENCE_TERRITORY_NAME = "San Cristobal"
-
-
 def upgrade() -> None:
     op.add_column(
         "climate_data",
@@ -153,70 +149,7 @@ def upgrade() -> None:
             nullable=False,
         )
 
-    project_id = connection.execute(
-        sa.text("SELECT id FROM projects WHERE name = :name ORDER BY id LIMIT 1"),
-        {"name": REFERENCE_PROJECT_NAME},
-    ).scalar_one_or_none()
-    if project_id is None:
-        connection.execute(
-            sa.text(
-                "INSERT INTO projects (name, description, status, is_synthetic) "
-                "VALUES (:name, :description, :status, :is_synthetic)"
-            ),
-            {
-                "name": REFERENCE_PROJECT_NAME,
-                "description": "Sprint 1A public climate and territorial observation pilot.",
-                "status": "active",
-                "is_synthetic": False,
-            },
-        )
-        project_id = connection.execute(
-            sa.text("SELECT id FROM projects WHERE name = :name ORDER BY id LIMIT 1"),
-            {"name": REFERENCE_PROJECT_NAME},
-        ).scalar_one()
-
-    territory_exists = connection.execute(
-        sa.text(
-            "SELECT id FROM territories WHERE project_id = :project_id AND name = :name "
-            "ORDER BY id LIMIT 1"
-        ),
-        {"project_id": project_id, "name": REFERENCE_TERRITORY_NAME},
-    ).scalar_one_or_none()
-    if territory_exists is None:
-        connection.execute(
-            sa.text(
-                "INSERT INTO territories "
-                "(project_id, name, country, province, latitude, longitude, is_synthetic) "
-                "VALUES (:project_id, :name, :country, :province, :latitude, :longitude, :is_synthetic)"
-            ),
-            {
-                "project_id": project_id,
-                "name": REFERENCE_TERRITORY_NAME,
-                "country": "Ecuador",
-                "province": "Galapagos",
-                "latitude": -0.9002,
-                "longitude": -89.6127,
-                "is_synthetic": False,
-            },
-        )
-
-
 def downgrade() -> None:
-    connection = op.get_bind()
-    project_id = connection.execute(
-        sa.text("SELECT id FROM projects WHERE name = :name ORDER BY id LIMIT 1"),
-        {"name": REFERENCE_PROJECT_NAME},
-    ).scalar_one_or_none()
-    if project_id is not None:
-        connection.execute(
-            sa.text("DELETE FROM territories WHERE project_id = :project_id AND name = :name"),
-            {"project_id": project_id, "name": REFERENCE_TERRITORY_NAME},
-        )
-        connection.execute(
-            sa.text("DELETE FROM projects WHERE id = :project_id"),
-            {"project_id": project_id},
-        )
-
     op.drop_column("evidence", "data_provenance")
     op.drop_column("evidence", "observed_at")
     op.drop_column("evidence", "source_name")

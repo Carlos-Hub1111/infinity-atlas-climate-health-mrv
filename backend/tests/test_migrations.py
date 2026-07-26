@@ -79,16 +79,20 @@ class Sprint1AMigrationTests(unittest.TestCase):
                 evidence = connection.execute(
                     "SELECT observed_at, data_provenance FROM evidence WHERE id = 1"
                 ).fetchone()
-                reference = connection.execute(
-                    "SELECT latitude, longitude, is_synthetic FROM territories WHERE name = 'San Cristobal'"
-                ).fetchone()
+                reference_projects = connection.execute(
+                    "SELECT COUNT(*) FROM projects WHERE name LIKE 'Infinity Atlas Climate & Health MRV %'"
+                ).fetchone()[0]
+                reference_territories = connection.execute(
+                    "SELECT COUNT(*) FROM territories WHERE name = 'San Cristobal'"
+                ).fetchone()[0]
             finally:
                 connection.close()
 
             self.assertEqual(climate, ("2026-07-26 18:00:00", "synthetic_demo"))
             self.assertEqual(observation, ("2026-07-26 18:00:00", "synthetic_demo", 1))
             self.assertEqual(evidence, ("2026-07-26 18:00:00", "synthetic_demo"))
-            self.assertEqual(reference, (-0.9002, -89.6127, 0))
+            self.assertEqual(reference_projects, 0)
+            self.assertEqual(reference_territories, 0)
 
 
 if __name__ == "__main__":

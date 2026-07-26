@@ -56,8 +56,18 @@ Direct frontend dependencies:
 ## External data source
 
 Open-Meteo Weather Forecast API data are offered under CC BY 4.0 and require visible attribution with
-a link to Open-Meteo where data are displayed. The free API terms currently limit use to non-commercial
-purposes and document request limits. No API key is used or stored.
+a link to Open-Meteo where data are displayed. Sprint 1A uses the free endpoint only for evaluation
+and prototyping. Its current terms limit it to non-commercial use and document request limits. No API
+key is used or stored.
+
+Before a funded or production stage, select one of:
+
+- an appropriate Open-Meteo commercial plan;
+- a reviewed self-hosted Open-Meteo deployment;
+- a replacement public or contracted climate source.
+
+The climate integration is behind a provider adapter, so replacing the source does not require
+rewriting the observation workflow.
 
 - Licence: https://open-meteo.com/en/license
 - Terms: https://open-meteo.com/en/terms

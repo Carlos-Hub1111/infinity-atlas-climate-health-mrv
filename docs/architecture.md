@@ -57,3 +57,13 @@ is stored under `frontend/src/i18n/`; code, endpoints and technical documentatio
 
 `POST /api/v1/admin/seed` is hidden and returns 404 outside local/development/test environments.
 Automatic startup seeding is also limited to those environments and remains disabled by default.
+
+## Reference and demo data operations
+
+Alembic migrations contain schema transformations only. Reference data are created or updated
+manually with the idempotent `python -m app.bootstrap` command.
+
+The clean demonstration operation requires both `--clean-demo` and `--confirm-clean-demo`, is blocked
+outside local/development/test, and is never part of normal application or Docker startup. It
+preserves the reference prototype and San Cristobal while replacing observations with one explicit
+`controlled_test` record.

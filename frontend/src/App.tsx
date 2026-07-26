@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Save,
   Thermometer,
+  X,
 } from "lucide-react";
 import {
   ClimateCurrent,
@@ -118,6 +119,15 @@ function provenanceClass(provenance: DataProvenance): string {
   return "tag tagControlled";
 }
 
+function evidenceDomain(uri: string): string | null {
+  try {
+    const url = new URL(uri);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.hostname : null;
+  } catch {
+    return null;
+  }
+}
+
 export function App() {
   const [locale, setLocale] = React.useState<Locale>(defaultLocale);
   const [health, setHealth] = React.useState<Health | null>(null);
@@ -127,11 +137,17 @@ export function App() {
   const [climate, setClimate] = React.useState<ClimateCurrent | null>(null);
   const [climateLoading, setClimateLoading] = React.useState(false);
   const [climateError, setClimateError] = React.useState(false);
+  const [climateFeedback, setClimateFeedback] = React.useState<
+    "idle" | "updating" | "success" | "error"
+  >("idle");
+  const [lastClimateQueryAt, setLastClimateQueryAt] = React.useState<string | null>(null);
   const [loadError, setLoadError] = React.useState(false);
   const [form, setForm] = React.useState<FormState>(emptyForm);
   const [submitState, setSubmitState] = React.useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [savedObservationId, setSavedObservationId] = React.useState<number | null>(null);
   const t = translations[locale];
 
+  const selectedProject = projects.find((project) => project.id === Number(form.projectId));
   const selectedTerritory = territories.find((territory) => territory.id === Number(form.territoryId));
   const projectTerritories = territories.filter(
     (territory) => territory.project_id === Number(form.projectId),
@@ -145,6 +161,15 @@ export function App() {
   React.useEffect(() => {
     document.title = t.documentTitle;
   }, [t.documentTitle]);
+
+  React.useEffect(() => {
+    if (submitState !== "saved") return;
+    const timer = window.setTimeout(() => {
+      setSubmitState("idle");
+      setSavedObservationId(null);
+    }, 12000);
+    return () => window.clearTimeout(timer);
+  }, [submitState, savedObservationId]);
 
   React.useEffect(() => {
     let active = true;
@@ -186,14 +211,18 @@ export function App() {
     if (!territoryId) return;
     setClimateLoading(true);
     setClimateError(false);
+    setClimateFeedback("updating");
     try {
       const nextClimate = await getJson<ClimateCurrent>(
         `/api/v1/climate/current?territory_id=${territoryId}`,
       );
       setClimate(nextClimate);
+      setClimateFeedback("success");
     } catch {
       setClimateError(true);
+      setClimateFeedback("error");
     } finally {
+      setLastClimateQueryAt(new Date().toISOString());
       setClimateLoading(false);
     }
   }, []);
@@ -204,7 +233,7 @@ export function App() {
 
   function updateForm<Key extends keyof FormState>(key: Key, value: FormState[Key]) {
     setForm((current) => ({ ...current, [key]: value }));
-    if (submitState !== "idle") setSubmitState("idle");
+    if (submitState === "error") setSubmitState("idle");
   }
 
   function selectProject(projectId: string) {
@@ -266,7 +295,7 @@ export function App() {
     };
 
     try {
-      await postJson<Observation>("/api/v1/observations", payload);
+      const created = await postJson<Observation>("/api/v1/observations", payload);
       await loadObservations();
       setForm((current) => ({
         ...emptyForm(),
@@ -275,6 +304,7 @@ export function App() {
         latitude: current.latitude,
         longitude: current.longitude,
       }));
+      setSavedObservationId(created.id);
       setSubmitState("saved");
     } catch {
       setSubmitState("error");
@@ -315,6 +345,26 @@ export function App() {
         </div>
       </header>
 
+      {submitState === "saved" && savedObservationId !== null ? (
+        <div className="saveNotification" role="status" aria-live="polite">
+          <CheckCircle2 size={22} />
+          <strong>
+            {replaceParams(t.observationForm.saved, { id: savedObservationId })}
+          </strong>
+          <button
+            type="button"
+            onClick={() => {
+              setSubmitState("idle");
+              setSavedObservationId(null);
+            }}
+            aria-label={t.close}
+            title={t.close}
+          >
+            <X size={18} />
+          </button>
+        </div>
+      ) : null}
+
       <section className="territoryBar" aria-label={t.territoryLabel}>
         <div>
           <span className="sectionLabel">{t.territoryLabel}</span>
@@ -332,6 +382,13 @@ export function App() {
         ) : null}
       </section>
 
+      {selectedProject?.status === "prototype_reference" ? (
+        <div className="prototypeNotice" role="note">
+          <AlertTriangle size={18} />
+          <span>{t.prototypeNotice}</span>
+        </div>
+      ) : null}
+
       <section className="climateSection">
         <div className="sectionHeading">
           <div>
@@ -345,9 +402,37 @@ export function App() {
             disabled={climateLoading || !form.territoryId}
           >
             <RefreshCw size={17} className={climateLoading ? "spin" : ""} />
-            {t.climate.refresh}
+            {climateLoading ? t.climate.updating : t.climate.refresh}
           </button>
         </div>
+
+        {climateFeedback !== "idle" ? (
+          <div
+            className={`climateQueryFeedback ${climateFeedback === "error" ? "errorFeedback" : ""}`}
+            role="status"
+            aria-live="polite"
+          >
+            {climateFeedback === "updating" ? (
+              <LoaderCircle size={17} className="spin" />
+            ) : climateFeedback === "error" ? (
+              <AlertTriangle size={17} />
+            ) : (
+              <CheckCircle2 size={17} />
+            )}
+            <span>
+              {climateFeedback === "updating"
+                ? t.climate.updating
+                : climateFeedback === "error"
+                  ? t.climate.refreshError
+                  : t.climate.refreshSuccess}
+              {lastClimateQueryAt
+                ? ` ${replaceParams(t.climate.lastQuery, {
+                    time: formatDate(lastClimateQueryAt, locale),
+                  })}`
+                : ""}
+            </span>
+          </div>
+        ) : null}
 
         {climateLoading && !climate ? (
           <div className="stateMessage">
@@ -474,7 +559,7 @@ export function App() {
                 value={form.provenance}
                 onChange={(event) => updateForm("provenance", event.target.value as DataProvenance)}
               >
-                {Object.entries(t.observationProvenance).map(([value, label]) => (
+                {Object.entries(t.provenance).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
@@ -638,11 +723,6 @@ export function App() {
               {submitState === "saving" ? <LoaderCircle size={18} className="spin" /> : <Save size={18} />}
               {submitState === "saving" ? t.observationForm.saving : t.observationForm.submit}
             </button>
-            {submitState === "saved" ? (
-              <span className="formFeedback successFeedback">
-                <CheckCircle2 size={18} /> {t.observationForm.saved}
-              </span>
-            ) : null}
             {submitState === "error" ? (
               <span className="formFeedback errorFeedback">
                 <AlertTriangle size={18} /> {t.observationForm.error}
@@ -679,6 +759,13 @@ export function App() {
                     </div>
                   </div>
                   <p>{observation.description}</p>
+                  {observation.data_provenance === "synthetic_demo" &&
+                  observation.source_name.startsWith("Legacy synthetic demo record") ? (
+                    <div className="legacySyntheticNotice">
+                      <AlertTriangle size={16} />
+                      <span>{t.observations.legacySyntheticNotice}</span>
+                    </div>
+                  ) : null}
                   <dl>
                     <dt>
                       <MapPin size={14} /> {t.observations.location}
@@ -694,11 +781,37 @@ export function App() {
                     <dd>{observation.responsible_role}</dd>
                     <dt>{t.observations.evidence}</dt>
                     <dd>
-                      {observation.evidence_items.map((evidence) => (
-                        <a key={evidence.id} href={evidence.uri} target="_blank" rel="noreferrer">
-                          {evidence.description ?? evidence.source_name} <ExternalLink size={12} />
-                        </a>
-                      ))}
+                      {observation.evidence_items.map((evidence) => {
+                        const domain = evidenceDomain(evidence.uri);
+                        const isSyntheticMarker =
+                          observation.data_provenance === "synthetic_demo" ||
+                          evidence.data_provenance === "synthetic_demo" ||
+                          domain === null;
+                        const isOpenMeteoTechnical = domain === "api.open-meteo.com";
+
+                        return (
+                          <span className="evidenceReference" key={evidence.id}>
+                            {isSyntheticMarker ? (
+                              <span>{t.observations.noExternalSyntheticEvidence}</span>
+                            ) : (
+                              <>
+                                <a href={evidence.uri} target="_blank" rel="noreferrer">
+                                  {isOpenMeteoTechnical
+                                    ? t.observations.openMeteoTechnical
+                                    : evidence.description ?? evidence.source_name}
+                                  <ExternalLink size={12} />
+                                </a>
+                                <small>
+                                  {domain}
+                                  {isOpenMeteoTechnical
+                                    ? ` · ${t.observations.technicalDataWarning}`
+                                    : ""}
+                                </small>
+                              </>
+                            )}
+                          </span>
+                        );
+                      })}
                     </dd>
                   </dl>
                 </article>

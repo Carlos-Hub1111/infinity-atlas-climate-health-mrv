@@ -22,7 +22,7 @@ from app.services.climate_data import ClimateResult, get_current_climate
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.2.0-sprint-1a",
+    version="0.2.1-sprint-1a-uat",
     description=(
         "Sprint 1A API for public climate conditions and traceable territorial observations. "
         "No child-identifying, clinical or confidential information is accepted."
@@ -94,7 +94,9 @@ def list_territories(db: Session = Depends(get_db)) -> list[Territory]:
         "Retrieves current model-based weather conditions from the Open-Meteo Weather Forecast API "
         "(CC BY 4.0), stores the provider URL plus observation and retrieval timestamps, and caches "
         "the result temporarily. If the provider fails, the last stored public record is returned with "
-        "`is_stale=true`. WMO `weather_code` describes the modeled weather condition."
+        "`is_stale=true`. WMO `weather_code` describes the modeled weather condition. The free endpoint "
+        "is used only for evaluation/prototyping; funded deployment requires a suitable commercial plan, "
+        "reviewed self-hosting, or an alternative provider behind the existing climate adapter."
     ),
     responses={503: {"description": "The provider failed and no stored public climate record is available."}},
 )

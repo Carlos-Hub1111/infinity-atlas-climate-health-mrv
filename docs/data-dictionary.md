@@ -14,8 +14,12 @@ the Sprint 1B validation workflow exists.
 
 ## Project
 
-Groups territories and observations. Sprint 1A inserts the non-synthetic reference project
-`Infinity Atlas Climate & Health MRV Pilot` through migration `0002_sprint_1a`.
+Groups territories and observations. Database migrations contain schema changes only. The manual,
+idempotent command `python -m app.bootstrap` creates or updates the non-synthetic reference project:
+
+- name: `Infinity Atlas Climate & Health MRV Prototype`;
+- status: `prototype_reference`;
+- display notice: prototype / controlled test, not a validated field pilot.
 
 ## Territory
 
@@ -73,6 +77,10 @@ Stores an external URL reference linked to an observation:
 - provenance and synthetic flag.
 
 No file contents are stored in Git or the application data directory.
+
+Synthetic legacy records use the internal marker `synthetic://no-external-evidence`; the interface
+must not render that marker as an external link. Controlled Open-Meteo response URLs are labeled as
+technical source data and display their domain before the user opens them.
 
 ## Validation and RiskScore
 
