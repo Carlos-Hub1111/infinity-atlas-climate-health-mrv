@@ -315,7 +315,7 @@ export function App() {
     <main className="appShell">
       <header className="appHeader">
         <div className="brandBlock">
-          <div className="brandMark">IA</div>
+          <div className="brandMark">InfinityAtlas</div>
           <div>
             <p className="eyebrow">{t.sprintLabel}</p>
             <h1>{t.headline}</h1>
@@ -510,7 +510,7 @@ export function App() {
           </div>
 
           <div className="formGrid">
-            <label>
+            <label className="projectField">
               <span>{t.observationForm.project}</span>
               <select
                 required

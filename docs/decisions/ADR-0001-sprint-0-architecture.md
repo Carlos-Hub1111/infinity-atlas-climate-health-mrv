@@ -8,7 +8,7 @@ Accepted for Sprint 0.
 
 ## Context
 
-InfinityGaia needs an executable but narrow UNICEF prototype before 2026-08-10. The user is nontechnical, Docker is not currently available in the local environment, and the system must avoid confidential data and overbuilt infrastructure.
+INFINITYGAIA S.A.S. B.I.C. needs an executable but narrow UNICEF prototype before 2026-08-10. The user is nontechnical, Docker is not currently available in the local environment, and the system must avoid confidential data and overbuilt infrastructure.
 
 ## Decision
 

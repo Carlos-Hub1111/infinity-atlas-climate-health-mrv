@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Infinity Atlas Climate & Health MRV Toolkit"
+    app_name: str = "InfinityAtlas Climate & Health MRV Toolkit"
     app_env: str = "local"
     database_url: str = "sqlite:///./local.db"
     auto_create_tables: bool = False

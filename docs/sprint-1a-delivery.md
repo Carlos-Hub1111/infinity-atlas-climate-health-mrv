@@ -4,6 +4,13 @@ Date: 2026-07-26
 
 Status: implemented and pending final branch review.
 
+Official identity:
+
+- platform: `InfinityAtlas`;
+- UNICEF solution: `InfinityAtlas Climate & Health MRV Toolkit`;
+- reference project: `InfinityAtlas Climate & Health MRV Prototype`;
+- owner: `INFINITYGAIA S.A.S. B.I.C.`.
+
 ## Functional delivery
 
 - San Cristobal public reference territory.
@@ -112,7 +119,7 @@ Controlled observation example:
 | Provenance | `controlled_test` |
 | Location | `-0.9002, -89.6127` |
 | Source | Sprint 1A browser verification |
-| Responsible role/team | InfinityGaia prototype team |
+| Responsible role/team | INFINITYGAIA S.A.S. B.I.C. prototype team |
 | Evidence | Public Open-Meteo query used for controlled interface verification |
 | Persistence | Recovered after a full browser reload |
 

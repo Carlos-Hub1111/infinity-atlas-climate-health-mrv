@@ -80,7 +80,7 @@ class Sprint1AMigrationTests(unittest.TestCase):
                     "SELECT observed_at, data_provenance FROM evidence WHERE id = 1"
                 ).fetchone()
                 reference_projects = connection.execute(
-                    "SELECT COUNT(*) FROM projects WHERE name LIKE 'Infinity Atlas Climate & Health MRV %'"
+                    "SELECT COUNT(*) FROM projects WHERE name LIKE 'InfinityAtlas Climate & Health MRV %'"
                 ).fetchone()[0]
                 reference_territories = connection.execute(
                     "SELECT COUNT(*) FROM territories WHERE name = 'San Cristobal'"

@@ -4,6 +4,7 @@ from sqlalchemy import select
 
 from app.bootstrap import (
     LEGACY_SYNTHETIC_NOTICE,
+    SYNTHETIC_PROJECT_NAME,
     SYNTHETIC_EVIDENCE_MARKER_DESCRIPTION,
     SYNTHETIC_EVIDENCE_MARKER_URI,
 )
@@ -13,8 +14,20 @@ from app.models import ClimateData, Evidence, Observation, Project, Role, Territ
 
 def seed_demo_data() -> dict[str, int | bool]:
     with SessionLocal() as db:
-        existing = db.scalar(select(Project).where(Project.name == "San Cristobal Climate & Health MRV Demo"))
+        existing = db.scalar(
+            select(Project).where(
+                Project.name.in_(
+                    {
+                        SYNTHETIC_PROJECT_NAME,
+                        "San Cristobal Climate & Health MRV Demo",
+                    }
+                )
+            )
+        )
         if existing:
+            if existing.name != SYNTHETIC_PROJECT_NAME:
+                existing.name = SYNTHETIC_PROJECT_NAME
+                db.commit()
             return {"created": False, "project_id": existing.id}
 
         role_admin = Role(name="admin", description="Synthetic administrator role for Sprint 0")
@@ -45,7 +58,7 @@ def seed_demo_data() -> dict[str, int | bool]:
         db.flush()
 
         project = Project(
-            name="San Cristobal Climate & Health MRV Demo",
+            name=SYNTHETIC_PROJECT_NAME,
             description="Synthetic Sprint 0 project for UNICEF prototype structure validation.",
             status="sprint-0",
             is_synthetic=True,

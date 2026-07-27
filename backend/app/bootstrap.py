@@ -4,7 +4,7 @@ import argparse
 import json
 from datetime import datetime, timezone
 
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -21,14 +21,16 @@ from app.models import (
     Validation,
 )
 
-REFERENCE_PROJECT_NAME = "Infinity Atlas Climate & Health MRV Prototype"
+REFERENCE_PROJECT_NAME = "InfinityAtlas Climate & Health MRV Prototype"
 LEGACY_REFERENCE_PROJECT_NAME = "Infinity Atlas Climate & Health MRV Pilot"
+LEGACY_SPACED_REFERENCE_PROJECT_NAME = "Infinity Atlas Climate & Health MRV Prototype"
 REFERENCE_PROJECT_STATUS = "prototype_reference"
 REFERENCE_PROJECT_DESCRIPTION = "Prototype / controlled test - Not a validated field pilot"
 REFERENCE_TERRITORY_NAME = "San Cristobal"
 REFERENCE_LATITUDE = -0.9002
 REFERENCE_LONGITUDE = -89.6127
 
+SYNTHETIC_PROJECT_NAME = "InfinityAtlas Climate & Health MRV Synthetic Demo"
 LEGACY_SYNTHETIC_PROJECT_NAME = "San Cristobal Climate & Health MRV Demo"
 LEGACY_SYNTHETIC_NOTICE = "Legacy synthetic demo record - Not technically validated"
 SYNTHETIC_EVIDENCE_MARKER_URI = "synthetic://no-external-evidence"
@@ -40,6 +42,7 @@ CONTROLLED_DEMO_EVIDENCE_URL = (
     "https://github.com/Carlos-Hub1111/infinity-atlas-climate-health-mrv"
 )
 LOCAL_ENVIRONMENTS = {"local", "dev", "development", "test"}
+OFFICIAL_OWNER_NAME = "INFINITYGAIA S.A.S. B.I.C."
 
 
 def _upsert_reference_data(db: Session) -> tuple[Project, Territory, bool, bool]:
@@ -48,7 +51,16 @@ def _upsert_reference_data(db: Session) -> tuple[Project, Territory, bool, bool]
     )
     if project is None:
         project = db.scalar(
-            select(Project).where(Project.name == LEGACY_REFERENCE_PROJECT_NAME).order_by(Project.id)
+            select(Project)
+            .where(
+                Project.name.in_(
+                    {
+                        LEGACY_SPACED_REFERENCE_PROJECT_NAME,
+                        LEGACY_REFERENCE_PROJECT_NAME,
+                    }
+                )
+            )
+            .order_by(Project.id)
         )
 
     project_created = project is None
@@ -99,6 +111,20 @@ def _upsert_reference_data(db: Session) -> tuple[Project, Territory, bool, bool]
 
 
 def _harden_synthetic_records(db: Session) -> dict[str, int]:
+    synthetic_projects = list(
+        db.scalars(
+            select(Project).where(
+                Project.is_synthetic.is_(True),
+                Project.name.in_({SYNTHETIC_PROJECT_NAME, LEGACY_SYNTHETIC_PROJECT_NAME}),
+            )
+        )
+    )
+    synthetic_projects_updated = 0
+    for project in synthetic_projects:
+        if project.name != SYNTHETIC_PROJECT_NAME:
+            project.name = SYNTHETIC_PROJECT_NAME
+            synthetic_projects_updated += 1
+
     observations = list(
         db.scalars(
             select(Observation).where(
@@ -144,11 +170,33 @@ def _harden_synthetic_records(db: Session) -> dict[str, int]:
         risk_scores_removed = 0
 
     return {
+        "synthetic_projects_updated": synthetic_projects_updated,
         "synthetic_observations_hardened": len(observations),
         "synthetic_evidence_markers_updated": evidence_updated,
         "synthetic_validations_removed": validations_removed or 0,
         "synthetic_risk_scores_removed": risk_scores_removed or 0,
     }
+
+
+def _normalize_known_controlled_brand_labels(db: Session) -> int:
+    updates = [
+        db.execute(
+            update(Observation)
+            .where(Observation.source_name == "InfinityGaia controlled prototype test")
+            .values(source_name=f"{OFFICIAL_OWNER_NAME} controlled prototype test")
+        ).rowcount,
+        db.execute(
+            update(Observation)
+            .where(Observation.responsible_role == "InfinityGaia prototype team")
+            .values(responsible_role=f"{OFFICIAL_OWNER_NAME} prototype team")
+        ).rowcount,
+        db.execute(
+            update(Evidence)
+            .where(Evidence.source_name == "InfinityGaia public GitHub repository")
+            .values(source_name=f"{OFFICIAL_OWNER_NAME} public GitHub repository")
+        ).rowcount,
+    ]
+    return sum(count or 0 for count in updates)
 
 
 def bootstrap_reference_data(db: Session) -> dict[str, int | bool]:
@@ -161,6 +209,7 @@ def bootstrap_reference_data(db: Session) -> dict[str, int | bool]:
         "territory_created": territory_created,
     }
     summary.update(_harden_synthetic_records(db))
+    summary["controlled_brand_labels_updated"] = _normalize_known_controlled_brand_labels(db)
     db.commit()
     return summary
 
@@ -178,13 +227,15 @@ def prepare_clean_demo_data(
         raise RuntimeError("Clean demo preparation requires --confirm-clean-demo.")
 
     project, territory, _, _ = _upsert_reference_data(db)
-    legacy_project = db.scalar(
-        select(Project).where(Project.name == LEGACY_SYNTHETIC_PROJECT_NAME).order_by(Project.id)
+    synthetic_project = db.scalar(
+        select(Project)
+        .where(Project.name.in_({SYNTHETIC_PROJECT_NAME, LEGACY_SYNTHETIC_PROJECT_NAME}))
+        .order_by(Project.id)
     )
 
     project_ids = [project.id]
-    if legacy_project is not None:
-        project_ids.append(legacy_project.id)
+    if synthetic_project is not None:
+        project_ids.append(synthetic_project.id)
     observation_ids = list(
         db.scalars(select(Observation.id).where(Observation.project_id.in_(project_ids)))
     )
@@ -195,10 +246,10 @@ def prepare_clean_demo_data(
         db.execute(delete(RiskScore).where(RiskScore.observation_id.in_(observation_ids)))
         db.execute(delete(Observation).where(Observation.id.in_(observation_ids)))
 
-    if legacy_project is not None:
+    if synthetic_project is not None:
         legacy_territory_ids = list(
             db.scalars(
-                select(Territory.id).where(Territory.project_id == legacy_project.id)
+                select(Territory.id).where(Territory.project_id == synthetic_project.id)
             )
         )
         if legacy_territory_ids:
@@ -206,7 +257,7 @@ def prepare_clean_demo_data(
                 delete(ClimateData).where(ClimateData.territory_id.in_(legacy_territory_ids))
             )
             db.execute(delete(Territory).where(Territory.id.in_(legacy_territory_ids)))
-        db.delete(legacy_project)
+        db.delete(synthetic_project)
 
     synthetic_emails = {
         "synthetic.admin@example.local",
@@ -244,7 +295,7 @@ def prepare_clean_demo_data(
             evidence_type="url",
             uri=CONTROLLED_DEMO_EVIDENCE_URL,
             description="Public repository reference for the controlled demonstration",
-            source_name="Infinity Atlas public repository",
+            source_name="InfinityAtlas public repository",
             observed_at=now,
             data_provenance="controlled_test",
             is_synthetic=False,
@@ -262,7 +313,7 @@ def prepare_clean_demo_data(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Bootstrap Infinity Atlas reference data.")
+    parser = argparse.ArgumentParser(description="Bootstrap InfinityAtlas reference data.")
     parser.add_argument(
         "--clean-demo",
         action="store_true",

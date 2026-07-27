@@ -22,7 +22,7 @@ from app.services.climate_data import ClimateResult, get_current_climate
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.2.1-sprint-1a-uat",
+    version="0.2.2-sprint-1a-brand",
     description=(
         "Sprint 1A API for public climate conditions and traceable territorial observations. "
         "No child-identifying, clinical or confidential information is accepted."

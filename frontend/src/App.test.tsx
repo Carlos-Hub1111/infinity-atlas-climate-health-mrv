@@ -5,7 +5,7 @@ import { App, galapagosInputValue } from "./App";
 
 const project = {
   id: 1,
-  name: "Infinity Atlas Climate & Health MRV Prototype",
+  name: "InfinityAtlas Climate & Health MRV Prototype",
   description: "Prototype / controlled test - Not a validated field pilot",
   status: "prototype_reference",
   is_synthetic: false,
@@ -63,7 +63,7 @@ const createdObservation = {
       evidence_type: "url",
       uri: "https://github.com/Carlos-Hub1111/infinity-atlas-climate-health-mrv",
       description: "Public repository reference",
-      source_name: "Infinity Atlas public repository",
+      source_name: "InfinityAtlas public repository",
       observed_at: "2026-07-26T20:00:00Z",
       data_provenance: "controlled_test",
       is_synthetic: false,
@@ -88,7 +88,7 @@ function installFetchMock(options?: {
     vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = String(input);
       if (url.endsWith("/health")) {
-        return response({ status: "ok", app: "Infinity Atlas", environment: "test", database: "sqlite" });
+        return response({ status: "ok", app: "InfinityAtlas Climate & Health MRV Toolkit", environment: "test", database: "sqlite" });
       }
       if (url.endsWith("/api/v1/projects")) return response([project]);
       if (url.endsWith("/api/v1/territories")) return response([territory]);
@@ -123,6 +123,13 @@ describe("Sprint 1A application", () => {
   it("renders the observation form and attributed public climate data", async () => {
     render(<App />);
 
+    expect(
+      await screen.findByRole("heading", {
+        name: "InfinityAtlas Climate & Health MRV Toolkit",
+      }),
+    ).toBeInTheDocument();
+    expect(document.title).toBe("InfinityAtlas Climate & Health MRV Toolkit");
+    expect(screen.getByText("InfinityAtlas")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "New territorial observation" })).toBeInTheDocument();
     expect(await screen.findByText("26.6 °C")).toBeInTheDocument();
     expect(screen.getAllByText("Public real data").length).toBeGreaterThan(0);
@@ -143,6 +150,12 @@ describe("Sprint 1A application", () => {
 
     fireEvent.change(screen.getByLabelText("Language"), { target: { value: "es" } });
 
+    expect(
+      screen.getByRole("heading", {
+        name: "InfinityAtlas Climate & Health MRV Toolkit",
+      }),
+    ).toBeInTheDocument();
+    expect(document.title).toBe("InfinityAtlas Climate & Health MRV Toolkit");
     expect(screen.getByRole("heading", { name: "Nueva observación territorial" })).toBeInTheDocument();
     expect(screen.getByLabelText("Descripción")).toBeInTheDocument();
     expect(screen.getByLabelText("Procedencia del dato")).toBeInTheDocument();
@@ -169,7 +182,7 @@ describe("Sprint 1A application", () => {
       target: { value: "https://github.com/Carlos-Hub1111/infinity-atlas-climate-health-mrv" },
     });
     fireEvent.change(screen.getByLabelText("Evidence source"), {
-      target: { value: "Infinity Atlas public repository" },
+      target: { value: "InfinityAtlas public repository" },
     });
     fireEvent.change(screen.getByLabelText("Evidence description"), {
       target: { value: "Public repository reference" },

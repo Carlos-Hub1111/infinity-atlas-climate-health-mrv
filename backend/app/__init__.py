@@ -1,1 +1,1 @@
-"""Infinity Atlas Climate & Health MRV backend."""
+"""InfinityAtlas Climate & Health MRV backend."""

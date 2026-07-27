@@ -96,7 +96,7 @@ Excluded from publication:
 - `node_modules`;
 - frontend build output;
 - logs;
-- internal InfinityGaia context files;
+- internal INFINITYGAIA S.A.S. B.I.C. context files;
 - internal PowerPoint;
 - budget, contract, legal or confidential proposal documents.
 

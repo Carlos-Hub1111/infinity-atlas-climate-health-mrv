@@ -6,7 +6,7 @@ Status: completed for local execution.
 
 ## What was built
 
-- Repository structure for the Infinity Atlas Climate & Health MRV Toolkit.
+- Repository structure for the InfinityAtlas Climate & Health MRV Toolkit.
 - Initial React/Vite frontend.
 - Initial FastAPI backend/API.
 - SQLAlchemy minimum data model.

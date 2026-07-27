@@ -7,6 +7,7 @@ from sqlalchemy.pool import StaticPool
 from app.bootstrap import (
     CONTROLLED_DEMO_DESCRIPTION,
     LEGACY_REFERENCE_PROJECT_NAME,
+    LEGACY_SPACED_REFERENCE_PROJECT_NAME,
     LEGACY_SYNTHETIC_PROJECT_NAME,
     REFERENCE_PROJECT_DESCRIPTION,
     REFERENCE_PROJECT_NAME,
@@ -66,6 +67,83 @@ class ReferenceBootstrapTests(unittest.TestCase):
             self.assertEqual(first["territory_id"], second["territory_id"])
             self.assertFalse(second["project_created"])
             self.assertFalse(second["territory_created"])
+
+    def test_bootstrap_migrates_the_spaced_prototype_name_without_duplication(self) -> None:
+        with self.session_factory() as db:
+            db.add(
+                Project(
+                    name=LEGACY_SPACED_REFERENCE_PROJECT_NAME,
+                    description="Previous Sprint 1A name",
+                    status="prototype_reference",
+                    is_synthetic=False,
+                )
+            )
+            db.commit()
+
+            bootstrap_reference_data(db)
+
+            projects = list(db.scalars(select(Project)))
+            self.assertEqual(len(projects), 1)
+            self.assertEqual(projects[0].name, REFERENCE_PROJECT_NAME)
+
+    def test_bootstrap_normalizes_only_known_controlled_brand_labels(self) -> None:
+        with self.session_factory() as db:
+            bootstrap_reference_data(db)
+            project = db.scalar(select(Project).where(Project.name == REFERENCE_PROJECT_NAME))
+            territory = db.scalar(
+                select(Territory).where(Territory.name == REFERENCE_TERRITORY_NAME)
+            )
+            observation = Observation(
+                project_id=project.id,
+                territory_id=territory.id,
+                category="water",
+                description="Controlled brand normalization fixture",
+                hazard=1,
+                exposure=1,
+                vulnerability=1,
+                latitude=territory.latitude,
+                longitude=territory.longitude,
+                source_name="InfinityGaia controlled prototype test",
+                responsible_role="InfinityGaia prototype team",
+                data_provenance="controlled_test",
+                synthetic_confirmed=False,
+                status="pending",
+                is_synthetic=False,
+            )
+            db.add(observation)
+            db.flush()
+            db.add(
+                Evidence(
+                    observation_id=observation.id,
+                    evidence_type="url",
+                    uri="https://github.com/Carlos-Hub1111/infinity-atlas-climate-health-mrv",
+                    description="Controlled public repository reference",
+                    source_name="InfinityGaia public GitHub repository",
+                    data_provenance="controlled_test",
+                    is_synthetic=False,
+                )
+            )
+            db.commit()
+
+            result = bootstrap_reference_data(db)
+
+            db.refresh(observation)
+            evidence = db.scalar(
+                select(Evidence).where(Evidence.observation_id == observation.id)
+            )
+            self.assertEqual(
+                observation.source_name,
+                "INFINITYGAIA S.A.S. B.I.C. controlled prototype test",
+            )
+            self.assertEqual(
+                observation.responsible_role,
+                "INFINITYGAIA S.A.S. B.I.C. prototype team",
+            )
+            self.assertEqual(
+                evidence.source_name,
+                "INFINITYGAIA S.A.S. B.I.C. public GitHub repository",
+            )
+            self.assertEqual(result["controlled_brand_labels_updated"], 3)
 
     def test_bootstrap_hardens_synthetic_legacy_without_deleting_controlled_records(self) -> None:
         with self.session_factory() as db:

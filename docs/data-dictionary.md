@@ -17,7 +17,7 @@ the Sprint 1B validation workflow exists.
 Groups territories and observations. Database migrations contain schema changes only. The manual,
 idempotent command `python -m app.bootstrap` creates or updates the non-synthetic reference project:
 
-- name: `Infinity Atlas Climate & Health MRV Prototype`;
+- name: `InfinityAtlas Climate & Health MRV Prototype`;
 - status: `prototype_reference`;
 - display notice: prototype / controlled test, not a validated field pilot.
 

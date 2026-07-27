@@ -1,9 +1,9 @@
 export const en = {
   languageName: "English",
   languageLabel: "Language",
-  documentTitle: "Infinity Atlas | Climate & Health MRV",
+  documentTitle: "InfinityAtlas Climate & Health MRV Toolkit",
   sprintLabel: "Sprint 1A · San Cristobal",
-  headline: "Climate & Health MRV Field Register",
+  headline: "InfinityAtlas Climate & Health MRV Toolkit",
   subtitle: "Public climate context and traceable territorial observations.",
   apiStatus: "API connected",
   apiPending: "API connecting",

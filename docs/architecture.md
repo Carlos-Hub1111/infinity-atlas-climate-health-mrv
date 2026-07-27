@@ -1,5 +1,8 @@
 # Sprint 1A architecture
 
+The platform identity is **InfinityAtlas**. The UNICEF solution is
+**InfinityAtlas Climate & Health MRV Toolkit**, owned by **INFINITYGAIA S.A.S. B.I.C.**
+
 The prototype remains a modular monolith:
 
 - one React/Vite frontend;

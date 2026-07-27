@@ -1,8 +1,15 @@
-# Infinity Atlas Climate & Health MRV
+# InfinityAtlas Climate & Health MRV Toolkit
 
 **Open-source climate-health MRV toolkit for municipalities and vulnerable communities.**
 
-Infinity Atlas Climate & Health MRV is an open-source toolkit designed to help local governments, communities, schools and implementing partners collect, structure, visualize and report climate-related environmental risks affecting children’s health.
+InfinityAtlas Climate & Health MRV Toolkit is an open-source solution designed to help local governments, communities, schools and implementing partners collect, structure, visualize and report climate-related environmental risks affecting children’s health.
+
+## Brand identity
+
+- Platform: **InfinityAtlas**
+- UNICEF solution: **InfinityAtlas Climate & Health MRV Toolkit**
+- Reference project: **InfinityAtlas Climate & Health MRV Prototype**
+- Owner: **INFINITYGAIA S.A.S. B.I.C.**
 
 The toolkit focuses on strategic planning and local decision-making by connecting environmental exposure data with child-centered climate resilience. It supports risk mapping, vulnerability scoring, MRV indicators, community reporting and basic dashboard structures.
 
@@ -33,15 +40,15 @@ This toolkit provides a practical open-source foundation for climate-health MRV,
 
 ## Initial Use Case
 
-The initial use case is connected to InfinityGaia’s work in Ecuador, including San Cristóbal, Galápagos, where circular waste management, environmental risk reduction, public health protection and marine pollution prevention are connected to climate resilience and community wellbeing.
+The initial use case is connected to INFINITYGAIA S.A.S. B.I.C.’s work in Ecuador, including San Cristóbal, Galápagos, where circular waste management, environmental risk reduction, public health protection and marine pollution prevention are connected to climate resilience and community wellbeing.
 
 ## Open-Source Boundary
 
-This repository represents the public-good open-source module of the broader Infinity Atlas vision.
+This repository represents the public-good open-source module of the broader InfinityAtlas vision.
 
 Open-source components may include data templates, basic indicators, documentation, dashboard wireframes and community MRV tools.
 
-InfinityGaia retains ownership of its brand, advanced architecture, commercial configurations, implementation services, know-how, client-specific deployments and MRV-as-a-Service model.
+INFINITYGAIA S.A.S. B.I.C. retains ownership of its brands, advanced architecture, commercial configurations, implementation services, know-how, client-specific deployments and MRV-as-a-Service model.
 
 ## License
 
@@ -112,7 +119,7 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 `python -m app.bootstrap` is manual and idempotent. It creates or updates:
 
-- project: `Infinity Atlas Climate & Health MRV Prototype`;
+- project: `InfinityAtlas Climate & Health MRV Prototype`;
 - status: `prototype_reference`;
 - territory: San Cristobal, Galapagos;
 - prototype notice: this is a controlled test, not a validated field pilot.
@@ -177,7 +184,8 @@ that must be retained.
 
 ## Contact
 
-InfinityGaia S.A.S. B.I.C.  
+INFINITYGAIA S.A.S. B.I.C.
+
 Website: https://www.infinitygaia.org  
 Project Lead: Carlos Cifuentes  
 Email: carlos.cifuentes@infinitygaia.org

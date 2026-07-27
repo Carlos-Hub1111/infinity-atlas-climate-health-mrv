@@ -1,6 +1,6 @@
 # Dashboard Overview
 
-This document describes the initial dashboard concept for the Infinity Atlas Climate & Health MRV Toolkit.
+This document describes the initial dashboard concept for the InfinityAtlas Climate & Health MRV Toolkit.
 
 The dashboard will help municipalities, communities, schools and implementing partners visualize climate-related environmental risks affecting children’s health.
 
