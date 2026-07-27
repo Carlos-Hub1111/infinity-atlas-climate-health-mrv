@@ -1,88 +1,94 @@
-# Sprint 1A data dictionary
+# Sprint 1B data dictionary
 
-## Provenance values
+## Controlled vocabularies
 
-| Value | Meaning | Display rule |
-| --- | --- | --- |
-| `public_real` | Public source or field record with an attributable origin | Climate provider data may be shown as public real; pending observations remain visibly unverified |
-| `controlled_test` | Controlled functional test that is not field evidence | Must be shown as controlled test |
-| `synthetic_demo` | Invented demonstration data | Must be visibly marked synthetic |
+| Field | Values |
+| --- | --- |
+| Data provenance | `public_real`, `controlled_test`, `synthetic_demo` |
+| Observation status | `pending`, `observed`, `validated`, `rejected` |
+| Role | `admin`, `monitor`, `validator`, `public` |
+| Category | `water`, `waste`, `heat`, `environmental_pollution` |
+| Risk level | `low`, `moderate`, `high`, `critical` |
 
-The server derives `is_synthetic=true` only from `synthetic_demo`. A client cannot mark synthetic data as real.
-User-submitted `public_real` observations remain `pending` and are displayed as awaiting verification until
-the Sprint 1B validation workflow exists.
+`synthetic_demo` always derives `is_synthetic=true`. Controlled and synthetic records are labeled in
+the interface. A synthetic record is never presented as a real territorial assessment.
+
+## User and Role
+
+`User` stores a minimal prototype identity: username, optional email, display name, Argon2 password
+hash, role, active state, synthetic/demo marker and UTC creation time. It does not require personal,
+clinical or child-identifying information.
+
+`Role` stores the server authorization role and description.
+
+## AuthSession
+
+Stores the JWT identifier (`jti`), user, creation time, expiry and optional revocation time. Logout sets
+`revoked_at`; normal APIs do not delete session history.
 
 ## Project
 
-Groups territories and observations. Database migrations contain schema changes only. The manual,
-idempotent command `python -m app.bootstrap` creates or updates the non-synthetic reference project:
+The manual idempotent reference bootstrap manages:
 
-- name: `InfinityAtlas Climate & Health MRV Prototype`;
-- status: `prototype_reference`;
-- display notice: prototype / controlled test, not a validated field pilot.
+- name `InfinityAtlas Climate & Health MRV Prototype`;
+- status `prototype_reference`;
+- notice that it is a controlled prototype, not a validated field pilot.
 
 ## Territory
 
-Stores name, country, province and coordinates. The initial public reference is:
-
-- San Cristobal, Galapagos, Ecuador;
-- latitude `-0.9002`;
-- longitude `-89.6127`.
+Stores project, name, country, province, coordinates, synthetic marker and IANA `timezone`. The initial
+reference is San Cristobal, Galapagos, Ecuador at `-0.9002`, `-89.6127`, with
+`Pacific/Galapagos`.
 
 ## ClimateData
 
-Stores:
-
-- territory;
-- provider name and complete request URL;
-- provider observation timestamp;
-- application retrieval timestamp;
-- temperature;
-- relative humidity;
-- apparent temperature;
-- precipitation;
-- WMO weather code;
-- provenance and synthetic flag;
-- raw provider payload for traceability.
-
-Only non-synthetic `public_real` records are eligible for the climate fallback.
+Stores territory, provider name and request URL, provider observation time, application retrieval time,
+temperature, relative humidity, apparent temperature, precipitation, WMO weather code, provenance,
+synthetic marker and raw provider response. Only attributable non-synthetic public records are eligible
+for stale fallback.
 
 ## Observation
 
-Stores:
+Stores project, territory, creator, category, description, hazard/exposure/vulnerability (each 1-4),
+coordinates, UTC observation and creation times, source, responsible role/team, provenance, synthetic
+confirmation, status and synthetic marker.
 
-- project and territory;
-- category: `water`, `waste`, `heat` or `environmental_pollution`;
-- description;
-- hazard, exposure and vulnerability inputs from 1 to 4;
-- coordinates;
-- observation and creation timestamps;
-- source name;
-- responsible role or team;
-- provenance;
-- synthetic confirmation;
-- initial status `pending`.
-
-Sprint 1A does not calculate a final risk score.
+Every new API record starts as `pending`. A monitor can update only their own pending record. Updating a
+risk component appends a new `RiskScore`.
 
 ## Evidence
 
-Stores an external URL reference linked to an observation:
+Stores an external URL reference, type, description, source, UTC evidence time, provenance and
+synthetic marker. No file content is stored in Git or application storage. Synthetic markers are not
+rendered as links. Open-Meteo response URLs are visibly labeled as technical source data.
 
-- evidence type;
-- URL;
-- description;
-- source name;
-- evidence timestamp;
-- provenance and synthetic flag.
+## Validation
 
-No file contents are stored in Git or the application data directory.
+Each row stores observation, previous status, next status, comment, validator and UTC decision time.
+Rows are append-only through normal APIs. Comments are mandatory for `observed` and `rejected`.
 
-Synthetic legacy records use the internal marker `synthetic://no-external-evidence`; the interface
-must not render that marker as an external link. Controlled Open-Meteo response URLs are labeled as
-technical source data and display their domain before the user opens them.
+Validation confirms completeness and methodological review. It does not constitute a medical diagnosis
+or independently verify the territorial event.
 
-## Validation and RiskScore
+## RiskScore
 
-The existing entities remain in the schema for continuity. Full validation and final risk scoring are
-reserved for Sprint 1B. Sprint 1A observation creation does not write either entity.
+Each snapshot stores:
+
+- observation;
+- hazard, exposure and vulnerability inputs;
+- total score and level;
+- data provenance;
+- methodology version `climate-health-risk-v0.1`;
+- responsible calculator;
+- UTC calculation time;
+- `is_clinical_diagnosis=false`.
+
+Formula: `hazard + exposure + vulnerability`. Bands: 3-5 low, 6-8 moderate, 9-10 high and 11-12
+critical.
+
+## AuditEvent
+
+Append-only event fields are actor, actor role, UTC timestamp, event type, entity type/identifier,
+previous state, next state, comment and optional methodology version. Tracked events include
+observation creation/update, risk calculation, validation, status changes, successful/failed login,
+logout and user active-state changes.

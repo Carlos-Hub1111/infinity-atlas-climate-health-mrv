@@ -27,11 +27,16 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     full_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
     email: Mapped[str | None] = mapped_column(String(160), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(500), nullable=False)
     role_id: Mapped[int] = mapped_column(ForeignKey("roles.id"), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_synthetic: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     role: Mapped[Role] = relationship(back_populates="users")
+    sessions: Mapped[list["AuthSession"]] = relationship(back_populates="user")
 
 
 class Project(Base):
@@ -56,6 +61,7 @@ class Territory(Base):
     province: Mapped[str | None] = mapped_column(String(120))
     latitude: Mapped[float] = mapped_column(Float, nullable=False)
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    timezone: Mapped[str] = mapped_column(String(80), default="UTC", nullable=False)
     is_synthetic: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     project: Mapped[Project] = relationship(back_populates="territories")
@@ -131,6 +137,7 @@ class Validation(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     observation_id: Mapped[int] = mapped_column(ForeignKey("observations.id"), nullable=False)
+    previous_status: Mapped[str] = mapped_column(String(40), nullable=False)
     status: Mapped[str] = mapped_column(String(40), nullable=False)
     comment: Mapped[str | None] = mapped_column(String(500))
     validated_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
@@ -144,10 +151,44 @@ class RiskScore(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     observation_id: Mapped[int] = mapped_column(ForeignKey("observations.id"), nullable=False)
+    hazard: Mapped[int] = mapped_column(Integer, nullable=False)
+    exposure: Mapped[int] = mapped_column(Integer, nullable=False)
+    vulnerability: Mapped[int] = mapped_column(Integer, nullable=False)
     risk_score: Mapped[int] = mapped_column(Integer, nullable=False)
     risk_level: Mapped[str] = mapped_column(String(40), nullable=False)
-    confidence_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    data_provenance: Mapped[str] = mapped_column(String(40), nullable=False)
     formula_version: Mapped[str] = mapped_column(String(80), nullable=False)
+    calculated_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    is_clinical_diagnosis: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     calculated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     observation: Mapped[Observation] = relationship(back_populates="risk_scores")
+
+
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    jti: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    user: Mapped[User] = relationship(back_populates="sessions")
+
+
+class AuditEvent(Base):
+    __tablename__ = "audit_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    actor_role: Mapped[str | None] = mapped_column(String(80))
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    entity_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    entity_id: Mapped[int | None] = mapped_column(Integer)
+    previous_state: Mapped[str | None] = mapped_column(String(80))
+    new_state: Mapped[str | None] = mapped_column(String(80))
+    comment: Mapped[str | None] = mapped_column(String(500))
+    methodology_version: Mapped[str | None] = mapped_column(String(80))

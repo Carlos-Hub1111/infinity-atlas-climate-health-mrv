@@ -38,20 +38,29 @@ def seed_demo_data() -> dict[str, int | bool]:
 
         admin = User(
             full_name="Synthetic Admin",
+            username="synthetic-admin",
             email="synthetic.admin@example.local",
+            password_hash="!unusable-synthetic-seed",
             role_id=role_admin.id,
+            is_active=False,
             is_synthetic=True,
         )
         monitor = User(
             full_name="Synthetic Community Monitor",
+            username="synthetic-monitor",
             email="synthetic.monitor@example.local",
+            password_hash="!unusable-synthetic-seed",
             role_id=role_monitor.id,
+            is_active=False,
             is_synthetic=True,
         )
         validator = User(
             full_name="Synthetic MRV Validator",
+            username="synthetic-validator",
             email="synthetic.validator@example.local",
+            password_hash="!unusable-synthetic-seed",
             role_id=role_validator.id,
+            is_active=False,
             is_synthetic=True,
         )
         db.add_all([admin, monitor, validator])
@@ -73,6 +82,7 @@ def seed_demo_data() -> dict[str, int | bool]:
             province="Galapagos",
             latitude=-0.9002,
             longitude=-89.6127,
+            timezone="Pacific/Galapagos",
             is_synthetic=True,
         )
         db.add(territory)

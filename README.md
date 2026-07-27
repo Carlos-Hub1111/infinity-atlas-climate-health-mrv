@@ -172,6 +172,58 @@ This command is blocked outside local/development/test environments. It is never
 application or Docker startup. Do not run it against a database containing acceptance or field records
 that must be retained.
 
+## Sprint 1B Access, Validation, Risk and Traceability
+
+Sprint 1B adds the protected methodological workflow without introducing microservices or future
+modules:
+
+- Argon2 password hashing and time-limited JWT access tokens;
+- revocable server-side sessions and functional logout;
+- server-enforced `admin`, `monitor`, `validator` and `public` roles;
+- owner-scoped monitor records and aggregate-only public access;
+- append-only validation decisions and audit events;
+- backend risk calculation using hazard + exposure + vulnerability;
+- methodology version `climate-health-risk-v0.1`;
+- territory-configured `Pacific/Galapagos` display time with UTC database storage;
+- English default and Spanish selectable across all role views.
+
+Validation confirms record completeness and methodological review. It is not a medical diagnosis and
+does not independently verify a territorial event. The risk score is also non-clinical and records its
+inputs, formula version, actor and calculation time.
+
+### Configure local authentication
+
+Create `backend/.env` from `.env.example` and replace the JWT marker with a locally generated value of
+at least 32 characters. Do not commit `.env`.
+
+Then run the schema and manual bootstraps:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m alembic upgrade head
+.\.venv\Scripts\python.exe -m app.bootstrap
+.\.venv\Scripts\python.exe -m app.demo_users
+```
+
+`app.demo_users` is blocked outside local/development/test. It creates the usernames `demo-admin`,
+`demo-monitor` and `demo-validator`. Passwords come from local `DEMO_*_PASSWORD` environment values or
+are generated securely and displayed once in the local console. No functional password is published.
+To replace existing local demo passwords explicitly:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.demo_users --reset-passwords
+```
+
+The unauthenticated public view exposes aggregate counts only. Demo user creation is never performed by
+a migration, Docker startup or production startup.
+
+Sprint 1B technical documents:
+
+- `docs/sprint-1b-delivery.md`
+- `docs/architecture.md`
+- `docs/data-dictionary.md`
+- `docs/decisions/adr-003-sprint-1b-security-and-risk.md`
+
 ## 12-Month Roadmap
 
 1. Finalize climate-health risk taxonomy and indicator framework.

@@ -29,6 +29,7 @@ REFERENCE_PROJECT_DESCRIPTION = "Prototype / controlled test - Not a validated f
 REFERENCE_TERRITORY_NAME = "San Cristobal"
 REFERENCE_LATITUDE = -0.9002
 REFERENCE_LONGITUDE = -89.6127
+REFERENCE_TIMEZONE = "Pacific/Galapagos"
 
 SYNTHETIC_PROJECT_NAME = "InfinityAtlas Climate & Health MRV Synthetic Demo"
 LEGACY_SYNTHETIC_PROJECT_NAME = "San Cristobal Climate & Health MRV Demo"
@@ -96,6 +97,7 @@ def _upsert_reference_data(db: Session) -> tuple[Project, Territory, bool, bool]
             province="Galapagos",
             latitude=REFERENCE_LATITUDE,
             longitude=REFERENCE_LONGITUDE,
+            timezone=REFERENCE_TIMEZONE,
             is_synthetic=False,
         )
         db.add(territory)
@@ -105,6 +107,7 @@ def _upsert_reference_data(db: Session) -> tuple[Project, Territory, bool, bool]
         territory.province = "Galapagos"
         territory.latitude = REFERENCE_LATITUDE
         territory.longitude = REFERENCE_LONGITUDE
+        territory.timezone = REFERENCE_TIMEZONE
         territory.is_synthetic = False
 
     return project, territory, project_created, territory_created

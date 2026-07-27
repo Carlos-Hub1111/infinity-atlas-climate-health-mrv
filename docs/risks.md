@@ -36,7 +36,8 @@ Mitigation: keep architecture simple, document decisions, and prepare for later 
 
 Impact: demo data could be recreated or polluted in a public environment.
 
-Mitigation: `POST /api/v1/admin/seed` is hidden and disabled unless `APP_ENV` is local/development/test. A future production deployment must replace this with admin permissions or remove the route.
+Mitigation: `POST /api/v1/admin/seed` is hidden and disabled unless `APP_ENV` is
+local/development/test and now also requires an authenticated administrator.
 
 ## R7 - Public weather source availability
 
@@ -73,5 +74,35 @@ Impact: the current Starlette test client emits a deprecation warning indicating
 from `httpx` to `httpx2`.
 
 Mitigation: tests are currently green and the production climate adapter still uses supported `httpx`.
-Review the FastAPI/Starlette test client dependency during Sprint 1B instead of changing the runtime
-stack inside Sprint 1A.
+Review the FastAPI/Starlette test client dependency during the funded hardening phase instead of
+changing the runtime stack inside Sprint 1B.
+
+## R12 - Browser token storage is a prototype compromise
+
+Impact: a cross-site scripting flaw could expose a token stored in browser session storage.
+
+Mitigation: strict dependency review, no injected HTML and short token expiry reduce prototype risk.
+A funded web deployment should move authentication to hardened same-site HttpOnly cookies with CSRF
+controls and a reviewed content-security policy.
+
+## R13 - Audit records are not cryptographically immutable
+
+Impact: privileged database operators could alter audit rows directly.
+
+Mitigation: normal APIs expose no update/delete operation for audit events. A funded deployment should
+add tamper evidence, restricted database roles, backups and external log retention.
+
+## R14 - Prototype authentication lacks production account operations
+
+Impact: there is no password recovery, MFA, lockout policy, email verification or identity-provider
+integration.
+
+Mitigation: demo users are local-only, minimal and synthetic. Production identity architecture requires
+human security review before field deployment.
+
+## R15 - No automated login rate limiting
+
+Impact: a deployed public login could be targeted by repeated credential attempts.
+
+Mitigation: login failures are audited and responses are generic. Network and account rate limiting,
+progressive delay and monitoring are mandatory before internet-facing production use.

@@ -5,9 +5,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.main import app
-from app.models import Base, Project, Territory
+from app.models import Base, Project, Role, Territory, User
+from app.services.security import hash_password
 
 
 class ObservationApiTests(unittest.TestCase):
@@ -19,8 +21,23 @@ class ObservationApiTests(unittest.TestCase):
         )
         Base.metadata.create_all(self.engine)
         self.session_factory = sessionmaker(bind=self.engine, autoflush=False, autocommit=False)
+        self.original_jwt_secret = settings.jwt_secret_key
+        settings.jwt_secret_key = "test-only-signing-key-with-at-least-32-characters"
 
         with self.session_factory() as db:
+            role = Role(name="monitor", description="Test monitor")
+            db.add(role)
+            db.flush()
+            user = User(
+                full_name="Test Monitor",
+                username="test-monitor",
+                email="test.monitor@example.local",
+                password_hash=hash_password("test-password-not-published"),
+                role_id=role.id,
+                is_active=True,
+                is_synthetic=True,
+            )
+            db.add(user)
             project = Project(
                 name="Sprint 1A controlled test",
                 description="Automated test fixture",
@@ -36,6 +53,7 @@ class ObservationApiTests(unittest.TestCase):
                 province="Galapagos",
                 latitude=-0.9002,
                 longitude=-89.6127,
+                timezone="Pacific/Galapagos",
                 is_synthetic=False,
             )
             db.add(territory)
@@ -52,9 +70,15 @@ class ObservationApiTests(unittest.TestCase):
 
         app.dependency_overrides[get_db] = override_get_db
         self.client = TestClient(app)
+        login = self.client.post(
+            "/api/v1/auth/login",
+            json={"identifier": "test-monitor", "password": "test-password-not-published"},
+        )
+        self.headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
     def tearDown(self) -> None:
         app.dependency_overrides.clear()
+        settings.jwt_secret_key = self.original_jwt_secret
         self.engine.dispose()
 
     def payload(self, *, provenance: str = "controlled_test", confirmed: bool = False) -> dict:
@@ -84,7 +108,9 @@ class ObservationApiTests(unittest.TestCase):
         }
 
     def test_creates_pending_observation_with_evidence_and_persists_across_requests(self) -> None:
-        response = self.client.post("/api/v1/observations", json=self.payload())
+        response = self.client.post(
+            "/api/v1/observations", json=self.payload(), headers=self.headers
+        )
 
         self.assertEqual(response.status_code, 201)
         created = response.json()
@@ -95,7 +121,7 @@ class ObservationApiTests(unittest.TestCase):
         self.assertEqual(created["observed_at"], "2026-07-26T19:30:00Z")
         self.assertTrue(created["created_at"].endswith("Z"))
 
-        persisted_response = self.client.get("/api/v1/observations")
+        persisted_response = self.client.get("/api/v1/observations", headers=self.headers)
 
         self.assertEqual(persisted_response.status_code, 200)
         persisted = persisted_response.json()
@@ -107,7 +133,9 @@ class ObservationApiTests(unittest.TestCase):
         payload = self.payload()
         payload["hazard"] = 5
 
-        response = self.client.post("/api/v1/observations", json=payload)
+        response = self.client.post(
+            "/api/v1/observations", json=payload, headers=self.headers
+        )
 
         self.assertEqual(response.status_code, 422)
 
@@ -115,10 +143,12 @@ class ObservationApiTests(unittest.TestCase):
         rejected = self.client.post(
             "/api/v1/observations",
             json=self.payload(provenance="synthetic_demo", confirmed=False),
+            headers=self.headers,
         )
         accepted = self.client.post(
             "/api/v1/observations",
             json=self.payload(provenance="synthetic_demo", confirmed=True),
+            headers=self.headers,
         )
 
         self.assertEqual(rejected.status_code, 422)

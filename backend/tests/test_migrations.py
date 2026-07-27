@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 
-class Sprint1AMigrationTests(unittest.TestCase):
+class Sprint1BMigrationTests(unittest.TestCase):
     def test_upgrades_populated_sprint_zero_database(self) -> None:
         backend_root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -85,6 +85,18 @@ class Sprint1AMigrationTests(unittest.TestCase):
                 reference_territories = connection.execute(
                     "SELECT COUNT(*) FROM territories WHERE name = 'San Cristobal'"
                 ).fetchone()[0]
+                territory_timezone = connection.execute(
+                    "SELECT timezone FROM territories WHERE id = 1"
+                ).fetchone()[0]
+                operational_users = connection.execute(
+                    "SELECT COUNT(*) FROM users"
+                ).fetchone()[0]
+                new_tables = {
+                    row[0]
+                    for row in connection.execute(
+                        "SELECT name FROM sqlite_master WHERE type = 'table'"
+                    ).fetchall()
+                }
             finally:
                 connection.close()
 
@@ -93,6 +105,10 @@ class Sprint1AMigrationTests(unittest.TestCase):
             self.assertEqual(evidence, ("2026-07-26 18:00:00", "synthetic_demo"))
             self.assertEqual(reference_projects, 0)
             self.assertEqual(reference_territories, 0)
+            self.assertEqual(territory_timezone, "UTC")
+            self.assertEqual(operational_users, 0)
+            self.assertIn("auth_sessions", new_tables)
+            self.assertIn("audit_events", new_tables)
 
 
 if __name__ == "__main__":

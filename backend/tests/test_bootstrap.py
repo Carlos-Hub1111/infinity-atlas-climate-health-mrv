@@ -195,14 +195,24 @@ class ReferenceBootstrapTests(unittest.TestCase):
                     is_synthetic=True,
                 )
             )
-            db.add(Validation(observation_id=synthetic_observation.id, status="validated"))
+            db.add(
+                Validation(
+                    observation_id=synthetic_observation.id,
+                    previous_status="pending",
+                    status="validated",
+                )
+            )
             db.add(
                 RiskScore(
                     observation_id=synthetic_observation.id,
+                    hazard=3,
+                    exposure=3,
+                    vulnerability=2,
                     risk_score=8,
                     risk_level="high",
-                    confidence_score=60,
+                    data_provenance="synthetic_demo",
                     formula_version="legacy",
+                    is_clinical_diagnosis=False,
                 )
             )
             db.commit()

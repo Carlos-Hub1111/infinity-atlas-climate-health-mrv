@@ -5,12 +5,13 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, mod
 
 DataProvenance = Literal["public_real", "controlled_test", "synthetic_demo"]
 ObservationCategory = Literal["water", "waste", "heat", "environmental_pollution"]
+ValidationStatus = Literal["validated", "observed", "rejected"]
 
 
 def _ensure_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
-    return value
+    return value.astimezone(timezone.utc)
 
 
 class HealthResponse(BaseModel):
@@ -45,7 +46,48 @@ class TerritoryRead(BaseModel):
     province: str | None
     latitude: float
     longitude: float
+    timezone: str
     is_synthetic: bool
+
+
+class RoleRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: str | None
+
+
+class UserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    full_name: str
+    email: str | None
+    role: RoleRead
+    is_active: bool
+    is_synthetic: bool
+
+
+class LoginRequest(BaseModel):
+    identifier: str = Field(min_length=2, max_length=160)
+    password: str = Field(min_length=1, max_length=500)
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: Literal["bearer"] = "bearer"
+    expires_at: datetime
+    user: UserRead
+
+
+class MessageResponse(BaseModel):
+    message: str
+
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
 
 
 class EvidenceCreate(BaseModel):
@@ -54,13 +96,6 @@ class EvidenceCreate(BaseModel):
     description: str = Field(min_length=3, max_length=255)
     source_name: str = Field(min_length=2, max_length=160)
     observed_at: datetime
-
-    @field_validator("observed_at")
-    @classmethod
-    def require_timezone(cls, value: datetime) -> datetime:
-        if value.tzinfo is None or value.utcoffset() is None:
-            raise ValueError("Evidence timestamp must include a timezone.")
-        return value.astimezone(timezone.utc)
 
 
 class EvidenceRead(BaseModel):
@@ -87,6 +122,7 @@ class ObservationRead(BaseModel):
     id: int
     project_id: int
     territory_id: int
+    created_by_id: int | None
     category: ObservationCategory
     description: str
     hazard: int
@@ -127,18 +163,97 @@ class ObservationCreate(BaseModel):
     synthetic_confirmation: bool = False
     evidence: EvidenceCreate
 
-    @field_validator("observed_at")
-    @classmethod
-    def normalize_observation_timestamp(cls, value: datetime) -> datetime:
-        if value.tzinfo is None or value.utcoffset() is None:
-            raise ValueError("Observation timestamp must include a timezone.")
-        return value.astimezone(timezone.utc)
-
     @model_validator(mode="after")
     def validate_provenance(self) -> "ObservationCreate":
         if self.data_provenance == "synthetic_demo" and not self.synthetic_confirmation:
             raise ValueError("Synthetic demo observations require explicit confirmation.")
         return self
+
+
+class ObservationUpdate(BaseModel):
+    description: str | None = Field(default=None, min_length=5, max_length=2000)
+    hazard: int | None = Field(default=None, ge=1, le=4)
+    exposure: int | None = Field(default=None, ge=1, le=4)
+    vulnerability: int | None = Field(default=None, ge=1, le=4)
+
+    @model_validator(mode="after")
+    def require_change(self) -> "ObservationUpdate":
+        if not self.model_fields_set:
+            raise ValueError("At least one observation field must be supplied.")
+        return self
+
+
+class ValidationCreate(BaseModel):
+    status: ValidationStatus
+    comment: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def require_review_comment(self) -> "ValidationCreate":
+        if self.status in {"observed", "rejected"} and not (self.comment or "").strip():
+            raise ValueError("A comment is required when observing or rejecting a record.")
+        return self
+
+
+class ValidationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    observation_id: int
+    previous_status: str
+    status: str
+    comment: str | None
+    validated_by_id: int | None
+    validated_at: datetime
+    methodological_notice: str
+
+    @field_validator("validated_at", mode="before")
+    @classmethod
+    def normalize_timestamp(cls, value: datetime) -> datetime:
+        return _ensure_utc(value)
+
+
+class RiskScoreRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    observation_id: int
+    hazard: int
+    exposure: int
+    vulnerability: int
+    risk_score: int
+    risk_level: str
+    data_provenance: DataProvenance
+    formula_version: str
+    calculated_by_id: int | None
+    is_clinical_diagnosis: bool
+    calculated_at: datetime
+    explanation: str
+
+    @field_validator("calculated_at", mode="before")
+    @classmethod
+    def normalize_timestamp(cls, value: datetime) -> datetime:
+        return _ensure_utc(value)
+
+
+class AuditEventRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    actor_id: int | None
+    actor_role: str | None
+    occurred_at: datetime
+    event_type: str
+    entity_type: str
+    entity_id: int | None
+    previous_state: str | None
+    new_state: str | None
+    comment: str | None
+    methodology_version: str | None
+
+    @field_validator("occurred_at", mode="before")
+    @classmethod
+    def normalize_timestamp(cls, value: datetime) -> datetime:
+        return _ensure_utc(value)
 
 
 class ClimateCurrentRead(BaseModel):
@@ -162,10 +277,15 @@ class ClimateCurrentRead(BaseModel):
         return _ensure_utc(value)
 
 
-class DashboardSummary(BaseModel):
-    projects: int
-    territories: int
-    observations: int
-    synthetic_observations: int
-    latest_risk_level: str | None
-    latest_climate_source: str | None
+class PublicSummary(BaseModel):
+    territory_name: str
+    timezone: str
+    total_observations: int
+    pending: int
+    validated: int
+    observed: int
+    rejected: int
+    public_real: int
+    controlled_test: int
+    synthetic_demo: int
+    risk_levels: dict[str, int]

@@ -13,11 +13,14 @@ The Sprint 0 local source uses MIT License. When integrating into the existing p
 | alembic | 1.16.4 | MIT |
 | fastapi | 0.140.0 | MIT |
 | httpx | 0.28.1 | BSD-3-Clause |
+| PyJWT | 2.13.0 | MIT |
+| pwdlib | 0.3.0 | MIT |
 | starlette | 1.3.1 | BSD-3-Clause |
 | pg8000 | 1.31.5 | BSD 3-Clause |
 | pydantic | 2.11.7 | MIT |
 | pydantic-settings | 2.10.1 | MIT |
 | SQLAlchemy | 2.0.41 | MIT |
+| tzdata | 2026.3 | Apache-2.0 |
 | uvicorn | 0.51.0 | BSD-3-Clause |
 
 ## Backend notable transitive dependencies
@@ -26,6 +29,8 @@ The Sprint 0 local source uses MIT License. When integrating into the existing p
 | --- | --- | --- |
 | asn1crypto | 1.5.1 | MIT |
 | annotated-doc | 0.0.4 | Not declared in local metadata; verify upstream license before production release. |
+| argon2-cffi | 25.1.0 | MIT |
+| cffi | 2.1.0 | MIT |
 | python-dateutil | 2.9.0.post0 | Dual License |
 | scramp | 1.4.15 | MIT No Attribution |
 | six | 1.17.0 | MIT |

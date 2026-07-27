@@ -25,6 +25,10 @@ services:
       AUTO_SEED_DEMO_DATA: "false"
       CLIMATE_API_TIMEOUT_SECONDS: "8"
       CLIMATE_CACHE_TTL_SECONDS: "900"
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set locally}
+      JWT_ALGORITHM: "HS256"
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      JWT_ISSUER: "infinityatlas-docker"
     ports:
       - "8000:8000"
     depends_on:

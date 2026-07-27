@@ -6,7 +6,7 @@ Status: completed and frozen at commit `00e0bb268c677899a9fd728a971ce246643b37ca
 
 ## Sprint 1A - Climate, territory and observation
 
-Status: implemented on `feature/sprint-1a-climate-observation`, pending final review.
+Status: completed and frozen at commit `2086d25289908a4438ed53cd6efbbae74dd76aa9`.
 
 - Public San Cristobal reference territory.
 - Open-Meteo adapter with timeout and validation.
@@ -20,13 +20,14 @@ Status: implemented on `feature/sprint-1a-climate-observation`, pending final re
 
 ## Sprint 1B - Validation, risk score and traceability
 
-Status: not authorized and not started.
+Status: implemented on `feature/sprint-1b-validation-risk-rbac`, pending Product Owner review.
 
-- Reviewer workflow and role boundary.
-- Validation records and comments.
-- Transparent risk formula and versioning.
-- Confidence and audit events.
-- Full state transition rules.
+- Argon2 authentication, revocable JWT sessions and logout.
+- Backend-enforced admin, monitor, validator and public roles.
+- Reviewer workflow, comments and state transition rules.
+- Transparent risk formula and versioned score snapshots.
+- Append-only audit events and territory timezone.
+- English/Spanish role workspaces and aggregate-only public view.
 
 ## Sprint 1C - Dashboard, map, report and public view
 
@@ -39,8 +40,9 @@ Status: not authorized and not started.
 
 ## Later hardening
 
-- Authentication and role-based access.
+- Production identity provider, MFA, recovery and HttpOnly cookie architecture.
 - Private evidence object storage and malware scanning.
 - PostgreSQL/PostGIS Docker validation.
 - Accessibility and user testing.
 - Production provider and commercial-use review.
+- Tamper-evident external audit retention.

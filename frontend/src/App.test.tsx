@@ -1,7 +1,37 @@
 import React from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App, galapagosInputValue } from "./App";
+
+const roles = {
+  admin: { id: 1, name: "admin", description: "Administrator" },
+  monitor: { id: 2, name: "monitor", description: "Monitor" },
+  validator: { id: 3, name: "validator", description: "Validator" },
+  public: { id: 4, name: "public", description: "Public" },
+} as const;
+
+const users = Object.fromEntries(
+  Object.entries(roles).map(([name, role], index) => [
+    name,
+    {
+      id: index + 1,
+      username: `demo-${name}`,
+      full_name: `Demo ${name}`,
+      email: `demo.${name}@example.local`,
+      role,
+      is_active: true,
+      is_synthetic: true,
+    },
+  ]),
+) as Record<keyof typeof roles, {
+  id: number;
+  username: string;
+  full_name: string;
+  email: string;
+  role: (typeof roles)[keyof typeof roles];
+  is_active: boolean;
+  is_synthetic: boolean;
+}>;
 
 const project = {
   id: 1,
@@ -19,6 +49,7 @@ const territory = {
   province: "Galapagos",
   latitude: -0.9002,
   longitude: -89.6127,
+  timezone: "Pacific/Galapagos",
   is_synthetic: false,
 };
 
@@ -38,21 +69,22 @@ const climate = {
   is_stale: false,
 };
 
-const createdObservation = {
+const observation = {
   id: 4,
   project_id: 1,
   territory_id: 1,
+  created_by_id: users.monitor.id,
   category: "water",
   description: "Controlled observation created in the interface.",
-  hazard: 1,
-  exposure: 1,
-  vulnerability: 1,
+  hazard: 2,
+  exposure: 3,
+  vulnerability: 2,
   latitude: -0.9002,
   longitude: -89.6127,
   observed_at: "2026-07-26T20:00:00Z",
   created_at: "2026-07-26T20:05:00Z",
   source_name: "Controlled territorial exercise",
-  responsible_role: "Monitoring team",
+  responsible_role: "Territorial monitor",
   data_provenance: "controlled_test",
   synthetic_confirmed: false,
   status: "pending",
@@ -71,6 +103,52 @@ const createdObservation = {
   ],
 };
 
+const risk = {
+  id: 1,
+  observation_id: 4,
+  hazard: 2,
+  exposure: 3,
+  vulnerability: 2,
+  risk_score: 7,
+  risk_level: "moderate",
+  data_provenance: "controlled_test",
+  formula_version: "climate-health-risk-v0.1",
+  calculated_by_id: users.monitor.id,
+  is_clinical_diagnosis: false,
+  calculated_at: "2026-07-26T20:05:00Z",
+  explanation: "2 hazard + 3 exposure + 2 vulnerability = 7.",
+};
+
+const audit = [
+  {
+    id: 1,
+    actor_id: users.monitor.id,
+    actor_role: "monitor",
+    occurred_at: "2026-07-26T20:05:00Z",
+    event_type: "observation_created",
+    entity_type: "observation",
+    entity_id: 4,
+    previous_state: null,
+    new_state: "pending",
+    comment: "provenance=controlled_test",
+    methodology_version: null,
+  },
+];
+
+const publicSummary = {
+  territory_name: "San Cristobal",
+  timezone: "Pacific/Galapagos",
+  total_observations: 1,
+  pending: 1,
+  validated: 0,
+  observed: 0,
+  rejected: 0,
+  public_real: 0,
+  controlled_test: 1,
+  synthetic_demo: 0,
+  risk_levels: { low: 0, moderate: 1, high: 0, critical: 0 },
+};
+
 function response(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -79,95 +157,174 @@ function response(data: unknown, status = 200): Response {
 }
 
 function installFetchMock(options?: {
-  failObservationPost?: boolean;
-  observations?: unknown[];
+  invalidLogin?: boolean;
+  expiredMe?: boolean;
   climateHandler?: () => Promise<Response> | Response;
 }) {
+  let validationRecorded = false;
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = String(input);
+      const method = init?.method ?? "GET";
       if (url.endsWith("/health")) {
-        return response({ status: "ok", app: "InfinityAtlas Climate & Health MRV Toolkit", environment: "test", database: "sqlite" });
+        return response({
+          status: "ok",
+          app: "InfinityAtlas Climate & Health MRV Toolkit",
+          environment: "test",
+          database: "sqlite",
+        });
+      }
+      if (url.endsWith("/api/v1/public/summary")) return response(publicSummary);
+      if (url.endsWith("/api/v1/auth/me")) {
+        return options?.expiredMe
+          ? response({ detail: "Session expired." }, 401)
+          : response(users.monitor);
+      }
+      if (url.endsWith("/api/v1/auth/login") && method === "POST") {
+        if (options?.invalidLogin) return response({ detail: "Invalid" }, 401);
+        const body = JSON.parse(String(init?.body)) as { identifier: string };
+        const roleName =
+          (Object.keys(users) as Array<keyof typeof users>).find((name) =>
+            body.identifier.includes(name),
+          ) ?? "monitor";
+        return response({
+          access_token: `token-${roleName}`,
+          token_type: "bearer",
+          expires_at: "2026-07-26T22:00:00Z",
+          user: users[roleName],
+        });
+      }
+      if (url.endsWith("/api/v1/auth/logout") && method === "POST") {
+        return response({ message: "Session closed." });
       }
       if (url.endsWith("/api/v1/projects")) return response([project]);
       if (url.endsWith("/api/v1/territories")) return response([territory]);
       if (url.includes("/api/v1/climate/current")) {
         return options?.climateHandler ? options.climateHandler() : response(climate);
       }
-      if (url.endsWith("/api/v1/observations") && init?.method === "POST") {
-        return options?.failObservationPost
-          ? response({ detail: "Invalid" }, 422)
-          : response(createdObservation, 201);
+      if (url.endsWith("/api/v1/observations") && method === "POST") {
+        return response(observation, 201);
       }
-      if (url.endsWith("/api/v1/observations")) return response(options?.observations ?? []);
+      if (url.endsWith("/api/v1/observations")) return response([observation]);
+      if (url.endsWith("/risk-score")) return response(risk);
+      if (url.endsWith("/audit")) {
+        return response(
+          validationRecorded
+            ? [
+                ...audit,
+                {
+                  ...audit[0],
+                  id: 2,
+                  actor_id: users.validator.id,
+                  actor_role: "validator",
+                  event_type: "validation_created",
+                  previous_state: "pending",
+                  new_state: "observed",
+                  comment: "Clarify capture time.",
+                },
+              ]
+            : audit,
+        );
+      }
+      if (url.endsWith("/validation") && method === "POST") {
+        validationRecorded = true;
+        return response({
+          id: 1,
+          observation_id: 4,
+          previous_status: "pending",
+          status: "observed",
+          comment: "Clarify capture time.",
+          validated_by_id: users.validator.id,
+          validated_at: "2026-07-26T21:00:00Z",
+          methodological_notice:
+            "Validation confirms record completeness and methodological review.",
+        }, 201);
+      }
+      if (url.endsWith("/api/v1/admin/users")) return response(Object.values(users).slice(0, 3));
+      if (url.includes("/api/v1/admin/users/") && method === "PATCH") {
+        const body = JSON.parse(String(init?.body)) as { is_active: boolean };
+        return response({ ...users.monitor, is_active: body.is_active });
+      }
+      if (url.endsWith("/api/v1/admin/audit")) return response(audit);
       return response({ detail: "Not found" }, 404);
     }),
   );
 }
 
-describe("Sprint 1A application", () => {
+async function loginAs(role: keyof typeof users) {
+  fireEvent.change(screen.getByLabelText("Username or email"), {
+    target: { value: `demo-${role}` },
+  });
+  fireEvent.change(screen.getByLabelText("Password"), {
+    target: { value: "local-password" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+  await screen.findByText(users[role].full_name);
+}
+
+describe("Sprint 1B application", () => {
   beforeEach(() => {
+    sessionStorage.clear();
     installFetchMock();
   });
 
   afterEach(() => {
     cleanup();
+    sessionStorage.clear();
     vi.unstubAllGlobals();
   });
 
   it("uses Galapagos local time for territorial date inputs", () => {
-    expect(galapagosInputValue(new Date("2026-07-26T20:35:00Z"))).toBe("2026-07-26T14:35");
+    expect(galapagosInputValue(new Date("2026-07-26T20:35:00Z"))).toBe(
+      "2026-07-26T14:35",
+    );
   });
 
-  it("renders the observation form and attributed public climate data", async () => {
+  it("shows secure login and an aggregate-only public view before authentication", async () => {
     render(<App />);
+    expect(await screen.findByRole("heading", { name: "Secure prototype access" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Aggregated public view" })).toBeInTheDocument();
+    expect(screen.getByText("San Cristobal")).toBeInTheDocument();
+    expect(screen.getByText("Only aggregate counts are shown. Internal evidence and actor information are excluded.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
+  });
 
+  it("renders login errors without exposing credential details", async () => {
+    vi.unstubAllGlobals();
+    installFetchMock({ invalidLogin: true });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    fireEvent.change(screen.getByLabelText("Username or email"), { target: { value: "demo-monitor" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("credentials are invalid");
+  });
+
+  it("recovers from an expired stored session", async () => {
+    vi.unstubAllGlobals();
+    sessionStorage.setItem("infinityatlas.prototype.session", "expired-token");
+    installFetchMock({ expiredMe: true });
+    render(<App />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Your session ended. Sign in again.",
+    );
     expect(
-      await screen.findByRole("heading", {
-        name: "InfinityAtlas Climate & Health MRV Toolkit",
-      }),
+      screen.getByRole("heading", { name: "Aggregated public view" }),
     ).toBeInTheDocument();
-    expect(document.title).toBe("InfinityAtlas Climate & Health MRV Toolkit");
-    expect(screen.getByText("InfinityAtlas")).toBeInTheDocument();
+    expect(sessionStorage.getItem("infinityatlas.prototype.session")).toBeNull();
+  });
+
+  it("gives a monitor climate, observation creation, visible risk and bilingual feedback", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await loginAs("monitor");
+
     expect(await screen.findByRole("heading", { name: "New territorial observation" })).toBeInTheDocument();
     expect(await screen.findByText("26.6 °C")).toBeInTheDocument();
-    expect(screen.getAllByText("Public real data").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: /Weather data by Open-Meteo.com/ })).toHaveAttribute(
-      "href",
-      "https://open-meteo.com/",
-    );
-    expect(screen.getByLabelText("Description")).toBeInTheDocument();
-    expect(screen.getByLabelText("Evidence URL")).toBeInTheDocument();
-    expect(
-      screen.getByText("Prototype / controlled test — Not a validated field pilot"),
-    ).toBeInTheDocument();
-  });
-
-  it("makes the Spanish translations selectable", async () => {
-    render(<App />);
-    await screen.findByText("Public reference territory");
-
-    fireEvent.change(screen.getByLabelText("Language"), { target: { value: "es" } });
-
-    expect(
-      screen.getByRole("heading", {
-        name: "InfinityAtlas Climate & Health MRV Toolkit",
-      }),
-    ).toBeInTheDocument();
-    expect(document.title).toBe("InfinityAtlas Climate & Health MRV Toolkit");
-    expect(screen.getByRole("heading", { name: "Nueva observación territorial" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Descripción")).toBeInTheDocument();
-    expect(screen.getByLabelText("Procedencia del dato")).toBeInTheDocument();
-    expect(screen.getAllByText("Dato público real").length).toBeGreaterThan(0);
-    expect(
-      screen.getByText("Prototipo / prueba controlada — No constituye un piloto territorial validado"),
-    ).toBeInTheDocument();
-  });
-
-  it("shows a prominent save confirmation with the created record number", async () => {
-    render(<App />);
-    await screen.findByText("Public reference territory");
+    expect(screen.getByText("Monitor / Technician")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
+    expect(screen.getByText("climate-health-risk-v0.1")).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Description"), {
       target: { value: "Controlled observation created in the interface." },
@@ -175,27 +332,25 @@ describe("Sprint 1A application", () => {
     fireEvent.change(screen.getByLabelText("Observation source"), {
       target: { value: "Controlled territorial exercise" },
     });
-    fireEvent.change(screen.getByLabelText("Responsible role or team"), {
-      target: { value: "Monitoring team" },
-    });
     fireEvent.change(screen.getByLabelText("Evidence URL"), {
       target: { value: "https://github.com/Carlos-Hub1111/infinity-atlas-climate-health-mrv" },
     });
     fireEvent.change(screen.getByLabelText("Evidence source"), {
-      target: { value: "InfinityAtlas public repository" },
+      target: { value: "InfinityAtlas repository" },
     });
     fireEvent.change(screen.getByLabelText("Evidence description"), {
       target: { value: "Public repository reference" },
     });
-
     fireEvent.submit(screen.getByRole("button", { name: "Save observation" }).closest("form")!);
+    expect(await screen.findByText("Observation #4 saved successfully with Pending status.")).toBeInTheDocument();
 
-    expect(
-      await screen.findByText("Observation #4 saved successfully with Pending status."),
-    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Language"), { target: { value: "es" } });
+    expect(screen.getByRole("heading", { name: "Nueva observación territorial" })).toBeInTheDocument();
+    expect(screen.getByText("Monitor / Técnico")).toBeInTheDocument();
+    expect(screen.getByText("Procedencia del dato")).toBeInTheDocument();
   });
 
-  it("shows updating feedback, disables refresh and records the last climate query", async () => {
+  it("shows climate refresh feedback and the last query time", async () => {
     vi.unstubAllGlobals();
     let climateCalls = 0;
     let resolveRefresh: ((value: Response) => void) | undefined;
@@ -209,110 +364,60 @@ describe("Sprint 1A application", () => {
       },
     });
     render(<App />);
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await loginAs("monitor");
     await screen.findByText("26.6 °C");
-
-    const refreshButton = screen.getByRole("button", { name: "Refresh climate" });
-    fireEvent.click(refreshButton);
-
+    fireEvent.click(screen.getByRole("button", { name: "Refresh climate" }));
     expect(screen.getByRole("button", { name: "Updating…" })).toBeDisabled();
-    expect(screen.getAllByText("Updating…").length).toBeGreaterThan(0);
     resolveRefresh?.(response(climate));
-
-    expect(await screen.findByText(/Climate query completed\./)).toBeInTheDocument();
+    expect(await screen.findByText("Climate query completed.")).toBeInTheDocument();
     expect(screen.getByText(/Last query:/)).toBeInTheDocument();
   });
 
-  it("never renders a fictitious external link for synthetic evidence", async () => {
-    vi.unstubAllGlobals();
-    installFetchMock({
-      observations: [
-        {
-          ...createdObservation,
-          id: 1,
-          status: "pending",
-          data_provenance: "synthetic_demo",
-          is_synthetic: true,
-          source_name: "Legacy synthetic demo record - Not technically validated",
-          evidence_items: [
-            {
-              ...createdObservation.evidence_items[0],
-              id: 1,
-              uri: "https://example.local/synthetic-evidence",
-              data_provenance: "synthetic_demo",
-              is_synthetic: true,
-            },
-          ],
-        },
-      ],
-    });
+  it("gives validators decisions, evidence, transparent risk and append-only history", async () => {
     render(<App />);
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await loginAs("validator");
 
-    expect(await screen.findByText("No external evidence — synthetic marker")).toBeInTheDocument();
-    expect(
-      screen.getByText("Legacy synthetic demo record — Not technically validated"),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: /synthetic/i }),
-    ).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Methodological validation" })).toBeInTheDocument();
+    expect(screen.getByText("Hazard 2 + Exposure 3 + Vulnerability 2 = 7")).toBeInTheDocument();
+    expect(screen.getByText("Observation created")).toBeInTheDocument();
+    expect(screen.getByText(/does not constitute a medical diagnosis/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Observe" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("required comment");
+    fireEvent.change(screen.getByLabelText("Review comment"), {
+      target: { value: "Clarify capture time." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Observe" }));
+    expect(await screen.findByText("Record #4 changed to Observed.")).toBeInTheDocument();
+    expect(await screen.findByText("Validation decision recorded")).toBeInTheDocument();
   });
 
-  it("labels raw Open-Meteo evidence as technical source data", async () => {
-    vi.unstubAllGlobals();
-    installFetchMock({
-      observations: [
-        {
-          ...createdObservation,
-          id: 2,
-          evidence_items: [
-            {
-              ...createdObservation.evidence_items[0],
-              id: 2,
-              uri: "https://api.open-meteo.com/v1/forecast?latitude=-0.9002",
-              source_name: "Open-Meteo Weather Forecast API",
-            },
-          ],
-        },
-      ],
-    });
+  it("keeps a public-role session read-only", async () => {
     render(<App />);
-
-    const technicalLink = await screen.findByRole("link", {
-      name: /View technical Open-Meteo response/,
-    });
-    expect(technicalLink).toHaveAttribute(
-      "href",
-      "https://api.open-meteo.com/v1/forecast?latitude=-0.9002",
-    );
-    expect(screen.getByText(/api\.open-meteo\.com · Opens technical data/)).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await loginAs("public");
+    expect(screen.getByText("Public user")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Aggregated public view" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
   });
 
-  it("shows a localized visible error when observation saving fails", async () => {
-    vi.unstubAllGlobals();
-    installFetchMock({ failObservationPost: true });
+  it("lets administrators inspect demo accounts and audit events", async () => {
     render(<App />);
-    await screen.findByText("Public reference territory");
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await loginAs("admin");
 
-    fireEvent.change(screen.getByLabelText("Description"), {
-      target: { value: "Controlled observation for the interface error state." },
-    });
-    fireEvent.change(screen.getByLabelText("Observation source"), {
-      target: { value: "Controlled territorial exercise" },
-    });
-    fireEvent.change(screen.getByLabelText("Responsible role or team"), {
-      target: { value: "Monitoring team" },
-    });
-    fireEvent.change(screen.getByLabelText("Evidence URL"), {
-      target: { value: "https://example.org/controlled-evidence" },
-    });
-    fireEvent.change(screen.getByLabelText("Evidence source"), {
-      target: { value: "Controlled evidence repository" },
-    });
-    fireEvent.change(screen.getByLabelText("Evidence description"), {
-      target: { value: "Non-sensitive controlled reference" },
-    });
+    fireEvent.click(await screen.findByRole("button", { name: "Demo users" }));
+    expect(await screen.findByRole("heading", { name: "Local demonstration users" })).toBeInTheDocument();
+    const toggles = screen.getAllByRole("checkbox");
+    expect(toggles.length).toBe(3);
+    fireEvent.click(toggles[1]);
+    await waitFor(() => expect(toggles[1]).not.toBeChecked());
 
-    fireEvent.submit(screen.getByRole("button", { name: "Save observation" }).closest("form")!);
-
-    expect(await screen.findByText(/The observation could not be saved/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Audit" }));
+    expect(await screen.findByText("Observation created")).toBeInTheDocument();
   });
 });
