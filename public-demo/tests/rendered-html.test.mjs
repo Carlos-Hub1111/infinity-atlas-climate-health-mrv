@@ -29,3 +29,15 @@ test("keeps the public surface branded and free of starter code", async () => {
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   assert.doesNotMatch(dashboard, /Your site is taking shape/);
 });
+
+test("keeps deployment health and climate routes portable", async () => {
+  const [healthAlias, climateRoute] = await Promise.all([
+    readFile(new URL("../app/health/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/climate/route.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(healthAlias, /api\/health\/route/);
+  assert.match(climateRoute, /AbortController/);
+  assert.match(climateRoute, /stale-while-revalidate=900/);
+  assert.doesNotMatch(climateRoute, /cacheEverything|cacheTtl/);
+});
