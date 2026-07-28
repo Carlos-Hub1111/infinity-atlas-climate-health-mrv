@@ -38,7 +38,11 @@ export async function GET() {
         },
       },
     );
-  } catch {
+  } catch (error) {
+    console.error(
+      "Open-Meteo request failed",
+      error instanceof Error ? error.message : "unknown error",
+    );
     return Response.json(
       {
         error: "Climate source temporarily unavailable.",

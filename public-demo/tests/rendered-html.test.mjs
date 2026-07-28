@@ -22,6 +22,8 @@ test("keeps the public surface branded and free of starter code", async () => {
   assert.match(dashboard, /\/api\/report\.pdf/);
   assert.match(dashboard, /\/api\/export\.csv/);
   assert.match(dashboard, /OpenStreetMap/);
+  assert.match(dashboard, /await import\("leaflet"\)/);
+  assert.doesNotMatch(dashboard, /import L from "leaflet"/);
   assert.match(css, /@media \(max-width: 440px\)/);
   assert.match(packageJson, /"leaflet": "1\.9\.4"/);
   assert.match(dashboardRoute, /public_location_mode/);

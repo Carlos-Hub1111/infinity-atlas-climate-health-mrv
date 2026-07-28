@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import L from "leaflet";
+import type { LayerGroup, Map as LeafletMap } from "leaflet";
 import {
   Activity,
   AlertTriangle,
@@ -323,8 +323,8 @@ export function PublicDashboard() {
   const [climateLoading, setClimateLoading] = React.useState(false);
   const [error, setError] = React.useState(false);
   const mapHost = React.useRef<HTMLDivElement | null>(null);
-  const map = React.useRef<L.Map | null>(null);
-  const layer = React.useRef<L.LayerGroup | null>(null);
+  const map = React.useRef<LeafletMap | null>(null);
+  const layer = React.useRef<LayerGroup | null>(null);
   const t = copy[locale];
   const filterQuery = query(filters);
 
@@ -384,42 +384,53 @@ export function PublicDashboard() {
 
   React.useEffect(() => {
     if (!data || !mapHost.current) return;
-    if (!map.current) {
-      map.current = L.map(mapHost.current, {
-        center: [-0.9002, -89.6127],
-        zoom: 12,
-        keyboard: true,
-      });
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap contributors",
-      }).addTo(map.current);
-      layer.current = L.layerGroup().addTo(map.current);
-    }
-    layer.current?.clearLayers();
-    data.observations
-      .filter((item) => item.latitude !== null && item.longitude !== null)
-      .forEach((item) => {
-        const marker = L.divIcon({
-          className: "markerHost",
-          html: `<span class="mapMarker" style="--marker:${colors[item.risk_level]}">${item.risk_level.slice(0, 1).toUpperCase()}</span>`,
-          iconSize: [32, 36],
-          iconAnchor: [16, 36],
-        });
-        const popup = document.createElement("div");
-        popup.className = "popup";
-        const strong = document.createElement("strong");
-        strong.textContent = `#${item.id} · ${item.record_title}`;
-        const details = document.createElement("span");
-        details.textContent = `${label(t.categories, item.category)} · ${label(t.statuses, item.status)} · ${item.risk_score} ${label(t.risks, item.risk_level)} · ${label(t.provenances, item.data_provenance)}`;
-        popup.append(strong, details);
-        L.marker([item.latitude!, item.longitude!], {
-          icon: marker,
+    let cancelled = false;
+
+    async function renderMap() {
+      const L = await import("leaflet");
+      if (cancelled || !data || !mapHost.current) return;
+      if (!map.current) {
+        map.current = L.map(mapHost.current, {
+          center: [-0.9002, -89.6127],
+          zoom: 12,
           keyboard: true,
-          title: `#${item.id} ${item.record_title}`,
-          alt: `#${item.id} ${item.record_title}`,
-        }).bindPopup(popup).addTo(layer.current!);
-      });
-    window.setTimeout(() => map.current?.invalidateSize(), 0);
+        });
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(map.current);
+        layer.current = L.layerGroup().addTo(map.current);
+      }
+      layer.current?.clearLayers();
+      data.observations
+        .filter((item) => item.latitude !== null && item.longitude !== null)
+        .forEach((item) => {
+          const marker = L.divIcon({
+            className: "markerHost",
+            html: `<span class="mapMarker" style="--marker:${colors[item.risk_level]}">${item.risk_level.slice(0, 1).toUpperCase()}</span>`,
+            iconSize: [32, 36],
+            iconAnchor: [16, 36],
+          });
+          const popup = document.createElement("div");
+          popup.className = "popup";
+          const strong = document.createElement("strong");
+          strong.textContent = `#${item.id} · ${item.record_title}`;
+          const details = document.createElement("span");
+          details.textContent = `${label(t.categories, item.category)} · ${label(t.statuses, item.status)} · ${item.risk_score} ${label(t.risks, item.risk_level)} · ${label(t.provenances, item.data_provenance)}`;
+          popup.append(strong, details);
+          L.marker([item.latitude!, item.longitude!], {
+            icon: marker,
+            keyboard: true,
+            title: `#${item.id} ${item.record_title}`,
+            alt: `#${item.id} ${item.record_title}`,
+          }).bindPopup(popup).addTo(layer.current!);
+        });
+      window.setTimeout(() => map.current?.invalidateSize(), 0);
+    }
+
+    void renderMap();
+    return () => {
+      cancelled = true;
+    };
   }, [data, locale, t]);
 
   React.useEffect(
