@@ -981,6 +981,141 @@ fieldset legend {
   margin: 3px 0 0;
 }
 
+.auditExplorer {
+  padding: 20px;
+  border: 1px solid #bac7ca;
+  background: #fff;
+}
+
+.auditFilters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #d1d9db;
+}
+
+.auditFilters label {
+  display: grid;
+  gap: 5px;
+}
+
+.auditFilters label > span {
+  color: #435158;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.inputWithIcon {
+  position: relative;
+}
+
+.inputWithIcon svg {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  color: #617076;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.inputWithIcon input {
+  padding-left: 34px;
+}
+
+.auditExplorerGrid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.62fr) minmax(480px, 1.38fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.auditObservationList {
+  min-width: 0;
+  padding: 16px 18px 0 0;
+  border-right: 1px solid #d1d9db;
+}
+
+.auditListHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.auditListHeading h3 {
+  margin: 0;
+}
+
+.auditListHeading span {
+  color: #617076;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.auditObservationRows {
+  display: grid;
+  gap: 6px;
+  max-height: 62vh;
+  overflow: auto;
+}
+
+.auditObservationRow {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid #c6d0d2;
+  background: #fff;
+  color: #26363c;
+  text-align: left;
+}
+
+.auditObservationRow:hover,
+.auditObservationRow:focus-visible {
+  border-color: #508e91;
+  background: #edf6f5;
+}
+
+.auditObservationRow strong {
+  font-size: 0.76rem;
+}
+
+.auditObservationRow span {
+  color: #617076;
+  font-size: 0.69rem;
+}
+
+.auditExplorerGrid > .auditTimeline {
+  min-width: 0;
+  margin-top: 0;
+  padding-top: 16px;
+  border-top: 0;
+}
+
+.auditSelectedHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.auditSelectedHeader > div {
+  display: grid;
+  gap: 3px;
+}
+
+.auditSelectedHeader span {
+  color: #617076;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.auditSelectedHeader h2 {
+  font-size: 1rem;
+}
+
 .userTable {
   display: grid;
   border-top: 1px solid #cbd4d6;
@@ -1097,7 +1232,8 @@ fieldset legend {
   gap: 6px;
 }
 
-.summaryGroup span {
+.summaryItem {
+  position: relative;
   display: grid;
   min-height: 52px;
   align-content: center;
@@ -1110,6 +1246,60 @@ fieldset legend {
 .summaryGroup b {
   color: #233238;
   font-size: 1rem;
+}
+
+.summaryLabel {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.infoTooltip {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.infoTooltipButton {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #006d77;
+  cursor: help;
+  place-items: center;
+}
+
+.infoTooltipButton:hover,
+.infoTooltipButton:focus-visible {
+  background: #e5f1f0;
+  outline: 2px solid #007f78;
+  outline-offset: 1px;
+}
+
+.infoTooltipContent {
+  position: absolute;
+  z-index: 20;
+  bottom: calc(100% + 7px);
+  left: 0;
+  width: min(270px, calc(100vw - 52px));
+  padding: 9px 10px;
+  border: 1px solid #405258;
+  background: #26363c;
+  box-shadow: 0 5px 15px rgba(22, 38, 43, 0.18);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.summaryItem:nth-child(3) .infoTooltipContent,
+.summaryItem:nth-child(4) .infoTooltipContent {
+  right: 0;
+  left: auto;
 }
 
 .emptyState,
@@ -1163,7 +1353,8 @@ fieldset legend {
 
   .entryGrid,
   .workspaceGrid,
-  .reviewWorkspace {
+  .reviewWorkspace,
+  .auditExplorerGrid {
     grid-template-columns: 1fr;
   }
 
@@ -1173,6 +1364,15 @@ fieldset legend {
 
   .queueList {
     max-height: 230px;
+  }
+
+  .auditFilters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .auditObservationList {
+    padding-right: 0;
+    border-right: 0;
   }
 }
 
@@ -1214,7 +1414,8 @@ fieldset legend {
 
   .climateMeta,
   .formGrid,
-  .userRow {
+  .userRow,
+  .auditFilters {
     grid-template-columns: 1fr;
   }
 
@@ -1268,6 +1469,17 @@ fieldset legend {
 
   .secondaryButton {
     width: 100%;
+  }
+
+  .auditSelectedHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .summaryItem:nth-child(3) .infoTooltipContent,
+  .summaryItem:nth-child(4) .infoTooltipContent {
+    right: auto;
+    left: 0;
   }
 
   .riskLayout {

@@ -1,5 +1,12 @@
 import React from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App, galapagosInputValue } from "./App";
 
@@ -103,6 +110,16 @@ const observation = {
   ],
 };
 
+const heatObservation = {
+  ...observation,
+  id: 6,
+  category: "heat" as const,
+  description: "Controlled heat observation used for Product Owner acceptance.",
+  observed_at: "2026-07-26T21:00:00Z",
+  created_at: "2026-07-26T21:01:00Z",
+  status: "validated" as const,
+};
+
 const risk = {
   id: 1,
   observation_id: 4,
@@ -119,6 +136,12 @@ const risk = {
   explanation: "2 hazard + 3 exposure + 2 vulnerability = 7.",
 };
 
+const heatRisk = {
+  ...risk,
+  id: 2,
+  observation_id: 6,
+};
+
 const audit = [
   {
     id: 1,
@@ -132,6 +155,51 @@ const audit = [
     new_state: "pending",
     comment: "provenance=controlled_test",
     methodology_version: null,
+  },
+];
+
+const adminAudit = [
+  audit[0],
+  {
+    ...audit[0],
+    id: 2,
+    entity_id: 6,
+    occurred_at: "2026-07-26T21:01:00Z",
+  },
+  {
+    ...audit[0],
+    id: 3,
+    entity_id: 6,
+    occurred_at: "2026-07-26T21:02:00Z",
+    event_type: "risk_score_calculated",
+    previous_state: null,
+    new_state: "7:moderate",
+    comment: null,
+    methodology_version: "climate-health-risk-v0.1",
+  },
+  {
+    ...audit[0],
+    id: 4,
+    actor_id: users.validator.id,
+    actor_role: "validator",
+    entity_id: 6,
+    occurred_at: "2026-07-26T21:10:00Z",
+    event_type: "status_changed",
+    previous_state: "pending",
+    new_state: "observed",
+    comment: "Clarification requested.",
+  },
+  {
+    ...audit[0],
+    id: 5,
+    actor_id: users.validator.id,
+    actor_role: "validator",
+    entity_id: 6,
+    occurred_at: "2026-07-26T21:20:00Z",
+    event_type: "status_changed",
+    previous_state: "observed",
+    new_state: "validated",
+    comment: "Clarification completed.",
   },
 ];
 
@@ -162,6 +230,7 @@ function installFetchMock(options?: {
   climateHandler?: () => Promise<Response> | Response;
 }) {
   let validationRecorded = false;
+  let activeRole: keyof typeof users = "monitor";
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
@@ -188,6 +257,7 @@ function installFetchMock(options?: {
           (Object.keys(users) as Array<keyof typeof users>).find((name) =>
             body.identifier.includes(name),
           ) ?? "monitor";
+        activeRole = roleName;
         return response({
           access_token: `token-${roleName}`,
           token_type: "bearer",
@@ -206,9 +276,15 @@ function installFetchMock(options?: {
       if (url.endsWith("/api/v1/observations") && method === "POST") {
         return response(observation, 201);
       }
-      if (url.endsWith("/api/v1/observations")) return response([observation]);
-      if (url.endsWith("/risk-score")) return response(risk);
-      if (url.endsWith("/audit")) {
+      if (url.endsWith("/api/v1/observations")) {
+        return response(
+          activeRole === "admin" ? [observation, heatObservation] : [observation],
+        );
+      }
+      if (url.endsWith("/risk-score")) {
+        return response(url.includes("/observations/6/") ? heatRisk : risk);
+      }
+      if (url.includes("/api/v1/observations/") && url.endsWith("/audit")) {
         return response(
           validationRecorded
             ? [
@@ -246,7 +322,7 @@ function installFetchMock(options?: {
         const body = JSON.parse(String(init?.body)) as { is_active: boolean };
         return response({ ...users.monitor, is_active: body.is_active });
       }
-      if (url.endsWith("/api/v1/admin/audit")) return response(audit);
+      if (url.endsWith("/api/v1/admin/audit")) return response(adminAudit);
       return response({ detail: "Not found" }, 404);
     }),
   );
@@ -288,6 +364,34 @@ describe("Sprint 1B application", () => {
     expect(screen.getByText("San Cristobal")).toBeInTheDocument();
     expect(screen.getByText("Only aggregate counts are shown. Internal evidence and actor information are excluded.")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
+  });
+
+  it("explains every public review status with accessible bilingual tooltips", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Aggregated public view" });
+
+    const pendingHelp = screen.getByRole("button", {
+      name: "More information about Pending",
+    });
+    expect(pendingHelp).toHaveAttribute("aria-expanded", "false");
+    fireEvent.focus(pendingHelp);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Record received and not yet reviewed by an authorized person.",
+    );
+    expect(pendingHelp).toHaveAttribute("aria-expanded", "true");
+    fireEvent.keyDown(pendingHelp, { key: "Escape" });
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Language"), {
+      target: { value: "es" },
+    });
+    const validatedHelp = screen.getByRole("button", {
+      name: "Más información sobre Validado",
+    });
+    fireEvent.click(validatedHelp);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Registro revisado metodológicamente y considerado completo. No confirma por sí solo que el evento ocurrió.",
+    );
   });
 
   it("renders login errors without exposing credential details", async () => {
@@ -368,9 +472,50 @@ describe("Sprint 1B application", () => {
     await loginAs("monitor");
     await screen.findByText("26.6 °C");
     fireEvent.click(screen.getByRole("button", { name: "Refresh climate" }));
-    expect(screen.getByRole("button", { name: "Updating…" })).toBeDisabled();
+    const updatingButton = screen.getByRole("button", {
+      name: "Updating climate…",
+    });
+    expect(updatingButton).toBeDisabled();
+    expect(updatingButton).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByTestId("climate-refresh-icon")).toHaveClass("spin");
     resolveRefresh?.(response(climate));
-    expect(await screen.findByText("Climate query completed.")).toBeInTheDocument();
+    expect(await screen.findByText("Climate updated successfully.")).toBeInTheDocument();
+    expect(screen.getByText(/Last query:/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Refresh climate" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Refresh climate" })).toHaveAttribute(
+      "aria-busy",
+      "false",
+    );
+  });
+
+  it("restores climate refresh controls and announces the stored-data fallback after an error", async () => {
+    vi.unstubAllGlobals();
+    let climateCalls = 0;
+    let resolveRefresh: ((value: Response) => void) | undefined;
+    installFetchMock({
+      climateHandler: () => {
+        climateCalls += 1;
+        if (climateCalls === 1) return response(climate);
+        return new Promise<Response>((resolve) => {
+          resolveRefresh = resolve;
+        });
+      },
+    });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await loginAs("monitor");
+    await screen.findByText("26.6 °C");
+
+    fireEvent.click(screen.getByRole("button", { name: "Refresh climate" }));
+    expect(screen.getByRole("button", { name: "Updating climate…" })).toBeDisabled();
+    resolveRefresh?.(response({ detail: "Climate source unavailable." }, 503));
+
+    expect(
+      await screen.findByText(
+        "Climate could not be updated. The latest available data is shown.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Refresh climate" })).toBeEnabled();
     expect(screen.getByText(/Last query:/)).toBeInTheDocument();
   });
 
@@ -405,7 +550,7 @@ describe("Sprint 1B application", () => {
     expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
   });
 
-  it("lets administrators inspect demo accounts and audit events", async () => {
+  it("lets administrators search, filter and open an observation audit, then return globally", async () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Secure prototype access" });
     await loginAs("admin");
@@ -418,6 +563,46 @@ describe("Sprint 1B application", () => {
     await waitFor(() => expect(toggles[1]).not.toBeChecked());
 
     fireEvent.click(screen.getByRole("button", { name: "Audit" }));
-    expect(await screen.findByText("Observation created")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Navigable audit" }),
+    ).toBeInTheDocument();
+
+    const observationSearch = screen.getByLabelText("Observation number");
+    fireEvent.change(observationSearch, { target: { value: "6" } });
+    expect(screen.getByText("#6 — Heat — Validated")).toBeInTheDocument();
+    expect(screen.queryByText("#4 — Water — Pending")).not.toBeInTheDocument();
+
+    fireEvent.change(observationSearch, { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Category"), {
+      target: { value: "heat" },
+    });
+    expect(screen.getByText("#6 — Heat — Validated")).toBeInTheDocument();
+    expect(screen.queryByText("#4 — Water — Pending")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Event"), {
+      target: { value: "risk_score_calculated" },
+    });
+    const globalTimeline = screen.getByRole("list");
+    expect(within(globalTimeline).getByText("Risk score calculated")).toBeInTheDocument();
+    expect(within(globalTimeline).queryByText("Status changed")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Event"), { target: { value: "" } });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open audit for observation #6",
+      }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "#6 — Heat — Validated" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Clarification requested.")).toBeInTheDocument();
+    expect(screen.getByText("Clarification completed.")).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Back to global activity" }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Global activity" }),
+    ).toBeInTheDocument();
   });
 });

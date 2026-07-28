@@ -1,6 +1,7 @@
 import React from "react";
 import {
   AlertTriangle,
+  ArrowLeft,
   Check,
   CheckCircle2,
   ClipboardCheck,
@@ -12,13 +13,16 @@ import {
   FileClock,
   FileSearch,
   Gauge,
+  Info,
   Languages,
+  ListFilter,
   LoaderCircle,
   LockKeyhole,
   LogOut,
   MapPin,
   RefreshCw,
   Save,
+  Search,
   ShieldCheck,
   Thermometer,
   UserRound,
@@ -684,7 +688,11 @@ export function App() {
           )}
 
           {view === "audit" && user.role.name === "admin" && (
-            <AuditTimeline events={adminAudit} locale={locale} />
+            <AuditWorkspace
+              events={adminAudit}
+              observations={observations}
+              locale={locale}
+            />
           )}
         </main>
       )}
@@ -748,19 +756,38 @@ function ClimatePanel({
   const t = translations[locale];
   const timeZone = climate?.territory.timezone ?? "Pacific/Galapagos";
   return (
-    <section className="climateSection">
+    <section className="climateSection" aria-busy={feedback === "updating"}>
       <div className="sectionHeading sectionHeadingSplit">
         <div>
           <CloudSun size={21} />
           <h2>{t.climate.title}</h2>
         </div>
-        <button className="secondaryButton" type="button" onClick={onRefresh} disabled={feedback === "updating"}>
-          <RefreshCw className={feedback === "updating" ? "spin" : ""} size={17} />
+        <button
+          className="secondaryButton"
+          type="button"
+          onClick={onRefresh}
+          disabled={feedback === "updating"}
+          aria-busy={feedback === "updating"}
+          aria-describedby={
+            feedback === "idle" ? undefined : "climate-refresh-status"
+          }
+        >
+          <RefreshCw
+            className={feedback === "updating" ? "spin" : ""}
+            data-testid="climate-refresh-icon"
+            size={17}
+          />
           {feedback === "updating" ? t.climate.updating : t.climate.refresh}
         </button>
       </div>
       {feedback !== "idle" && (
-        <div className={`inlineFeedback ${feedback === "error" ? "errorFeedback" : "successFeedback"}`}>
+        <div
+          id="climate-refresh-status"
+          className={`inlineFeedback ${feedback === "error" ? "errorFeedback" : "successFeedback"}`}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {feedback === "updating" && <LoaderCircle className="spin" size={16} />}
           {feedback === "success" && <CheckCircle2 size={16} />}
           {feedback === "error" && <AlertTriangle size={16} />}
@@ -1296,21 +1323,332 @@ function RiskPanel({ risk, locale }: { risk?: RiskScore; locale: Locale }) {
   );
 }
 
+function AuditWorkspace({
+  events,
+  observations,
+  locale,
+}: {
+  events: AuditEvent[];
+  observations: Observation[];
+  locale: Locale;
+}) {
+  const t = translations[locale];
+  const [observationSearch, setObservationSearch] = React.useState("");
+  const [categoryFilter, setCategoryFilter] = React.useState<
+    "" | Observation["category"]
+  >("");
+  const [statusFilter, setStatusFilter] = React.useState<
+    "" | Observation["status"]
+  >("");
+  const [eventFilter, setEventFilter] = React.useState("");
+  const [actorFilter, setActorFilter] = React.useState("");
+  const [dateFilter, setDateFilter] = React.useState("");
+  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("desc");
+  const [selectedObservationId, setSelectedObservationId] = React.useState<number | null>(
+    null,
+  );
+
+  const observationById = React.useMemo(
+    () => new Map(observations.map((observation) => [observation.id, observation])),
+    [observations],
+  );
+  const normalizedSearch = observationSearch.replace(/^#\s*/, "").trim();
+  const eventTypes = React.useMemo(
+    () => [...new Set(events.map((event) => event.event_type))].sort(),
+    [events],
+  );
+  const actorOptions = React.useMemo(() => {
+    const options = new Map<string, string>();
+    events.forEach((event) => {
+      if (event.actor_id) {
+        options.set(
+          String(event.actor_id),
+          replaceParams(t.audit.actor, {
+            role: translateValue(t.roles, event.actor_role, event.actor_role ?? ""),
+            id: event.actor_id,
+          }),
+        );
+      } else {
+        options.set("system", t.audit.systemActor);
+      }
+    });
+    return [...options.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [events, t]);
+
+  const filteredEvents = React.useMemo(() => {
+    return events
+      .filter((event) => {
+        const observation =
+          event.entity_type === "observation" && event.entity_id
+            ? observationById.get(event.entity_id)
+            : undefined;
+        if (
+          normalizedSearch &&
+          (event.entity_type !== "observation" ||
+            !String(event.entity_id ?? "").includes(normalizedSearch))
+        ) {
+          return false;
+        }
+        if (categoryFilter && observation?.category !== categoryFilter) return false;
+        if (statusFilter && observation?.status !== statusFilter) return false;
+        if (eventFilter && event.event_type !== eventFilter) return false;
+        if (
+          actorFilter &&
+          (actorFilter === "system"
+            ? event.actor_id !== null
+            : String(event.actor_id ?? "") !== actorFilter)
+        ) {
+          return false;
+        }
+        if (dateFilter && event.occurred_at.slice(0, 10) !== dateFilter) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const comparison =
+          new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime() ||
+          a.id - b.id;
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+  }, [
+    actorFilter,
+    categoryFilter,
+    dateFilter,
+    eventFilter,
+    events,
+    normalizedSearch,
+    observationById,
+    sortDirection,
+    statusFilter,
+  ]);
+
+  const matchingEventObservationIds = React.useMemo(
+    () =>
+      new Set(
+        filteredEvents
+          .filter(
+            (event) => event.entity_type === "observation" && event.entity_id !== null,
+          )
+          .map((event) => event.entity_id as number),
+      ),
+    [filteredEvents],
+  );
+  const eventFiltersActive = Boolean(eventFilter || actorFilter || dateFilter);
+  const filteredObservations = observations
+    .filter((observation) => {
+      if (normalizedSearch && !String(observation.id).includes(normalizedSearch)) {
+        return false;
+      }
+      if (categoryFilter && observation.category !== categoryFilter) return false;
+      if (statusFilter && observation.status !== statusFilter) return false;
+      if (eventFiltersActive && !matchingEventObservationIds.has(observation.id)) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => b.id - a.id);
+
+  const selectedObservation =
+    selectedObservationId === null
+      ? null
+      : observationById.get(selectedObservationId) ?? null;
+  const selectedEvents = selectedObservation
+    ? events
+        .filter(
+          (event) =>
+            event.entity_type === "observation" &&
+            event.entity_id === selectedObservation.id,
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime() ||
+            a.id - b.id,
+        )
+    : [];
+
+  if (selectedObservation) {
+    const selectedTitle = replaceParams(t.audit.selectedObservation, {
+      id: selectedObservation.id,
+      category: t.categories[selectedObservation.category],
+      status: t.statuses[selectedObservation.status],
+    });
+    return (
+      <section className="auditExplorer">
+        <div className="auditSelectedHeader">
+          <button
+            className="secondaryButton"
+            type="button"
+            onClick={() => setSelectedObservationId(null)}
+          >
+            <ArrowLeft size={17} />
+            {t.audit.backToGlobal}
+          </button>
+          <div>
+            <span>{t.audit.observationTimeline}</span>
+            <h2>{selectedTitle}</h2>
+          </div>
+        </div>
+        <AuditTimeline
+          events={selectedEvents}
+          locale={locale}
+          compact
+          title={t.audit.observationTimeline}
+        />
+      </section>
+    );
+  }
+
+  return (
+    <section className="auditExplorer">
+      <div className="sectionHeading">
+        <ListFilter size={21} />
+        <h2>{t.audit.explorerTitle}</h2>
+      </div>
+      <div className="auditFilters" aria-label={t.audit.filters}>
+        <label>
+          <span>{t.audit.observationSearch}</span>
+          <div className="inputWithIcon">
+            <Search size={16} aria-hidden="true" />
+            <input
+              value={observationSearch}
+              onChange={(event) => setObservationSearch(event.target.value)}
+              placeholder={t.audit.observationSearchPlaceholder}
+              inputMode="numeric"
+            />
+          </div>
+        </label>
+        <label>
+          <span>{t.audit.categoryFilter}</span>
+          <select
+            value={categoryFilter}
+            onChange={(event) =>
+              setCategoryFilter(event.target.value as "" | Observation["category"])
+            }
+          >
+            <option value="">{t.audit.allCategories}</option>
+            {Object.entries(t.categories).map(([value, label]) => (
+              <option value={value} key={value}>{label}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>{t.audit.statusFilter}</span>
+          <select
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value as "" | Observation["status"])
+            }
+          >
+            <option value="">{t.audit.allStatuses}</option>
+            {Object.entries(t.statuses).map(([value, label]) => (
+              <option value={value} key={value}>{label}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>{t.audit.eventFilter}</span>
+          <select value={eventFilter} onChange={(event) => setEventFilter(event.target.value)}>
+            <option value="">{t.audit.allEvents}</option>
+            {eventTypes.map((eventType) => (
+              <option value={eventType} key={eventType}>
+                {translateValue(t.events, eventType, eventType)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>{t.audit.actorFilter}</span>
+          <select value={actorFilter} onChange={(event) => setActorFilter(event.target.value)}>
+            <option value="">{t.audit.allActors}</option>
+            {actorOptions.map(([value, label]) => (
+              <option value={value} key={value}>{label}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>{t.audit.dateFilter}</span>
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(event) => setDateFilter(event.target.value)}
+          />
+        </label>
+        <label>
+          <span>{t.audit.sortOrder}</span>
+          <select
+            value={sortDirection}
+            onChange={(event) => setSortDirection(event.target.value as "asc" | "desc")}
+          >
+            <option value="desc">{t.audit.newestFirst}</option>
+            <option value="asc">{t.audit.oldestFirst}</option>
+          </select>
+        </label>
+      </div>
+      <div className="auditExplorerGrid">
+        <aside className="auditObservationList">
+          <div className="auditListHeading">
+            <h3>{t.audit.observationList}</h3>
+            <span>
+              {replaceParams(t.audit.observationCount, {
+                count: filteredObservations.length,
+              })}
+            </span>
+          </div>
+          {filteredObservations.length === 0 ? (
+            <div className="emptyState">{t.audit.noMatchingObservations}</div>
+          ) : (
+            <div className="auditObservationRows">
+              {filteredObservations.map((observation) => {
+                const title = replaceParams(t.audit.selectedObservation, {
+                  id: observation.id,
+                  category: t.categories[observation.category],
+                  status: t.statuses[observation.status],
+                });
+                return (
+                  <button
+                    type="button"
+                    className="auditObservationRow"
+                    key={observation.id}
+                    aria-label={replaceParams(t.audit.selectObservation, {
+                      id: observation.id,
+                    })}
+                    onClick={() => setSelectedObservationId(observation.id)}
+                  >
+                    <strong>{title}</strong>
+                    <span>{formatDate(observation.observed_at, locale)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </aside>
+        <AuditTimeline
+          events={filteredEvents}
+          locale={locale}
+          compact
+          title={t.audit.globalActivity}
+        />
+      </div>
+    </section>
+  );
+}
+
 function AuditTimeline({
   events,
   locale,
   compact = false,
+  title,
 }: {
   events: AuditEvent[];
   locale: Locale;
   compact?: boolean;
+  title?: string;
 }) {
   const t = translations[locale];
   return (
     <section className={compact ? "detailBand auditTimeline" : "auditSection auditTimeline"}>
       <div className="sectionHeading">
         <FileClock size={20} />
-        <h2>{t.audit.title}</h2>
+        <h2>{title ?? t.audit.title}</h2>
       </div>
       {events.length === 0 ? (
         <div className="emptyState">{t.audit.empty}</div>
@@ -1413,20 +1751,51 @@ function PublicSummaryPanel({
             <div><span>{t.public.total}</span><strong>{summary.total_observations}</strong></div>
           </div>
           <SummaryGroup title={t.public.workflow} items={[
-            [t.statuses.pending, summary.pending],
-            [t.statuses.validated, summary.validated],
-            [t.statuses.observed, summary.observed],
-            [t.statuses.rejected, summary.rejected],
+            {
+              label: t.statuses.pending,
+              count: summary.pending,
+              help: t.public.statusHelp.pending,
+              helpLabel: replaceParams(t.public.statusHelpLabel, {
+                status: t.statuses.pending,
+              }),
+            },
+            {
+              label: t.statuses.validated,
+              count: summary.validated,
+              help: t.public.statusHelp.validated,
+              helpLabel: replaceParams(t.public.statusHelpLabel, {
+                status: t.statuses.validated,
+              }),
+            },
+            {
+              label: t.statuses.observed,
+              count: summary.observed,
+              help: t.public.statusHelp.observed,
+              helpLabel: replaceParams(t.public.statusHelpLabel, {
+                status: t.statuses.observed,
+              }),
+            },
+            {
+              label: t.statuses.rejected,
+              count: summary.rejected,
+              help: t.public.statusHelp.rejected,
+              helpLabel: replaceParams(t.public.statusHelpLabel, {
+                status: t.statuses.rejected,
+              }),
+            },
           ]} />
           <SummaryGroup title={t.public.provenance} items={[
-            [t.provenance.public_real, summary.public_real],
-            [t.provenance.controlled_test, summary.controlled_test],
-            [t.provenance.synthetic_demo, summary.synthetic_demo],
+            { label: t.provenance.public_real, count: summary.public_real },
+            { label: t.provenance.controlled_test, count: summary.controlled_test },
+            { label: t.provenance.synthetic_demo, count: summary.synthetic_demo },
           ]} />
-          <SummaryGroup title={t.public.risk} items={Object.entries(summary.risk_levels).map(([level, count]) => [
-            translateValue(t.riskLevels, level, level),
-            count,
-          ])} />
+          <SummaryGroup
+            title={t.public.risk}
+            items={Object.entries(summary.risk_levels).map(([level, count]) => ({
+              label: translateValue(t.riskLevels, level, level),
+              count,
+            }))}
+          />
           <p className="privacyNotice"><ShieldCheck size={17} /> {t.public.privacy}</p>
         </>
       )}
@@ -1434,15 +1803,85 @@ function PublicSummaryPanel({
   );
 }
 
-function SummaryGroup({ title, items }: { title: string; items: Array<[string, number]> }) {
+type SummaryItem = {
+  label: string;
+  count: number;
+  help?: string;
+  helpLabel?: string;
+};
+
+function SummaryGroup({ title, items }: { title: string; items: SummaryItem[] }) {
   return (
     <div className="summaryGroup">
       <h3>{title}</h3>
       <div>
-        {items.map(([label, count]) => (
-          <span key={label}><b>{count}</b>{label}</span>
+        {items.map((item) => (
+          <div className="summaryItem" key={item.label}>
+            <b>{item.count}</b>
+            <span className="summaryLabel">
+              {item.label}
+              {item.help && item.helpLabel && (
+                <InfoTooltip label={item.helpLabel} text={item.help} />
+              )}
+            </span>
+          </div>
         ))}
       </div>
     </div>
+  );
+}
+
+function InfoTooltip({ label, text }: { label: string; text: string }) {
+  const [hovered, setHovered] = React.useState(false);
+  const [focused, setFocused] = React.useState(false);
+  const [pinned, setPinned] = React.useState(false);
+  const tooltipId = React.useId();
+  const open = hovered || focused || pinned;
+
+  return (
+    <span
+      className="infoTooltip"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setFocused(false);
+          setPinned(false);
+        }
+      }}
+    >
+      <button
+        type="button"
+        className="infoTooltipButton"
+        aria-label={label}
+        aria-expanded={open}
+        aria-describedby={open ? tooltipId : undefined}
+        onClick={(event) => {
+          if (pinned) {
+            setPinned(false);
+            setFocused(false);
+            event.currentTarget.blur();
+          } else {
+            setPinned(true);
+          }
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            setHovered(false);
+            setFocused(false);
+            setPinned(false);
+            event.currentTarget.blur();
+          }
+        }}
+      >
+        <Info size={15} aria-hidden="true" />
+      </button>
+      {open && (
+        <span className="infoTooltipContent" id={tooltipId} role="tooltip">
+          {text}
+        </span>
+      )}
+    </span>
   );
 }

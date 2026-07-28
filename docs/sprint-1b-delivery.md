@@ -49,6 +49,20 @@ traceable after refresh, received score `3 / low`, and then recorded:
 
 This is a controlled prototype exercise, not a verified territorial event.
 
+The formal Product Owner UAT subsequently created controlled observation `#6`, received score
+`7 / moderate`, confirmed role restrictions and recorded `pending -> observed -> validated` with
+comments and actors. The experience findings and their resolutions are documented in
+`docs/sprint-1b-uat-findings.md`.
+
+## Product Owner UAT hardening
+
+- Accessible bilingual explanations for every aggregate public review status.
+- Animated, locked and screen-reader-announced climate refresh state with explicit success and
+  stored-data fallback messages.
+- Navigable administrator audit with observation search, filters, ordering and observation-only
+  timelines.
+- Frontend coverage for all three findings.
+
 ## Captures
 
 - `docs/screenshots/sprint-1b/public-login.png`
