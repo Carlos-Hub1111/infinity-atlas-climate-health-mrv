@@ -1,4 +1,7 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { desc } from "drizzle-orm";
+import { getDb } from "../../../db";
+import { climateSnapshots } from "../../../db/schema";
 import {
   filteredPublicRows,
   filterOptions,
@@ -58,7 +61,22 @@ async function currentClimate() {
     };
     return body.current ?? null;
   } catch {
-    return null;
+    const [fallback] = await getDb()
+      .select()
+      .from(climateSnapshots)
+      .orderBy(desc(climateSnapshots.observedAt))
+      .limit(1);
+    return fallback
+      ? {
+          time: fallback.observedAt,
+          temperature_2m: fallback.temperatureC,
+          relative_humidity_2m: fallback.relativeHumidityPercent,
+          apparent_temperature: fallback.apparentTemperatureC,
+          precipitation: fallback.precipitationMm,
+          weather_code: fallback.weatherCode,
+          is_stale: true,
+        }
+      : null;
   } finally {
     clearTimeout(timeout);
   }
@@ -171,7 +189,7 @@ export async function GET(request: Request) {
     );
     drawLine(
       cover,
-      `Precipitation ${climate.precipitation} mm | Weather code ${climate.weather_code} | Observed ${climate.time}`,
+      `Precipitation ${climate.precipitation} mm | Weather code ${climate.weather_code} | Observed ${climate.time}${climate.is_stale ? " | Stored fallback" : ""}`,
       451,
       regular,
       9,
