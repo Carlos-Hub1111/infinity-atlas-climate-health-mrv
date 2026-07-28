@@ -2,6 +2,7 @@ import React from "react";
 import {
   AlertTriangle,
   ArrowLeft,
+  BarChart3,
   Check,
   CheckCircle2,
   ClipboardCheck,
@@ -30,6 +31,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { Dashboard } from "./Dashboard";
 import {
   AuditEvent,
   AuthResponse,
@@ -57,7 +59,7 @@ import {
   translateValue,
 } from "./i18n";
 
-type WorkspaceView = "observations" | "review" | "users" | "audit";
+type WorkspaceView = "dashboard" | "observations" | "review" | "users" | "audit";
 type FormState = {
   projectId: string;
   territoryId: string;
@@ -187,7 +189,7 @@ export function App() {
   const [loginState, setLoginState] = React.useState<
     "idle" | "loading" | "error" | "expired"
   >("idle");
-  const [view, setView] = React.useState<WorkspaceView>("observations");
+  const [view, setView] = React.useState<WorkspaceView>("dashboard");
 
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [territories, setTerritories] = React.useState<Territory[]>([]);
@@ -426,7 +428,7 @@ export function App() {
     setObservations([]);
     setRisks({});
     setSelectedId(null);
-    setView("observations");
+    setView("dashboard");
     setRecordTitleEdited(false);
     await loadPublicSummary();
   }
@@ -601,7 +603,12 @@ export function App() {
       </div>
 
       {!user ? (
-        <main className="entryGrid">
+        <main className="publicEntry">
+          <Dashboard
+            locale={locale}
+            user={null}
+            apiConnected={Boolean(health)}
+          />
           <section className="loginPanel">
             <div className="sectionHeading">
               <LockKeyhole size={21} />
@@ -643,18 +650,13 @@ export function App() {
               )}
             </form>
           </section>
-          <PublicSummaryPanel
-            summary={publicSummary}
-            error={publicError}
-            locale={locale}
-          />
         </main>
       ) : user.role.name === "public" ? (
         <main>
-          <PublicSummaryPanel
-            summary={publicSummary}
-            error={publicError}
+          <Dashboard
             locale={locale}
+            user={user}
+            apiConnected={Boolean(health)}
           />
         </main>
       ) : workspaceLoading && projects.length === 0 ? (
@@ -671,7 +673,16 @@ export function App() {
             locale={locale}
           />
 
-          {(view === "observations" || user.role.name === "monitor") && (
+          {view === "dashboard" && (
+            <Dashboard
+              locale={locale}
+              user={user}
+              apiConnected={Boolean(health)}
+              onNavigate={selectAdminView}
+            />
+          )}
+
+          {view === "observations" && (
             <>
               {selectedTerritory && (
                 <ClimatePanel
@@ -765,7 +776,7 @@ function RoleNavigation({
   locale: Locale;
 }) {
   const t = translations[locale];
-  const options: Array<[WorkspaceView, React.ReactNode, string]> =
+  const roleOptions: Array<[WorkspaceView, React.ReactNode, string]> =
     user.role.name === "admin"
       ? [
           ["review", <ClipboardCheck size={17} />, t.nav.review],
@@ -776,6 +787,10 @@ function RoleNavigation({
       : user.role.name === "validator"
         ? [["review", <ClipboardCheck size={17} />, t.nav.review]]
         : [["observations", <FileSearch size={17} />, t.nav.observations]];
+  const options: Array<[WorkspaceView, React.ReactNode, string]> = [
+    ["dashboard", <BarChart3 size={17} />, t.nav.dashboard],
+    ...roleOptions,
+  ];
   return (
     <nav className="workspaceNav" aria-label={t.auth.role}>
       {options.map(([value, icon, label]) => (

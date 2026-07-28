@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.config import settings
 from app.core.database import engine, get_db
+from app.api.dashboard import router as dashboard_router
 from app.models import (
     AuditEvent,
     AuthSession,
@@ -73,13 +74,15 @@ VALID_TRANSITIONS = {
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.3.0-sprint-1b",
+    version="0.4.0-sprint-1c",
     description=(
         "Role-protected prototype API for public climate data, territorial observations, "
         "methodological validation, transparent non-clinical risk scoring, and append-only "
         "traceability. Child-identifying, clinical, personal, or confidential data is prohibited."
     ),
 )
+
+app.include_router(dashboard_router)
 
 app.add_middleware(
     CORSMiddleware,

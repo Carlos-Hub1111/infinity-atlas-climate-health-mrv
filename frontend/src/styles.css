@@ -229,6 +229,16 @@ h3 {
   margin-top: 20px;
 }
 
+.publicEntry {
+  display: grid;
+  gap: 18px;
+}
+
+.publicEntry .loginPanel {
+  width: min(100%, 460px);
+  justify-self: end;
+}
+
 .loginPanel,
 .publicSection,
 .climateSection,

@@ -149,6 +149,34 @@ export type PublicSummary = {
   risk_levels: Record<string, number>;
 };
 
+export type DashboardTerritory = {
+  id: number;
+  name: string;
+  timezone: string;
+};
+
+export type DashboardResponse = {
+  scope: RoleName;
+  generated_at: string;
+  territory: DashboardTerritory | null;
+  period: {
+    start: string | null;
+    end: string | null;
+  };
+  filters: Record<string, string | number | null>;
+  active_filter_count: number;
+  total_observations: number;
+  status_counts: Record<Observation["status"], number>;
+  provenance_counts: Record<DataProvenance, number>;
+  risk_counts: Record<RiskScore["risk_level"], number>;
+  category_counts: Record<Observation["category"], number>;
+  trends: Array<{ date: string; count: number }>;
+  methodology_version: string;
+  methodological_notice: string;
+  role_metrics: Record<string, number>;
+  available_territories: DashboardTerritory[];
+};
+
 export type ObservationPayload = {
   project_id: number;
   territory_id: number;

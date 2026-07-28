@@ -219,6 +219,43 @@ const publicSummary = {
   risk_levels: { low: 0, moderate: 1, high: 0, critical: 0 },
 };
 
+const dashboard = {
+  scope: "public",
+  generated_at: "2026-07-26T20:05:00Z",
+  territory: {
+    id: 1,
+    name: "San Cristobal",
+    timezone: "Pacific/Galapagos",
+  },
+  period: {
+    start: "2026-07-26",
+    end: "2026-07-26",
+  },
+  filters: {
+    date_from: null,
+    date_to: null,
+    category: null,
+    status: null,
+    provenance: null,
+    risk_level: null,
+    territory_id: null,
+    search: null,
+  },
+  active_filter_count: 0,
+  total_observations: 1,
+  status_counts: { pending: 1, validated: 0, observed: 0, rejected: 0 },
+  provenance_counts: { public_real: 0, controlled_test: 1, synthetic_demo: 0 },
+  risk_counts: { low: 0, moderate: 1, high: 0, critical: 0 },
+  category_counts: { water: 1, waste: 0, heat: 0, environmental_pollution: 0 },
+  trends: [{ date: "2026-07-26", count: 1 }],
+  methodology_version: "climate-health-risk-v0.1",
+  methodological_notice: "Methodological and non-clinical.",
+  role_metrics: {},
+  available_territories: [
+    { id: 1, name: "San Cristobal", timezone: "Pacific/Galapagos" },
+  ],
+};
+
 function response(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -253,6 +290,37 @@ function installFetchMock(options?: {
         });
       }
       if (url.endsWith("/api/v1/public/summary")) return response(publicSummary);
+      if (url.includes("/api/v1/dashboard/public")) {
+        const parsed = new URL(url);
+        const activeFilterCount = Array.from(parsed.searchParams.values()).filter(Boolean).length;
+        const empty = parsed.searchParams.get("date_from") === "2027-01-01";
+        return response({
+          ...dashboard,
+          active_filter_count: activeFilterCount,
+          total_observations: empty ? 0 : dashboard.total_observations,
+          status_counts: empty
+            ? { pending: 0, validated: 0, observed: 0, rejected: 0 }
+            : dashboard.status_counts,
+          provenance_counts: empty
+            ? { public_real: 0, controlled_test: 0, synthetic_demo: 0 }
+            : dashboard.provenance_counts,
+          risk_counts: empty
+            ? { low: 0, moderate: 0, high: 0, critical: 0 }
+            : dashboard.risk_counts,
+          category_counts: empty
+            ? { water: 0, waste: 0, heat: 0, environmental_pollution: 0 }
+            : dashboard.category_counts,
+          trends: empty ? [] : dashboard.trends,
+        });
+      }
+      if (url.includes("/api/v1/dashboard/internal")) {
+        const roleMetrics = activeRole === "monitor"
+          ? { my_records: 1, pending: 1, observed_requiring_response: 0 }
+          : activeRole === "validator"
+            ? { pending_queue: 1, observed: 0, high_priority: 0, oldest_pending_hours: 2 }
+            : { total_users: 4, active_users: 4, recent_activity: 5, records: 2 };
+        return response({ ...dashboard, scope: activeRole, role_metrics: roleMetrics });
+      }
       if (url.endsWith("/api/v1/auth/me")) {
         return options?.expiredMe
           ? response({ detail: "Session expired." }, 401)
@@ -387,17 +455,19 @@ describe("Sprint 1B application", () => {
   it("shows secure login and an aggregate-only public view before authentication", async () => {
     render(<App />);
     expect(await screen.findByRole("heading", { name: "Secure prototype access" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Aggregated public view" })).toBeInTheDocument();
-    expect(screen.getByText("San Cristobal")).toBeInTheDocument();
-    expect(screen.getByText("Only aggregate counts are shown. Internal evidence and actor information are excluded.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "San Cristobal climate and health dashboard" })).toBeInTheDocument();
+    expect((await screen.findAllByText("San Cristobal")).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Territorial intelligence, traceability and trusted impact data.").length,
+    ).toBeGreaterThan(0);
     expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
   });
 
   it("explains every public review status with accessible bilingual tooltips", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Aggregated public view" });
+    await screen.findByRole("heading", { name: "San Cristobal climate and health dashboard" });
 
-    const pendingHelp = screen.getByRole("button", {
+    const pendingHelp = await screen.findByRole("button", {
       name: "More information about Pending",
     });
     expect(pendingHelp).toHaveAttribute("aria-expanded", "false");
@@ -468,7 +538,7 @@ describe("Sprint 1B application", () => {
       "Your session ended. Sign in again.",
     );
     expect(
-      screen.getByRole("heading", { name: "Aggregated public view" }),
+      screen.getByRole("heading", { name: "San Cristobal climate and health dashboard" }),
     ).toBeInTheDocument();
     expect(sessionStorage.getItem("infinityatlas.prototype.session")).toBeNull();
   });
@@ -577,7 +647,7 @@ describe("Sprint 1B application", () => {
     installFetchMock({
       climateHandler: () => {
         climateCalls += 1;
-        if (climateCalls === 1) return response(climate);
+        if (climateCalls <= 2) return response(climate);
         return new Promise<Response>((resolve) => {
           resolveRefresh = resolve;
         });
@@ -585,6 +655,7 @@ describe("Sprint 1B application", () => {
     });
     render(<App />);
     await screen.findByRole("heading", { name: "Secure prototype access" });
+    await screen.findByText("26.6 °C");
     await loginAs("monitor");
     await screen.findByText("26.6 °C");
     fireEvent.click(screen.getByRole("button", { name: "Refresh climate" }));
@@ -611,7 +682,7 @@ describe("Sprint 1B application", () => {
     installFetchMock({
       climateHandler: () => {
         climateCalls += 1;
-        if (climateCalls === 1) return response(climate);
+        if (climateCalls <= 2) return response(climate);
         return new Promise<Response>((resolve) => {
           resolveRefresh = resolve;
         });
@@ -619,6 +690,7 @@ describe("Sprint 1B application", () => {
     });
     render(<App />);
     await screen.findByRole("heading", { name: "Secure prototype access" });
+    await screen.findByText("26.6 °C");
     await loginAs("monitor");
     await screen.findByText("26.6 °C");
 
@@ -661,8 +733,35 @@ describe("Sprint 1B application", () => {
     await screen.findByRole("heading", { name: "Secure prototype access" });
     await loginAs("public");
     expect(screen.getByText("Public user")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Aggregated public view" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "San Cristobal climate and health dashboard" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
+  });
+
+  it("applies reproducible dashboard filters and renders a clear empty state", async () => {
+    render(<App />);
+    await screen.findByRole("button", { name: "More information about Pending" });
+    fireEvent.change(screen.getByLabelText("From date"), {
+      target: { value: "2027-01-01" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
+    expect(await screen.findByText("1 active filters")).toBeInTheDocument();
+    expect(window.location.search).toContain("date_from=2027-01-01");
+    expect(
+      (await screen.findAllByText("No data matches the active filters.")).length,
+    ).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    await waitFor(() => expect(window.location.search).toBe(""));
+  });
+
+  it("shows a backend-calculated role overview without replacing role workflows", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await loginAs("monitor");
+    fireEvent.click(screen.getByRole("button", { name: "Dashboard" }));
+    expect(await screen.findByRole("heading", { name: "Role overview" })).toBeInTheDocument();
+    expect(screen.getByText("My records")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open my records" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
   });
 
