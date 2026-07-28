@@ -115,6 +115,8 @@ const copy = {
     refresh: "Refresh climate",
     refreshing: "Updating climate…",
     climateError: "Climate source is temporarily unavailable.",
+    climateCurrent: "Current provider response",
+    climateStale: "Stored real observation · Provider temporarily unavailable",
     temperature: "Temperature",
     humidity: "Humidity",
     feels: "Feels like",
@@ -190,6 +192,8 @@ const copy = {
     refresh: "Actualizar clima",
     refreshing: "Actualizando clima…",
     climateError: "La fuente climática no está disponible temporalmente.",
+    climateCurrent: "Respuesta actual del proveedor",
+    climateStale: "Observación real almacenada · Proveedor temporalmente no disponible",
     temperature: "Temperatura",
     humidity: "Humedad",
     feels: "Sensación térmica",
@@ -551,7 +555,7 @@ export function PublicDashboard() {
 
           <section className="climate">
             <header>
-              <div><CloudSun size={20} /><div><h2>{t.climate}</h2>{climate && <p>{climate.source_name} · {formatDate(climate.observed_at, locale, true)}</p>}</div></div>
+              <div><CloudSun size={20} /><div><h2>{t.climate}</h2>{climate && <p>{climate.source_name} · {formatDate(climate.observed_at, locale, true)} <span className={climate.is_stale ? "climateStale" : "climateCurrent"}>{climate.is_stale ? t.climateStale : t.climateCurrent}</span></p>}</div></div>
               <button disabled={climateLoading} onClick={() => void loadClimate()}><RefreshCw className={climateLoading ? "spin" : ""} size={16} />{climateLoading ? t.refreshing : t.refresh}</button>
             </header>
             {climate ? (

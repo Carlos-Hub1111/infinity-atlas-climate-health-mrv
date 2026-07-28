@@ -75,6 +75,8 @@ button.primary { border-color: #006d77; background: #006d77; color: #fff; }
 .climate > header, .mapSection > header { justify-content: space-between; gap: 14px; margin-bottom: 12px; }
 .climate > header > div, .mapSection > header > div { gap: 8px; }
 .climate header p, .mapSection header p { margin: 2px 0 0; color: #66767b; font-size: .7rem; }
+.climate header p span { display: inline-block; margin-left: 5px; padding: 2px 5px; border: 1px solid #8eb4ae; color: #285f5a; font-weight: 800; }
+.climate header p .climateStale { border-color: #c9a452; color: #74571a; background: #fff9e9; }
 .climateGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .climateGrid > div { display: grid; min-height: 82px; grid-template-columns: auto 1fr; align-content: space-between; gap: 7px; padding: 11px; background: #f1f6f6; }
 .climateGrid svg { color: #006d77; }
