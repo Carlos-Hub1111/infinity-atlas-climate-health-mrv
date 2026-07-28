@@ -256,6 +256,32 @@ const dashboard = {
   ],
 };
 
+const mapData = {
+  scope: "public",
+  generated_at: "2026-07-26T20:05:00Z",
+  territory: { id: 1, name: "San Cristobal", timezone: "Pacific/Galapagos" },
+  active_filter_count: 0,
+  observations: [
+    {
+      id: 4,
+      record_title: "Controlled water observation",
+      category: "water",
+      status: "pending",
+      risk_score: 7,
+      risk_level: "moderate",
+      data_provenance: "controlled_test",
+      observed_at: "2026-07-26T20:00:00Z",
+      latitude: -0.9,
+      longitude: -89.613,
+      location_mode: "approximate",
+      is_publicly_mappable: true,
+      public_notice: "Controlled prototype record - not a verified territorial event.",
+    },
+  ],
+  attribution: "Map data (c) OpenStreetMap contributors",
+  privacy_notice: "Public locations follow the configured geoprivacy mode.",
+};
+
 function response(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -320,6 +346,10 @@ function installFetchMock(options?: {
             ? { pending_queue: 1, observed: 0, high_priority: 0, oldest_pending_hours: 2 }
             : { total_users: 4, active_users: 4, recent_activity: 5, records: 2 };
         return response({ ...dashboard, scope: activeRole, role_metrics: roleMetrics });
+      }
+      if (url.includes("/api/v1/map/observations")) return response(mapData);
+      if (url.includes("/api/v1/map/internal")) {
+        return response({ ...mapData, scope: activeRole });
       }
       if (url.endsWith("/api/v1/auth/me")) {
         return options?.expiredMe
@@ -752,6 +782,20 @@ describe("Sprint 1B application", () => {
     ).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     await waitFor(() => expect(window.location.search).toBe(""));
+  });
+
+  it("renders a filter-consistent map with safe popup content and attribution", async () => {
+    render(<App />);
+    expect(
+      await screen.findByRole("heading", { name: "Territorial map" }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("#4 · Controlled water observation"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Map data (c) OpenStreetMap contributors")).toBeInTheDocument();
+    expect(screen.getAllByText("Controlled test").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Territorial monitor")).not.toBeInTheDocument();
+    expect(screen.queryByText("Clarification requested.")).not.toBeInTheDocument();
   });
 
   it("shows a backend-calculated role overview without replacing role workflows", async () => {

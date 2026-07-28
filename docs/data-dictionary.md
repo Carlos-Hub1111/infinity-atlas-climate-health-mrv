@@ -1,4 +1,4 @@
-# Sprint 1B data dictionary
+# Sprint 1C data dictionary
 
 ## Controlled vocabularies
 
@@ -9,6 +9,7 @@
 | Role | `admin`, `monitor`, `validator`, `public` |
 | Category | `water`, `waste`, `heat`, `environmental_pollution` |
 | Risk level | `low`, `moderate`, `high`, `critical` |
+| Public location mode | `exact`, `approximate`, `aggregate`, `hidden` |
 
 `synthetic_demo` always derives `is_synthetic=true`. Controlled and synthetic records are labeled in
 the interface. A synthetic record is never presented as a real territorial assessment.
@@ -52,6 +53,9 @@ for stale fallback.
 Stores project, territory, creator, required `record_title` (1-80 characters), category, description,
 hazard/exposure/vulnerability (each 1-4), coordinates, UTC observation and creation times, source,
 responsible role/team, provenance, synthetic confirmation, status and synthetic marker.
+It also stores `public_location_mode`, which defaults to `approximate` and controls only the
+public-safe coordinate projection. The exact submitted coordinate remains available to authorized
+internal workflows.
 
 Every new API record starts as `pending`. A monitor can update the content of only their own pending
 record and can edit its title while it is `pending` or `observed`. An administrator can edit the title

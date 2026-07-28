@@ -94,6 +94,7 @@ export type Observation = {
   vulnerability: number;
   latitude: number;
   longitude: number;
+  public_location_mode: "exact" | "approximate" | "hidden" | "aggregate";
   observed_at: string;
   created_at: string;
   source_name: string;
@@ -177,6 +178,32 @@ export type DashboardResponse = {
   available_territories: DashboardTerritory[];
 };
 
+export type MapObservation = {
+  id: number;
+  record_title: string;
+  category: Observation["category"];
+  status: Observation["status"];
+  risk_score: number | null;
+  risk_level: RiskScore["risk_level"] | null;
+  data_provenance: DataProvenance;
+  observed_at: string;
+  latitude: number | null;
+  longitude: number | null;
+  location_mode: Observation["public_location_mode"];
+  is_publicly_mappable: boolean;
+  public_notice: string;
+};
+
+export type MapResponse = {
+  scope: RoleName;
+  generated_at: string;
+  territory: DashboardTerritory | null;
+  active_filter_count: number;
+  observations: MapObservation[];
+  attribution: string;
+  privacy_notice: string;
+};
+
 export type ObservationPayload = {
   project_id: number;
   territory_id: number;
@@ -188,6 +215,7 @@ export type ObservationPayload = {
   vulnerability: number;
   latitude: number;
   longitude: number;
+  public_location_mode: Observation["public_location_mode"];
   observed_at: string;
   source_name: string;
   responsible_role: string;

@@ -131,6 +131,7 @@ class ObservationRead(BaseModel):
     vulnerability: int
     latitude: float
     longitude: float
+    public_location_mode: Literal["exact", "approximate", "hidden", "aggregate"]
     observed_at: datetime
     created_at: datetime
     source_name: str
@@ -158,6 +159,9 @@ class ObservationCreate(BaseModel):
     vulnerability: int = Field(ge=1, le=4)
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
+    public_location_mode: Literal[
+        "exact", "approximate", "hidden", "aggregate"
+    ] = "approximate"
     observed_at: datetime
     source_name: str = Field(min_length=2, max_length=160)
     responsible_role: str = Field(min_length=2, max_length=160)

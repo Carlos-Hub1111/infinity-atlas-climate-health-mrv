@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from app.core.config import settings
 from app.core.database import engine, get_db
 from app.api.dashboard import router as dashboard_router
+from app.api.map import router as map_router
 from app.models import (
     AuditEvent,
     AuthSession,
@@ -83,6 +84,7 @@ app = FastAPI(
 )
 
 app.include_router(dashboard_router)
+app.include_router(map_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -384,6 +386,7 @@ def create_observation(
         vulnerability=payload.vulnerability,
         latitude=payload.latitude,
         longitude=payload.longitude,
+        public_location_mode=payload.public_location_mode,
         observed_at=_territory_datetime_to_utc(payload.observed_at, territory),
         source_name=payload.source_name,
         responsible_role=payload.responsible_role,

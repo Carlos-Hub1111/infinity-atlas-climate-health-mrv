@@ -71,6 +71,7 @@ type FormState = {
   vulnerability: string;
   latitude: string;
   longitude: string;
+  publicLocationMode: Observation["public_location_mode"];
   observedAt: string;
   provenance: DataProvenance;
   sourceName: string;
@@ -110,6 +111,7 @@ function emptyForm(): FormState {
     vulnerability: "1",
     latitude: "",
     longitude: "",
+    publicLocationMode: "approximate",
     observedAt: now,
     provenance: "controlled_test",
     sourceName: "",
@@ -447,6 +449,7 @@ export function App() {
       vulnerability: Number(form.vulnerability),
       latitude: Number(form.latitude),
       longitude: Number(form.longitude),
+      public_location_mode: form.publicLocationMode,
       observed_at: form.observedAt,
       source_name: form.sourceName,
       responsible_role: form.responsibleRole,
@@ -1048,6 +1051,18 @@ function ObservationForm({
           <label>
             <span>{t.observationForm.longitude}</span>
             <input type="number" step="any" value={form.longitude} onChange={(event) => setField("longitude", event.target.value)} required />
+          </label>
+          <label>
+            <span>{t.observationForm.publicLocationMode}</span>
+            <select
+              value={form.publicLocationMode}
+              onChange={(event) => setField("publicLocationMode", event.target.value)}
+            >
+              {Object.entries(t.locationModes).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            <small className="fieldHelp">{t.observationForm.publicLocationHelp}</small>
           </label>
           <button
             className="secondaryButton coordinateButton"

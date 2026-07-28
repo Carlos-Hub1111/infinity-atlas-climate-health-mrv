@@ -111,6 +111,11 @@ class Sprint1CDashboardTests(unittest.TestCase):
                 ),
             ]
             for title, category, status, provenance, observed_at, creator_id, risk in fixtures:
+                location_mode = {
+                    "Water observation": "approximate",
+                    "Heat priority review": "exact",
+                    "Synthetic waste demonstration": "hidden",
+                }[title]
                 observation = Observation(
                     project_id=project.id,
                     territory_id=territory.id,
@@ -123,6 +128,7 @@ class Sprint1CDashboardTests(unittest.TestCase):
                     vulnerability=risk[2] if risk else 1,
                     latitude=-0.9002,
                     longitude=-89.6127,
+                    public_location_mode=location_mode,
                     observed_at=observed_at,
                     created_at=observed_at,
                     source_name="Controlled automated test",
@@ -273,6 +279,62 @@ class Sprint1CDashboardTests(unittest.TestCase):
         ).json()
         self.assertEqual(admin["role_metrics"]["active_users"], 4)
         self.assertEqual(admin["role_metrics"]["records"], 3)
+
+    def test_public_map_applies_geoprivacy_and_excludes_internal_fields(self) -> None:
+        response = self.client.get("/api/v1/map/observations")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["scope"], "public")
+        self.assertIn("OpenStreetMap contributors", payload["attribution"])
+        records = {item["id"]: item for item in payload["observations"]}
+        self.assertEqual(len(records), 3)
+
+        approximate = records[1]
+        self.assertEqual(approximate["location_mode"], "approximate")
+        self.assertEqual(approximate["latitude"], -0.9)
+        self.assertEqual(approximate["longitude"], -89.613)
+
+        exact = records[2]
+        self.assertEqual(exact["location_mode"], "exact")
+        self.assertEqual(exact["latitude"], -0.9002)
+        self.assertEqual(exact["longitude"], -89.6127)
+
+        hidden = records[3]
+        self.assertEqual(hidden["location_mode"], "hidden")
+        self.assertIsNone(hidden["latitude"])
+        self.assertIsNone(hidden["longitude"])
+        self.assertFalse(hidden["is_publicly_mappable"])
+
+        public_keys = set().union(*(item.keys() for item in payload["observations"]))
+        for forbidden in (
+            "created_by_id",
+            "actor",
+            "comment",
+            "evidence",
+            "password",
+            "responsible_role",
+        ):
+            self.assertNotIn(forbidden, public_keys)
+
+    def test_internal_map_is_authenticated_role_scoped_and_filter_consistent(self) -> None:
+        self.assertEqual(self.client.get("/api/v1/map/internal").status_code, 401)
+        monitor = self.client.get(
+            "/api/v1/map/internal",
+            headers=self.login("monitor"),
+        ).json()
+        self.assertEqual(len(monitor["observations"]), 2)
+        hidden_internal = next(
+            item for item in monitor["observations"] if item["location_mode"] == "hidden"
+        )
+        self.assertEqual(hidden_internal["latitude"], -0.9002)
+        self.assertEqual(hidden_internal["longitude"], -89.6127)
+
+        heat = self.client.get(
+            "/api/v1/map/observations",
+            params={"category": "heat"},
+        ).json()
+        self.assertEqual(len(heat["observations"]), 1)
+        self.assertEqual(heat["observations"][0]["record_title"], "Heat priority review")
 
 
 if __name__ == "__main__":

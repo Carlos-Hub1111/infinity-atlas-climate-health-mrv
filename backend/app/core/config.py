@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     demo_data_is_synthetic: bool = True
     climate_api_timeout_seconds: float = 8.0
     climate_cache_ttl_seconds: int = 900
+    public_map_decimal_places: int = 3
     jwt_secret_key: str | None = None
     jwt_algorithm: Literal["HS256"] = "HS256"
     jwt_access_token_expire_minutes: int = 60

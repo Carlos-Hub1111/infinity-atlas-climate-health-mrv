@@ -102,6 +102,11 @@ class Observation(Base):
     vulnerability: Mapped[int] = mapped_column(Integer, nullable=False)
     latitude: Mapped[float] = mapped_column(Float, nullable=False)
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
+    public_location_mode: Mapped[str] = mapped_column(
+        String(20),
+        default="approximate",
+        nullable=False,
+    )
     observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     source_name: Mapped[str] = mapped_column(String(160), nullable=False)

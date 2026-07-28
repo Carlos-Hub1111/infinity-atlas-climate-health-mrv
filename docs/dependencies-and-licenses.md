@@ -51,6 +51,9 @@ Direct frontend dependencies:
 | react | MIT |
 | react-dom | MIT |
 | lucide-react | ISC |
+| recharts 3.10.1 | MIT |
+| leaflet 1.9.4 | BSD-2-Clause |
+| @types/leaflet 1.9.21 | MIT |
 | @types/react | MIT |
 | @types/react-dom | MIT |
 | @testing-library/jest-dom | MIT |
@@ -77,6 +80,14 @@ rewriting the observation workflow.
 - Licence: https://open-meteo.com/en/license
 - Terms: https://open-meteo.com/en/terms
 - Weather API documentation: https://open-meteo.com/en/docs
+
+## Cartographic provider
+
+The prototype uses Leaflet with OpenStreetMap tiles. OpenStreetMap attribution remains visible on the
+map and in the safe map API response. Production traffic must comply with the OpenStreetMap tile usage
+policy or use an approved hosted/self-hosted tile provider. `react-leaflet` was evaluated and removed
+because the installed release declared `Hippocratic-2.1`; the implementation uses Leaflet directly
+under BSD-2-Clause.
 
 ## Security checks run
 

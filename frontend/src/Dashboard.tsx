@@ -45,6 +45,7 @@ import {
   translations,
   translateValue,
 } from "./i18n";
+import { TerritoryMap } from "./TerritoryMap";
 import "./dashboard.css";
 
 type Filters = {
@@ -682,6 +683,12 @@ export function Dashboard({
             loading={climateLoading}
             locale={locale}
             onRefresh={refreshClimate}
+          />
+
+          <TerritoryMap
+            locale={locale}
+            user={user}
+            filterQuery={queryString(applied)}
           />
 
           <section className="chartGrid" aria-label={t.dashboard.visualizations}>

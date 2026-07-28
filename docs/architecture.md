@@ -1,4 +1,4 @@
-# Sprint 1B architecture
+# Sprint 1C architecture
 
 The platform identity is **InfinityAtlas**. The UNICEF solution is
 **InfinityAtlas Climate & Health MRV Toolkit**, owned by **INFINITYGAIA S.A.S. B.I.C.**
@@ -9,14 +9,15 @@ The prototype remains a modular monolith:
 - one FastAPI backend;
 - one relational database;
 - one isolated Open-Meteo adapter;
-- no microservices and no Sprint 1C modules.
+- backend-owned dashboard, map, reporting, and export projections;
+- no microservices.
 
 ## Runtime flow
 
 ```mermaid
 flowchart LR
     Actor["Authenticated actor"] --> UI["React / Vite role workspace"]
-    Public["Public visitor"] --> Aggregate["Aggregate-only public view"]
+    Public["Public visitor"] --> Aggregate["Dashboard and geoprivacy-aware map"]
     UI --> API["FastAPI API and RBAC"]
     Aggregate --> API
     API --> DB["SQLite local or PostgreSQL/PostGIS"]
@@ -27,6 +28,26 @@ flowchart LR
 
 The frontend never connects directly to the database or climate provider. Permissions are enforced in
 the backend even when controls are hidden in the frontend.
+
+Dashboard counts and trends are calculated in the backend. The public map receives a purpose-built
+safe projection rather than the internal observation model. Leaflet renders OpenStreetMap tiles and
+keeps provider attribution visible.
+
+## Dashboard and map projections
+
+The same validated filter contract drives dashboard metrics, charts, map points, PDF reports, and CSV
+exports. Public responses exclude actors, validation comments, internal evidence, credentials, and
+session details.
+
+Each observation owns `public_location_mode`:
+
+- `exact`: return the stored coordinate;
+- `approximate`: round to the configured public precision, three decimal places by default;
+- `aggregate`: use the territory reference coordinate;
+- `hidden`: omit public coordinates.
+
+Authenticated map responses remain role-scoped and may use stored coordinates. The public default for
+new observations is `approximate`.
 
 ## Authentication and authorization
 
@@ -56,7 +77,8 @@ external identity review.
 | Validate / observe / reject | Yes | No | Yes | No |
 | Read observation audit | Yes | Own | Yes | No |
 | Manage demo-user active state | Yes | No | No | No |
-| Read aggregate public summary | Yes | Yes | Yes | Yes |
+| Read public dashboard and map | Yes | Yes | Yes | Yes |
+| Read internal map | All | Own | All | No |
 
 ## Validation flow
 
