@@ -809,6 +809,19 @@ describe("Sprint 1B application", () => {
     expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
   });
 
+  it("shows only public downloads publicly and authorized downloads internally", async () => {
+    render(<App />);
+    expect(await screen.findByRole("button", { name: "Public PDF" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Public CSV" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Internal PDF" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Internal CSV" })).not.toBeInTheDocument();
+
+    await loginAs("admin");
+    fireEvent.click(screen.getByRole("button", { name: "Dashboard" }));
+    expect(await screen.findByRole("button", { name: "Internal PDF" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Internal CSV" })).toBeInTheDocument();
+  });
+
   it("lets an administrator rename a validated record", async () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Secure prototype access" });

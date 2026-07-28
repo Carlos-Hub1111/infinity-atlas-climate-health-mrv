@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     climate_api_timeout_seconds: float = 8.0
     climate_cache_ttl_seconds: int = 900
     public_map_decimal_places: int = 3
+    cors_allowed_origins: str = (
+        "http://127.0.0.1:5173,http://localhost:5173,"
+        "http://127.0.0.1:5174,http://localhost:5174"
+    )
     jwt_secret_key: str | None = None
     jwt_algorithm: Literal["HS256"] = "HS256"
     jwt_access_token_expire_minutes: int = 60
@@ -38,6 +42,14 @@ class Settings(BaseSettings):
             and not self.jwt_secret_key.startswith("<")
             and len(self.jwt_secret_key) >= 32
         )
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [
+            origin.strip()
+            for origin in self.cors_allowed_origins.split(",")
+            if origin.strip()
+        ]
 
 
 settings = Settings()

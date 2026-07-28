@@ -130,3 +130,37 @@ local/development/test. Neither command is part of normal Docker or production s
 
 English remains the default UNICEF demonstration language. Spanish is selectable. Visible text is
 stored under `frontend/src/i18n/`; code, endpoints and technical documentation remain English.
+
+## Sprint 1C reporting and public deployment
+
+The local prototype remains a modular monolith:
+
+```mermaid
+flowchart LR
+    UI["React role and public UI"] --> API["FastAPI /api/v1"]
+    API --> DB["SQLAlchemy database"]
+    API --> Weather["Open-Meteo adapter"]
+    API --> PDF["ReportLab PDF service"]
+    API --> CSV["UTF-8 CSV service"]
+    UI --> Map["Leaflet + OpenStreetMap"]
+```
+
+Critical metrics, filter validation, geoprivacy projection and permission scope are owned by the
+backend. The frontend renders those contracts and does not recalculate institutional metrics.
+
+The internet demonstration under `public-demo/` is intentionally read-only and isolated from local
+authentication. It uses the Sites Cloudflare-compatible vinext runtime and a managed D1 binding named
+`DB`. Its API routes expose only controlled aggregate records, safe public coordinates, live
+Open-Meteo context, public PDF/CSV downloads and `/api/health`. No write, seed, login or administrative
+route is present in that deployment.
+
+```mermaid
+flowchart LR
+    Browser["Public HTTPS browser"] --> Worker["InfinityAtlas public Worker"]
+    Worker --> D1["Managed D1 controlled demo data"]
+    Worker --> Climate["Open-Meteo public API"]
+    Browser --> Tiles["OpenStreetMap tiles"]
+```
+
+The deployed demonstration and local application share product terminology, methodology and safe
+public contracts, but not credentials or operational records.

@@ -106,3 +106,41 @@ Impact: a deployed public login could be targeted by repeated credential attempt
 
 Mitigation: login failures are audited and responses are generic. Network and account rate limiting,
 progressive delay and monitoring are mandatory before internet-facing production use.
+
+## R16 - Public map can reveal sensitive locations
+
+Impact: an exact coordinate could expose a vulnerable person, site or controlled activity.
+
+Mitigation: new records default to `approximate`; public projections support `exact`, `approximate`,
+`aggregate` and `hidden`. Public outputs omit exact coordinates unless explicitly authorized. A funded
+deployment requires a formal location-classification and approval policy.
+
+## R17 - OpenStreetMap public tile availability and usage limits
+
+Impact: tiles can be delayed, rate-limited or unavailable, leaving the basemap incomplete.
+
+Mitigation: attribution remains visible, map records also have an accessible text list, and production
+traffic must use an approved hosted or self-hosted provider compliant with the tile usage policy.
+
+## R18 - Public demonstration data mistaken for operational evidence
+
+Impact: aggregate controlled records could be interpreted as validated field events.
+
+Mitigation: the public header, records, map popups, PDF and documentation repeat the controlled
+prototype notice and preserve provenance. The deployed D1 database is separate and has no public write
+endpoint.
+
+## R19 - Report snapshot differs from live dashboard
+
+Impact: climate or counts can change between viewing and downloading.
+
+Mitigation: every report records generation time, report identifier, filter period and sources.
+Operational use should add signed report manifests and retained source snapshots.
+
+## R20 - Prototype deployment lacks production observability and disaster recovery
+
+Impact: platform or database failures may not meet future service expectations.
+
+Mitigation: Sprint 1C provides HTTPS, a database-backed health endpoint, controlled migrations and a
+local backup. Funded production requires monitored logs, alerting, retention, tested restore,
+availability targets and human operational ownership.

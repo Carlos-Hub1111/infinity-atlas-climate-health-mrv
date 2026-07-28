@@ -6,7 +6,9 @@ import {
   CheckCircle2,
   CloudSun,
   Droplets,
+  Download,
   Eraser,
+  FileText,
   Filter,
   Gauge,
   Info,
@@ -34,6 +36,7 @@ import {
   ClimateCurrent,
   DashboardResponse,
   DataProvenance,
+  downloadFile,
   getJson,
   Observation,
   RiskScore,
@@ -199,11 +202,13 @@ function CountChart({
   colors,
   empty,
   ariaTitle,
+  tickFormatter,
 }: {
   data: Array<{ name: string; value: number; key: string }>;
   colors: Record<string, string>;
   empty: string;
   ariaTitle: string;
+  tickFormatter?: (value: string) => string;
 }) {
   if (!data.some((item) => item.value > 0)) return <EmptyChart text={empty} />;
   return (
@@ -213,7 +218,12 @@ function CountChart({
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 8, right: 10, left: -22, bottom: 2 }}>
             <CartesianGrid stroke="#dbe3e4" vertical={false} />
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 11 }}
+              interval={0}
+              tickFormatter={tickFormatter}
+            />
             <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
             <Tooltip />
             <Bar dataKey="value" radius={[3, 3, 0, 0]}>
@@ -342,6 +352,9 @@ export function Dashboard({
   const [loading, setLoading] = React.useState(true);
   const [climateLoading, setClimateLoading] = React.useState(false);
   const [error, setError] = React.useState(false);
+  const [downloadState, setDownloadState] = React.useState<
+    "idle" | "loading" | "error"
+  >("idle");
   const isInternal = Boolean(user && user.role.name !== "public");
 
   const load = React.useCallback(async () => {
@@ -405,6 +418,25 @@ export function Dashboard({
     setDraft(emptyFilters);
     setApplied(emptyFilters);
   }
+
+  async function download(path: string, authenticated: boolean) {
+    setDownloadState("loading");
+    try {
+      const result = await downloadFile(path, authenticated);
+      const objectUrl = URL.createObjectURL(result.blob);
+      const anchor = document.createElement("a");
+      anchor.href = objectUrl;
+      anchor.download = result.filename;
+      anchor.click();
+      URL.revokeObjectURL(objectUrl);
+      setDownloadState("idle");
+    } catch {
+      setDownloadState("error");
+    }
+  }
+
+  const activeQuery = queryString(applied);
+  const withLocale = `${activeQuery}${activeQuery ? "&" : "?"}locale=${locale}`;
 
   const territoryTimezone = dashboard?.territory?.timezone ?? "Pacific/Galapagos";
   const statusData = dashboard
@@ -602,6 +634,57 @@ export function Dashboard({
         </div>
       ) : (
         <>
+          <section className="dashboardExports" aria-label={t.exports.title}>
+            <div>
+              <FileText size={18} />
+              <div>
+                <h2>{t.exports.title}</h2>
+                <p>{t.exports.description}</p>
+              </div>
+            </div>
+            <div>
+              <button
+                className="secondaryButton"
+                type="button"
+                disabled={downloadState === "loading"}
+                onClick={() => download(`/api/v1/reports/public.pdf${withLocale}`, false)}
+              >
+                <Download size={16} /> {t.exports.publicPdf}
+              </button>
+              <button
+                className="secondaryButton"
+                type="button"
+                disabled={downloadState === "loading"}
+                onClick={() => download(`/api/v1/exports/public.csv${activeQuery}`, false)}
+              >
+                <Download size={16} /> {t.exports.publicCsv}
+              </button>
+              {isInternal && (
+                <>
+                  <button
+                    className="secondaryButton"
+                    type="button"
+                    disabled={downloadState === "loading"}
+                    onClick={() => download(`/api/v1/reports/internal.pdf${withLocale}`, true)}
+                  >
+                    <Download size={16} /> {t.exports.internalPdf}
+                  </button>
+                  <button
+                    className="secondaryButton"
+                    type="button"
+                    disabled={downloadState === "loading"}
+                    onClick={() => download(`/api/v1/exports/observations.csv${activeQuery}`, true)}
+                  >
+                    <Download size={16} /> {t.exports.internalCsv}
+                  </button>
+                </>
+              )}
+            </div>
+            {downloadState === "error" && (
+              <p role="alert">{t.exports.error}</p>
+            )}
+          </section>
+
           {isInternal && Object.keys(dashboard.role_metrics).length > 0 && (
             <section className="roleOverview">
               <div className="dashboardSectionTitle">
@@ -722,7 +805,17 @@ export function Dashboard({
               ) : <EmptyChart text={t.dashboard.empty} />}
             </ChartFrame>
             <ChartFrame title={t.dashboard.categoryChart} description={t.dashboard.categoryDescription} help={t.dashboard.chartHelp}>
-              <CountChart data={categoryData} colors={Object.fromEntries(categoryData.map((item, index) => [item.key, categoryColors[index]]))} empty={t.dashboard.empty} ariaTitle={t.dashboard.categoryChart} />
+              <CountChart
+                data={categoryData}
+                colors={Object.fromEntries(categoryData.map((item, index) => [item.key, categoryColors[index]]))}
+                empty={t.dashboard.empty}
+                ariaTitle={t.dashboard.categoryChart}
+                tickFormatter={(value) =>
+                  value === translateValue(t.categories, "environmental_pollution", "environmental_pollution")
+                    ? (locale === "es" ? "Ambiental" : "Pollution")
+                    : value
+                }
+              />
             </ChartFrame>
             <ChartFrame title={t.dashboard.trendChart} description={t.dashboard.trendDescription} help={t.dashboard.chartHelp}>
               {dashboard.trends.length ? (

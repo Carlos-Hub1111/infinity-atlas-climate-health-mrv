@@ -78,6 +78,15 @@ export const es = {
       records: "Registros",
     },
   },
+  exports: {
+    title: "Reportes y exportaciones",
+    description: "Las descargas conservan los filtros activos y el alcance de permisos.",
+    publicPdf: "PDF público",
+    publicCsv: "CSV público",
+    internalPdf: "PDF interno",
+    internalCsv: "CSV interno",
+    error: "No se pudo generar el archivo solicitado.",
+  },
   auth: {
     title: "Acceso seguro al prototipo",
     identifier: "Usuario o correo",

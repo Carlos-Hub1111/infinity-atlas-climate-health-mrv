@@ -7,6 +7,7 @@
 .dashboardHeader,
 .dashboardTerritoryBand,
 .dashboardFilters,
+.dashboardExports,
 .roleOverview,
 .dashboardClimate,
 .chartFrame {
@@ -110,9 +111,56 @@
 }
 
 .dashboardFilters,
+.dashboardExports,
 .roleOverview,
 .dashboardClimate {
   padding: 18px;
+}
+
+.dashboardExports,
+.dashboardExports > div,
+.dashboardExports > div > div {
+  display: flex;
+  align-items: center;
+}
+
+.dashboardExports {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboardExports > div {
+  gap: 9px;
+}
+
+.dashboardExports > div:first-child > div {
+  display: grid;
+  align-items: start;
+  gap: 2px;
+}
+
+.dashboardExports > div:first-child > svg {
+  color: #007f78;
+}
+
+.dashboardExports h2 {
+  font-size: 0.92rem;
+}
+
+.dashboardExports p {
+  margin: 2px 0 0;
+  color: #64747a;
+  font-size: 0.7rem;
+}
+
+.dashboardExports > div:last-of-type {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.dashboardExports > p[role="alert"] {
+  color: #963933;
+  font-weight: 750;
 }
 
 .dashboardSectionTitle,
@@ -514,6 +562,7 @@
 @media (max-width: 440px) {
   .dashboardHeader,
   .dashboardFilters,
+  .dashboardExports,
   .roleOverview,
   .dashboardClimate,
   .chartFrame {
@@ -538,10 +587,16 @@
   }
 
   .dashboardSectionTitle.split,
+  .dashboardExports,
+  .dashboardExports > div:last-of-type,
   .dashboardClimate footer,
   .filterActions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .dashboardExports {
+    align-items: stretch;
   }
 
   .dashboardHelp {

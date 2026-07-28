@@ -1,6 +1,6 @@
 # Dependencies and licenses
 
-Date: 2026-07-26
+Date: 2026-07-28
 
 ## Repository license
 
@@ -19,6 +19,7 @@ The Sprint 0 local source uses MIT License. When integrating into the existing p
 | pg8000 | 1.31.5 | BSD 3-Clause |
 | pydantic | 2.11.7 | MIT |
 | pydantic-settings | 2.10.1 | MIT |
+| reportlab | 5.0.0 | BSD-3-Clause |
 | SQLAlchemy | 2.0.41 | MIT |
 | tzdata | 2026.3 | Apache-2.0 |
 | uvicorn | 0.51.0 | BSD-3-Clause |
@@ -34,6 +35,7 @@ The Sprint 0 local source uses MIT License. When integrating into the existing p
 | python-dateutil | 2.9.0.post0 | Dual License |
 | scramp | 1.4.15 | MIT No Attribution |
 | six | 1.17.0 | MIT |
+| Pillow | 12.3.0 | MIT-CMU |
 
 ## Frontend dependencies
 
@@ -60,6 +62,29 @@ Direct frontend dependencies:
 | @testing-library/react | MIT |
 | jsdom | MIT |
 | vitest | MIT |
+
+## Public demonstration dependencies
+
+The `public-demo/` deployment uses the Sites vinext Cloudflare runtime. Direct runtime dependencies:
+
+| Package | Version | License |
+| --- | --- | --- |
+| drizzle-orm | 0.45.2 | Apache-2.0 |
+| leaflet | 1.9.4 | BSD-2-Clause |
+| lucide-react | 0.545.0 | ISC |
+| next | 16.2.11 | MIT |
+| pdf-lib | 1.17.1 | MIT |
+| react | 19.2.6 | MIT |
+| react-dom | 19.2.6 | MIT |
+
+Cloudflare/Vite/Wrangler packages are development and deployment tooling. The public map retains
+OpenStreetMap attribution, and PDF/CSV outputs retain source and methodology notices.
+
+Next.js declares optional image tooling. The lockfile overrides transitive `sharp` to patched version
+0.35.0 and `postcss` to 8.5.18. The Windows sharp binary reports
+`Apache-2.0 AND LGPL-3.0-or-later`; InfinityAtlas does not use `next/image`, does not modify that
+library and the Cloudflare Worker deployment output contains no sharp, libvips or native `.node`
+binary. This remains a funded-stage license-review item if image optimization is introduced.
 
 ## External data source
 

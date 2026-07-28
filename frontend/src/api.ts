@@ -300,3 +300,26 @@ export function patchJson<T>(path: string, payload: unknown): Promise<T> {
     body: JSON.stringify(payload),
   });
 }
+
+export async function downloadFile(
+  path: string,
+  authenticated = true,
+): Promise<{ blob: Blob; filename: string }> {
+  const headers = new Headers();
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  if (authenticated && token) headers.set("Authorization", `Bearer ${token}`);
+  const response = await fetch(`${API_BASE}${path}`, { headers });
+  if (!response.ok) {
+    if (authenticated && response.status === 401 && token) {
+      setAccessToken(null);
+      window.dispatchEvent(new Event("infinityatlas:session-expired"));
+    }
+    throw new ApiError(response.status, `${response.status} ${response.statusText}`);
+  }
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const match = disposition.match(/filename="?([^";]+)"?/i);
+  return {
+    blob: await response.blob(),
+    filename: match?.[1] ?? "infinityatlas-download",
+  };
+}

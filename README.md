@@ -58,7 +58,9 @@ Documentation and content may be released under a Creative Commons Attribution l
 
 ## Status
 
-This project is currently in prototype design and pilot-readiness stage. The next phase is MVP software development, pilot testing, documentation and validation with local users.
+This project is an executable controlled prototype. Sprint 1C adds public and role-based dashboards,
+geoprivacy-aware mapping, reproducible PDF/CSV outputs and a safe internet demonstration. It is not a
+validated territorial pilot or production health system.
 
 ## Sprint 0 Foundation
 
@@ -226,6 +228,56 @@ Sprint 1B technical documents:
 - `docs/architecture.md`
 - `docs/data-dictionary.md`
 - `docs/decisions/adr-003-sprint-1b-security-and-risk.md`
+
+## Sprint 1C Dashboard, Map, Reporting and Public Demonstration
+
+Sprint 1C completes the demonstrable prototype surface:
+
+- backend-owned public and role-scoped dashboard metrics;
+- global date, category, status, provenance, risk, territory and record filters;
+- accessible Recharts visualizations with text summaries and empty states;
+- Leaflet and OpenStreetMap territorial mapping;
+- `exact`, `approximate`, `aggregate` and `hidden` public location modes;
+- bilingual public and internal PDF reports;
+- UTF-8 CSV exports with ISO 8601 dates and permission-aware fields;
+- a read-only HTTPS public demonstration backed by controlled D1 data;
+- simple local start, stop and explicit demo-reset scripts;
+- desktop, mobile, role, report and video evidence under `docs/demo/`.
+
+The public deployment is a separate aggregate demonstration surface. It contains no application
+accounts, write endpoint, evidence, validation comments, actors, credentials, personal information or
+confidential UNICEF material.
+
+### Start and stop locally
+
+After the one-time backend/frontend installation and local `.env` setup:
+
+```powershell
+.\start-local.ps1
+```
+
+Open `http://127.0.0.1:5173`. Stop both services safely with:
+
+```powershell
+.\stop-local.ps1
+```
+
+Preparing a clean local demonstration is intentionally explicit and creates a database backup first:
+
+```powershell
+.\prepare-demo.ps1 -ConfirmReset
+```
+
+This reset is blocked outside local/development/test environments and never runs during normal
+startup or production deployment. Demo passwords remain local and are not stored in these scripts.
+
+Sprint 1C technical documents:
+
+- `docs/sprint-1c-delivery.md`
+- `docs/sprint-1c-uat.md`
+- `docs/sprint-1c-a-dashboard.md`
+- `docs/sprint-1c-b-map-geoprivacy.md`
+- `docs/demo/README.md`
 
 ## 12-Month Roadmap
 

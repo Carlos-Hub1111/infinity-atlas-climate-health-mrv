@@ -78,6 +78,15 @@ export const en = {
       records: "Records",
     },
   },
+  exports: {
+    title: "Reports and exports",
+    description: "Downloads preserve the active filters and permission scope.",
+    publicPdf: "Public PDF",
+    publicCsv: "Public CSV",
+    internalPdf: "Internal PDF",
+    internalCsv: "Internal CSV",
+    error: "The requested file could not be generated.",
+  },
   auth: {
     title: "Secure prototype access",
     identifier: "Username or email",

@@ -97,3 +97,35 @@ Append-only event fields are actor, actor role, UTC timestamp, event type, entit
 previous state, next state, comment and optional methodology version. Tracked events include
 observation creation/update, `record_title_changed`, risk calculation, validation, status changes,
 successful/failed login, logout and user active-state changes.
+
+## Public dashboard projection
+
+The public dashboard response contains territory, consulted period, generated time, active filters,
+aggregate status/provenance/risk/category counts and daily trends. It excludes observation creators,
+validators, comments, evidence, audit events, credentials and sessions.
+
+The role-scoped dashboard uses the same metric contract. A Monitor receives own-record metrics; a
+Validator receives queue and age metrics; an Administrator receives active-user, record and recent
+activity indicators.
+
+## Public map projection
+
+The public map exposes record number, short title, category, review status, provenance, risk level,
+observation date, public location mode and only the coordinate allowed by that mode. `hidden` returns
+no public coordinate. The internal projection remains authenticated and role-scoped.
+
+## Reports and exports
+
+Public PDF/CSV outputs use the active validated filter contract and public-safe projection. Internal
+PDF/CSV outputs require `admin`, `monitor` or `validator`; Monitor exports remain owner-scoped.
+
+CSV output is UTF-8 with BOM and ISO 8601 UTC timestamps. PDF reports record the territory, period,
+generation time, unique report identifier, methodology version, source attribution, prototype notice
+and limitations. Neither format includes passwords, tokens or personal/clinical data.
+
+## Public demonstration D1 record
+
+`public-demo/db/schema.ts` defines a separate read-only demonstration table with short title,
+category, status, provenance, risk components/result, UTC observation time and safe public location.
+Its migration inserts only explicitly controlled, synthetic or public-reference rows. It is not the
+operational InfinityAtlas database and provides no write API.

@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.core.database import engine, get_db
 from app.api.dashboard import router as dashboard_router
 from app.api.map import router as map_router
+from app.api.reports import router as reports_router
 from app.models import (
     AuditEvent,
     AuthSession,
@@ -85,15 +86,11 @@ app = FastAPI(
 
 app.include_router(dashboard_router)
 app.include_router(map_router)
+app.include_router(reports_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5173",
-        "http://localhost:5173",
-        "http://127.0.0.1:5174",
-        "http://localhost:5174",
-    ],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -299,7 +296,6 @@ def list_territories(
 )
 def current_climate(
     territory_id: int,
-    _: Annotated[User, Depends(require_roles("admin", "monitor", "validator"))],
     db: Annotated[Session, Depends(get_db)],
     client: Annotated[OpenMeteoClient, Depends(get_climate_client)],
 ) -> ClimateCurrentRead:
