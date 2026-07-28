@@ -96,6 +96,7 @@ class ReferenceBootstrapTests(unittest.TestCase):
             observation = Observation(
                 project_id=project.id,
                 territory_id=territory.id,
+                record_title="Controlled brand normalization",
                 category="water",
                 description="Controlled brand normalization fixture",
                 hazard=1,
@@ -168,6 +169,7 @@ class ReferenceBootstrapTests(unittest.TestCase):
             synthetic_observation = Observation(
                 project_id=synthetic_project.id,
                 territory_id=synthetic_territory.id,
+                record_title="Legacy synthetic waste observation",
                 category="waste",
                 description="Legacy synthetic record",
                 hazard=3,
@@ -246,6 +248,7 @@ class ReferenceBootstrapTests(unittest.TestCase):
                 Observation(
                     project_id=project.id,
                     territory_id=territory.id,
+                    record_title="Record removed by clean demo",
                     category="heat",
                     description="Record to remove during explicit clean demo",
                     hazard=2,

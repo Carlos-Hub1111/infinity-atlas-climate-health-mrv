@@ -36,6 +36,7 @@ LEGACY_SYNTHETIC_PROJECT_NAME = "San Cristobal Climate & Health MRV Demo"
 LEGACY_SYNTHETIC_NOTICE = "Legacy synthetic demo record - Not technically validated"
 SYNTHETIC_EVIDENCE_MARKER_URI = "synthetic://no-external-evidence"
 SYNTHETIC_EVIDENCE_MARKER_DESCRIPTION = "No external evidence - synthetic marker"
+CONTROLLED_DEMO_RECORD_TITLE = "Controlled water observation - San Cristobal"
 CONTROLLED_DEMO_DESCRIPTION = (
     "Controlled demonstration record created by the explicit local clean-demo procedure."
 )
@@ -274,6 +275,7 @@ def prepare_clean_demo_data(
     observation = Observation(
         project_id=project.id,
         territory_id=territory.id,
+        record_title=CONTROLLED_DEMO_RECORD_TITLE,
         category="water",
         description=CONTROLLED_DEMO_DESCRIPTION,
         hazard=1,

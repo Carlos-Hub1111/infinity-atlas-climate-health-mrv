@@ -111,6 +111,7 @@ class Sprint1BApiTests(unittest.TestCase):
         return {
             "project_id": self.project_id,
             "territory_id": self.territory_id,
+            "record_title": "Controlled heat risk observation",
             "category": "heat",
             "description": "Controlled heat observation used by the Sprint 1B automated review.",
             "hazard": 4,
@@ -210,6 +211,80 @@ class Sprint1BApiTests(unittest.TestCase):
         self.assertEqual(public.status_code, 200)
         self.assertEqual(public.json()["total_observations"], 1)
         self.assertNotIn("created_by_id", public.json())
+
+    def test_record_title_permissions_and_append_only_history(self) -> None:
+        created, monitor_headers = self.create_as_monitor()
+        self.assertEqual(created["record_title"], "Controlled heat risk observation")
+
+        pending_update = self.client.patch(
+            f"/api/v1/observations/{created['id']}",
+            json={"record_title": "Heat risk clarification"},
+            headers=monitor_headers,
+        )
+        self.assertEqual(pending_update.status_code, 200)
+        self.assertEqual(pending_update.json()["record_title"], "Heat risk clarification")
+
+        validator_headers = self.login("validator")
+        validator_update = self.client.patch(
+            f"/api/v1/observations/{created['id']}",
+            json={"record_title": "Validator cannot rename"},
+            headers=validator_headers,
+        )
+        self.assertEqual(validator_update.status_code, 403)
+        observed = self.client.post(
+            f"/api/v1/observations/{created['id']}/validation",
+            json={"status": "observed", "comment": "Clarify the controlled evidence."},
+            headers=validator_headers,
+        )
+        self.assertEqual(observed.status_code, 201)
+
+        observed_update = self.client.patch(
+            f"/api/v1/observations/{created['id']}",
+            json={"record_title": "Heat risk evidence clarified"},
+            headers=monitor_headers,
+        )
+        self.assertEqual(observed_update.status_code, 200)
+
+        validated = self.client.post(
+            f"/api/v1/observations/{created['id']}/validation",
+            json={"status": "validated", "comment": "Clarification reviewed."},
+            headers=validator_headers,
+        )
+        self.assertEqual(validated.status_code, 201)
+        blocked_monitor = self.client.patch(
+            f"/api/v1/observations/{created['id']}",
+            json={"record_title": "Monitor blocked after validation"},
+            headers=monitor_headers,
+        )
+        self.assertEqual(blocked_monitor.status_code, 403)
+
+        admin_headers = self.login("admin")
+        admin_update = self.client.patch(
+            f"/api/v1/observations/{created['id']}",
+            json={"record_title": "Administrator approved record title"},
+            headers=admin_headers,
+        )
+        self.assertEqual(admin_update.status_code, 200)
+        self.assertEqual(
+            admin_update.json()["record_title"],
+            "Administrator approved record title",
+        )
+
+        audit = self.client.get(
+            f"/api/v1/observations/{created['id']}/audit",
+            headers=admin_headers,
+        ).json()
+        title_events = [
+            event for event in audit if event["event_type"] == "record_title_changed"
+        ]
+        self.assertEqual(len(title_events), 3)
+        self.assertEqual(
+            title_events[0]["previous_state"],
+            "Controlled heat risk observation",
+        )
+        self.assertEqual(title_events[-1]["new_state"], "Administrator approved record title")
+        self.assertEqual(title_events[-1]["actor_role"], "admin")
+        self.assertTrue(title_events[-1]["occurred_at"].endswith("Z"))
 
     def test_validation_rules_history_and_append_only_audit(self) -> None:
         created, _ = self.create_as_monitor()

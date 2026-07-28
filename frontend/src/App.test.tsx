@@ -81,6 +81,7 @@ const observation = {
   project_id: 1,
   territory_id: 1,
   created_by_id: users.monitor.id,
+  record_title: "Controlled water observation",
   category: "water",
   description: "Controlled observation created in the interface.",
   hazard: 2,
@@ -113,6 +114,7 @@ const observation = {
 const heatObservation = {
   ...observation,
   id: 6,
+  record_title: "Heat risk controlled test",
   category: "heat" as const,
   description: "Controlled heat observation used for Product Owner acceptance.",
   observed_at: "2026-07-26T21:00:00Z",
@@ -228,9 +230,15 @@ function installFetchMock(options?: {
   invalidLogin?: boolean;
   expiredMe?: boolean;
   climateHandler?: () => Promise<Response> | Response;
+  monitorObservationStatus?: "pending" | "validated" | "observed" | "rejected";
 }) {
   let validationRecorded = false;
   let activeRole: keyof typeof users = "monitor";
+  let currentObservation = {
+    ...observation,
+    status: options?.monitorObservationStatus ?? observation.status,
+  };
+  let currentHeatObservation = { ...heatObservation };
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
@@ -274,12 +282,31 @@ function installFetchMock(options?: {
         return options?.climateHandler ? options.climateHandler() : response(climate);
       }
       if (url.endsWith("/api/v1/observations") && method === "POST") {
-        return response(observation, 201);
+        const body = JSON.parse(String(init?.body)) as { record_title: string };
+        currentObservation = { ...currentObservation, record_title: body.record_title };
+        return response(currentObservation, 201);
       }
       if (url.endsWith("/api/v1/observations")) {
         return response(
-          activeRole === "admin" ? [observation, heatObservation] : [observation],
+          activeRole === "admin"
+            ? [currentObservation, currentHeatObservation]
+            : [currentObservation],
         );
+      }
+      if (url.includes("/api/v1/observations/") && method === "PATCH") {
+        const body = JSON.parse(String(init?.body)) as { record_title?: string };
+        if (url.includes("/observations/6")) {
+          currentHeatObservation = {
+            ...currentHeatObservation,
+            record_title: body.record_title ?? currentHeatObservation.record_title,
+          };
+          return response(currentHeatObservation);
+        }
+        currentObservation = {
+          ...currentObservation,
+          record_title: body.record_title ?? currentObservation.record_title,
+        };
+        return response(currentObservation);
       }
       if (url.endsWith("/risk-score")) {
         return response(url.includes("/observations/6/") ? heatRisk : risk);
@@ -392,6 +419,33 @@ describe("Sprint 1B application", () => {
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
       "Registro revisado metodológicamente y considerado completo. No confirma por sí solo que el evento ocurrió.",
     );
+
+    fireEvent.click(validatedHelp);
+    const provenanceHelp = screen.getByRole("button", {
+      name: "Más información sobre Prueba controlada",
+    });
+    fireEvent.click(provenanceHelp);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "No representa un evento territorial validado.",
+    );
+    fireEvent.click(provenanceHelp);
+
+    const formulaHelp = screen.getByRole("button", {
+      name: "Cómo se calcula el puntaje metodológico de riesgo",
+    });
+    fireEvent.focus(formulaHelp);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Puntaje de riesgo = Peligro + Exposición + Vulnerabilidad.",
+    );
+    fireEvent.keyDown(formulaHelp, { key: "Escape" });
+
+    const moderateHelp = screen.getByRole("button", {
+      name: "Más información sobre riesgo Moderado",
+    });
+    fireEvent.click(moderateHelp);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Puntaje metodológico de 6 a 8.",
+    );
   });
 
   it("renders login errors without exposing credential details", async () => {
@@ -430,6 +484,20 @@ describe("Sprint 1B application", () => {
     expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
     expect(screen.getByText("climate-health-risk-v0.1")).toBeInTheDocument();
 
+    const recordTitle = screen.getByLabelText("Record title");
+    expect(recordTitle).toHaveValue("Water observation — San Cristobal");
+    fireEvent.change(screen.getByLabelText("Category"), {
+      target: { value: "heat" },
+    });
+    expect(recordTitle).toHaveValue("Heat observation — San Cristobal");
+    fireEvent.change(recordTitle, {
+      target: { value: "Heat risk near the controlled route" },
+    });
+    fireEvent.change(screen.getByLabelText("Category"), {
+      target: { value: "waste" },
+    });
+    expect(recordTitle).toHaveValue("Heat risk near the controlled route");
+
     fireEvent.change(screen.getByLabelText("Description"), {
       target: { value: "Controlled observation created in the interface." },
     });
@@ -452,6 +520,54 @@ describe("Sprint 1B application", () => {
     expect(screen.getByRole("heading", { name: "Nueva observación territorial" })).toBeInTheDocument();
     expect(screen.getByText("Monitor / Técnico")).toBeInTheDocument();
     expect(screen.getByText("Procedencia del dato")).toBeInTheDocument();
+  });
+
+  it("searches observations by number and title and lets a monitor rename an allowed record", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await loginAs("monitor");
+    await screen.findByRole("heading", { name: "My observations" });
+
+    const search = screen.getByLabelText("Search observations");
+    fireEvent.change(search, { target: { value: "controlled water" } });
+    expect(
+      screen.getByText("#4 — Controlled water observation — San Cristobal"),
+    ).toBeInTheDocument();
+    fireEvent.change(search, { target: { value: "#4" } });
+    expect(
+      screen.getByText("#4 — Controlled water observation — San Cristobal"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit record #4 title" }),
+    );
+    const titleInput = screen.getByLabelText("Record title for observation #4");
+    fireEvent.change(titleInput, {
+      target: { value: "Controlled water evidence review" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save title" }));
+    expect(
+      await screen.findByText(
+        "#4 — Controlled water evidence review — San Cristobal",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Record #4 title updated.")).toBeInTheDocument();
+  });
+
+  it("hides title editing from a monitor after validation", async () => {
+    vi.unstubAllGlobals();
+    installFetchMock({ monitorObservationStatus: "validated" });
+    render(<App />);
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await loginAs("monitor");
+    expect(
+      await screen.findByText(
+        "#4 — Controlled water observation — San Cristobal",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Edit record #4 title" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows climate refresh feedback and the last query time", async () => {
@@ -550,6 +666,26 @@ describe("Sprint 1B application", () => {
     expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
   });
 
+  it("lets an administrator rename a validated record", async () => {
+    render(<App />);
+    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await loginAs("admin");
+    fireEvent.click(await screen.findByRole("button", { name: "Observations" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Edit record #6 title" }),
+    );
+    fireEvent.change(
+      screen.getByLabelText("Record title for observation #6"),
+      { target: { value: "Validated heat risk review" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save title" }));
+    expect(
+      await screen.findByText(
+        "#6 — Validated heat risk review — San Cristobal",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("lets administrators search, filter and open an observation audit, then return globally", async () => {
     render(<App />);
     await screen.findByRole("heading", { name: "Secure prototype access" });
@@ -567,17 +703,32 @@ describe("Sprint 1B application", () => {
       await screen.findByRole("heading", { name: "Navigable audit" }),
     ).toBeInTheDocument();
 
-    const observationSearch = screen.getByLabelText("Observation number");
+    const observationSearch = screen.getByLabelText(
+      "Observation number or record title",
+    );
     fireEvent.change(observationSearch, { target: { value: "6" } });
-    expect(screen.getByText("#6 — Heat — Validated")).toBeInTheDocument();
-    expect(screen.queryByText("#4 — Water — Pending")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("#6 — Heat risk controlled test — San Cristobal"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("#4 — Controlled water observation — San Cristobal"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(observationSearch, { target: { value: "heat risk" } });
+    expect(
+      screen.getByText("#6 — Heat risk controlled test — San Cristobal"),
+    ).toBeInTheDocument();
 
     fireEvent.change(observationSearch, { target: { value: "" } });
     fireEvent.change(screen.getByLabelText("Category"), {
       target: { value: "heat" },
     });
-    expect(screen.getByText("#6 — Heat — Validated")).toBeInTheDocument();
-    expect(screen.queryByText("#4 — Water — Pending")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("#6 — Heat risk controlled test — San Cristobal"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("#4 — Controlled water observation — San Cristobal"),
+    ).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Event"), {
       target: { value: "risk_score_calculated" },
@@ -593,7 +744,9 @@ describe("Sprint 1B application", () => {
       }),
     );
     expect(
-      screen.getByRole("heading", { name: "#6 — Heat — Validated" }),
+      screen.getByRole("heading", {
+        name: "#6 — Heat risk controlled test — San Cristobal",
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText("Clarification requested.")).toBeInTheDocument();
     expect(screen.getByText("Clarification completed.")).toBeInTheDocument();

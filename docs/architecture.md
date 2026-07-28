@@ -51,7 +51,8 @@ external identity review.
 | --- | --- | --- | --- | --- |
 | Read internal observations | All | Own | All | No |
 | Create observation | Yes | Yes | No | No |
-| Update observation | Yes | Own pending | No | No |
+| Update observation content | Yes | Own pending | No | No |
+| Edit record title | Any state | Own pending or observed | No | No |
 | Validate / observe / reject | Yes | No | Yes | No |
 | Read observation audit | Yes | Own | Yes | No |
 | Manage demo-user active state | Yes | No | No | No |
@@ -88,6 +89,10 @@ new score snapshot instead of changing the previous calculation.
 `audit_events` is append-only through normal application APIs. It records actor, role, UTC timestamp,
 event type, entity, prior and next states, comment and methodology version when applicable. Sprint 1B
 does not claim cryptographic immutability; privileged database operators can still alter storage.
+
+Every record-title change creates a `record_title_changed` event with the previous title, new title,
+actor, role, UTC timestamp and observation identifier. The same backend authorization rules apply
+regardless of whether the client displays an edit control.
 
 ## Time handling
 

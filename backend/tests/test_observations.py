@@ -86,6 +86,7 @@ class ObservationApiTests(unittest.TestCase):
         return {
             "project_id": self.project_id,
             "territory_id": self.territory_id,
+            "record_title": "Standing water controlled observation",
             "category": "water",
             "description": "Controlled observation of standing water near a public drainage point.",
             "hazard": 2,
@@ -115,6 +116,7 @@ class ObservationApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         created = response.json()
         self.assertEqual(created["status"], "pending")
+        self.assertEqual(created["record_title"], "Standing water controlled observation")
         self.assertEqual(created["data_provenance"], "controlled_test")
         self.assertFalse(created["is_synthetic"])
         self.assertEqual(len(created["evidence_items"]), 1)
@@ -138,6 +140,20 @@ class ObservationApiTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 422)
+
+    def test_requires_a_nonblank_title_with_at_most_eighty_characters(self) -> None:
+        missing_title = self.payload()
+        missing_title.pop("record_title")
+        blank_title = self.payload()
+        blank_title["record_title"] = "   "
+        long_title = self.payload()
+        long_title["record_title"] = "x" * 81
+
+        for payload in (missing_title, blank_title, long_title):
+            response = self.client.post(
+                "/api/v1/observations", json=payload, headers=self.headers
+            )
+            self.assertEqual(response.status_code, 422)
 
     def test_requires_confirmation_and_marks_synthetic_demo(self) -> None:
         rejected = self.client.post(

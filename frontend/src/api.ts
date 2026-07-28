@@ -86,6 +86,7 @@ export type Observation = {
   project_id: number;
   territory_id: number;
   created_by_id: number | null;
+  record_title: string;
   category: "water" | "waste" | "heat" | "environmental_pollution";
   description: string;
   hazard: number;
@@ -151,6 +152,7 @@ export type PublicSummary = {
 export type ObservationPayload = {
   project_id: number;
   territory_id: number;
+  record_title: string;
   category: Observation["category"];
   description: string;
   hazard: number;

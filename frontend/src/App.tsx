@@ -20,6 +20,7 @@ import {
   LockKeyhole,
   LogOut,
   MapPin,
+  Pencil,
   RefreshCw,
   Save,
   Search,
@@ -60,6 +61,7 @@ type WorkspaceView = "observations" | "review" | "users" | "audit";
 type FormState = {
   projectId: string;
   territoryId: string;
+  recordTitle: string;
   category: Observation["category"];
   description: string;
   hazard: string;
@@ -98,6 +100,7 @@ function emptyForm(): FormState {
   return {
     projectId: "",
     territoryId: "",
+    recordTitle: "",
     category: "water",
     description: "",
     hazard: "1",
@@ -116,6 +119,17 @@ function emptyForm(): FormState {
     evidenceDate: now,
     syntheticConfirmation: false,
   };
+}
+
+export function suggestedRecordTitle(
+  locale: Locale,
+  category: Observation["category"],
+  territoryName: string,
+): string {
+  return replaceParams(translations[locale].observationForm.recordTitleSuggestion, {
+    category: translations[locale].categories[category],
+    territory: territoryName,
+  }).slice(0, 80);
 }
 
 function formatDate(value: string, locale: Locale, timeZone = "Pacific/Galapagos"): string {
@@ -190,6 +204,7 @@ export function App() {
   const [lastClimateQueryAt, setLastClimateQueryAt] = React.useState<string | null>(null);
 
   const [form, setForm] = React.useState<FormState>(emptyForm);
+  const [recordTitleEdited, setRecordTitleEdited] = React.useState(false);
   const [submitState, setSubmitState] = React.useState<"idle" | "saving" | "saved" | "error">("idle");
   const [savedObservationId, setSavedObservationId] = React.useState<number | null>(null);
 
@@ -210,6 +225,20 @@ export function App() {
     document.title = t.documentTitle;
     document.documentElement.lang = locale;
   }, [locale, t.documentTitle]);
+
+  React.useEffect(() => {
+    if (!selectedTerritory || recordTitleEdited) return;
+    const suggestion = suggestedRecordTitle(
+      locale,
+      form.category,
+      selectedTerritory.name,
+    );
+    setForm((current) =>
+      current.recordTitle === suggestion
+        ? current
+        : { ...current, recordTitle: suggestion },
+    );
+  }, [form.category, locale, recordTitleEdited, selectedTerritory]);
 
   React.useEffect(() => {
     const handleExpiredSession = () => {
@@ -398,6 +427,7 @@ export function App() {
     setRisks({});
     setSelectedId(null);
     setView("observations");
+    setRecordTitleEdited(false);
     await loadPublicSummary();
   }
 
@@ -407,6 +437,7 @@ export function App() {
     const payload: ObservationPayload = {
       project_id: Number(form.projectId),
       territory_id: Number(form.territoryId),
+      record_title: form.recordTitle.trim(),
       category: form.category,
       description: form.description,
       hazard: Number(form.hazard),
@@ -431,6 +462,7 @@ export function App() {
       const created = await postJson<Observation>("/api/v1/observations", payload);
       setSavedObservationId(created.id);
       setSubmitState("saved");
+      setRecordTitleEdited(false);
       setForm((current) => ({
         ...emptyForm(),
         projectId: current.projectId,
@@ -444,6 +476,18 @@ export function App() {
     } catch {
       setSubmitState("error");
     }
+  }
+
+  async function updateRecordTitle(observationId: number, recordTitle: string) {
+    const updated = await patchJson<Observation>(
+      `/api/v1/observations/${observationId}`,
+      { record_title: recordTitle.trim() },
+    );
+    setObservations((current) =>
+      current.map((observation) =>
+        observation.id === updated.id ? updated : observation,
+      ),
+    );
   }
 
   async function submitDecision(nextStatus: "validated" | "observed" | "rejected") {
@@ -647,14 +691,21 @@ export function App() {
                   savedObservationId={savedObservationId}
                   locale={locale}
                   onChange={setForm}
+                  onRecordTitleChange={(value) => {
+                    setRecordTitleEdited(true);
+                    setForm((current) => ({ ...current, recordTitle: value }));
+                  }}
                   onSubmit={submitObservation}
                 />
                 <ObservationList
                   observations={observations}
                   risks={risks}
+                  territories={territories}
+                  user={user}
                   locale={locale}
                   title={t.observations.title}
                   timeZone={selectedTerritory?.timezone}
+                  onUpdateTitle={updateRecordTitle}
                 />
               </div>
             </>
@@ -670,6 +721,7 @@ export function App() {
               comment={reviewComment}
               reviewState={reviewState}
               reviewedStatus={reviewedStatus}
+              territories={territories}
               locale={locale}
               timeZone={selectedTerritory?.timezone}
               onSelect={setSelectedId}
@@ -691,6 +743,7 @@ export function App() {
             <AuditWorkspace
               events={adminAudit}
               observations={observations}
+              territories={territories}
               locale={locale}
             />
           )}
@@ -878,6 +931,7 @@ function ObservationForm({
   savedObservationId,
   locale,
   onChange,
+  onRecordTitleChange,
   onSubmit,
 }: {
   form: FormState;
@@ -887,6 +941,7 @@ function ObservationForm({
   savedObservationId: number | null;
   locale: Locale;
   onChange: React.Dispatch<React.SetStateAction<FormState>>;
+  onRecordTitleChange: (value: string) => void;
   onSubmit: (event: React.FormEvent) => void;
 }) {
   const t = translations[locale];
@@ -927,6 +982,17 @@ function ObservationForm({
                 <option key={territory.id} value={territory.id}>{territory.name}</option>
               ))}
             </select>
+          </label>
+          <label className="wideField">
+            <span>{t.observationForm.recordTitle}</span>
+            <input
+              value={form.recordTitle}
+              onChange={(event) => onRecordTitleChange(event.target.value)}
+              aria-label={t.observationForm.recordTitle}
+              maxLength={80}
+              required
+            />
+            <small className="fieldHelp">{t.observationForm.recordTitlePrivacy}</small>
           </label>
           <label>
             <span>{t.observationForm.category}</span>
@@ -1056,17 +1122,33 @@ function ObservationForm({
 function ObservationList({
   observations,
   risks,
+  territories,
+  user,
   locale,
   title,
   timeZone = "Pacific/Galapagos",
+  onUpdateTitle,
 }: {
   observations: Observation[];
   risks: Record<number, RiskScore>;
+  territories: Territory[];
+  user: User;
   locale: Locale;
   title: string;
   timeZone?: string;
+  onUpdateTitle: (observationId: number, recordTitle: string) => Promise<void>;
 }) {
   const t = translations[locale];
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const normalizedSearch = searchQuery.trim().toLocaleLowerCase(locale).replace(/^#\s*/, "");
+  const filteredObservations = observations.filter(
+    (observation) =>
+      !normalizedSearch ||
+      String(observation.id).includes(normalizedSearch) ||
+      observation.record_title.toLocaleLowerCase(locale).includes(normalizedSearch),
+  );
+  const territoryName = (territoryId: number) =>
+    territories.find((territory) => territory.id === territoryId)?.name ?? "—";
   return (
     <section className="listSection">
       <div className="sectionHeading sectionHeadingSplit">
@@ -1074,19 +1156,40 @@ function ObservationList({
           <FileSearch size={21} />
           <h2>{title}</h2>
         </div>
-        <span className="recordCount">{replaceParams(t.observations.count, { count: observations.length })}</span>
+        <span className="recordCount">{replaceParams(t.observations.count, { count: filteredObservations.length })}</span>
       </div>
+      <label className="observationSearch">
+        <span>{t.observations.search}</span>
+        <div className="inputWithIcon">
+          <Search size={16} aria-hidden="true" />
+          <input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder={t.observations.searchPlaceholder}
+          />
+        </div>
+      </label>
       {observations.length === 0 ? (
         <div className="emptyState">{t.observations.empty}</div>
+      ) : filteredObservations.length === 0 ? (
+        <div className="emptyState">{t.observations.noSearchResults}</div>
       ) : (
         <div className="observationList">
-          {observations.map((observation) => (
+          {filteredObservations.map((observation) => (
             <ObservationRecord
               key={observation.id}
               observation={observation}
               risk={risks[observation.id]}
+              territoryName={territoryName(observation.territory_id)}
+              canEditTitle={
+                user.role.name === "admin" ||
+                (user.role.name === "monitor" &&
+                  observation.created_by_id === user.id &&
+                  ["pending", "observed"].includes(observation.status))
+              }
               locale={locale}
               timeZone={timeZone}
+              onUpdateTitle={onUpdateTitle}
             />
           ))}
         </div>
@@ -1098,20 +1201,56 @@ function ObservationList({
 function ObservationRecord({
   observation,
   risk,
+  territoryName,
+  canEditTitle,
   locale,
   timeZone,
+  onUpdateTitle,
 }: {
   observation: Observation;
   risk?: RiskScore;
+  territoryName: string;
+  canEditTitle: boolean;
   locale: Locale;
   timeZone: string;
+  onUpdateTitle: (observationId: number, recordTitle: string) => Promise<void>;
 }) {
   const t = translations[locale];
+  const [editing, setEditing] = React.useState(false);
+  const [draftTitle, setDraftTitle] = React.useState(observation.record_title);
+  const [editState, setEditState] = React.useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+
+  React.useEffect(() => {
+    setDraftTitle(observation.record_title);
+  }, [observation.record_title]);
+
+  const submitTitle = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const normalized = draftTitle.trim();
+    if (!normalized || normalized.length > 80) {
+      setEditState("error");
+      return;
+    }
+    setEditState("saving");
+    try {
+      await onUpdateTitle(observation.id, normalized);
+      setEditing(false);
+      setEditState("saved");
+    } catch {
+      setEditState("error");
+    }
+  };
+
+  const editLabel = replaceParams(t.observations.editRecordTitle, {
+    id: observation.id,
+  });
   return (
     <article className="observationItem">
       <div className="recordHeader">
-        <div>
-          <strong>#{observation.id}</strong>
+        <div className="recordIdentity">
+          <strong>#{observation.id} — {observation.record_title} — {territoryName}</strong>
           <span>{t.categories[observation.category]}</span>
         </div>
         <div className="tagRow">
@@ -1119,8 +1258,81 @@ function ObservationRecord({
           <span className={provenanceClass(observation.data_provenance)}>
             {t.provenance[observation.data_provenance]}
           </span>
+          {canEditTitle && !editing && (
+            <button
+              type="button"
+              className="iconButton"
+              aria-label={editLabel}
+              title={editLabel}
+              onClick={() => {
+                setDraftTitle(observation.record_title);
+                setEditState("idle");
+                setEditing(true);
+              }}
+            >
+              <Pencil size={15} />
+            </button>
+          )}
         </div>
       </div>
+      {editing && (
+        <form className="recordTitleEditor" onSubmit={submitTitle}>
+          <label>
+            <span>
+              {replaceParams(t.observations.editTitleLabel, { id: observation.id })}
+            </span>
+            <input
+              value={draftTitle}
+              onChange={(event) => setDraftTitle(event.target.value)}
+              maxLength={80}
+              required
+              autoFocus
+            />
+          </label>
+          <div>
+            <button
+              type="submit"
+              className="iconButton"
+              aria-label={t.observations.saveTitle}
+              title={t.observations.saveTitle}
+              disabled={editState === "saving"}
+            >
+              {editState === "saving" ? (
+                <LoaderCircle className="spin" size={16} />
+              ) : (
+                <Save size={16} />
+              )}
+            </button>
+            <button
+              type="button"
+              className="iconButton"
+              aria-label={t.observations.cancelTitle}
+              title={t.observations.cancelTitle}
+              disabled={editState === "saving"}
+              onClick={() => {
+                setEditing(false);
+                setDraftTitle(observation.record_title);
+                setEditState("idle");
+              }}
+            >
+              <X size={16} />
+            </button>
+          </div>
+          <small>{t.observationForm.recordTitlePrivacy}</small>
+        </form>
+      )}
+      {editState === "saved" && (
+        <span className="recordEditFeedback successFeedback" role="status">
+          <CheckCircle2 size={15} />
+          {replaceParams(t.observations.titleSaved, { id: observation.id })}
+        </span>
+      )}
+      {editState === "error" && (
+        <span className="recordEditFeedback errorFeedback" role="alert">
+          <AlertTriangle size={15} />
+          {t.observations.titleError}
+        </span>
+      )}
       <p>{observation.description}</p>
       {observation.is_synthetic && (
         <div className="syntheticNotice">
@@ -1176,6 +1388,7 @@ function ValidationWorkspace({
   comment,
   reviewState,
   reviewedStatus,
+  territories,
   locale,
   timeZone = "Pacific/Galapagos",
   onSelect,
@@ -1190,6 +1403,7 @@ function ValidationWorkspace({
   comment: string;
   reviewState: "idle" | "saving" | "success" | "error";
   reviewedStatus: Observation["status"] | null;
+  territories: Territory[];
   locale: Locale;
   timeZone?: string;
   onSelect: (id: number) => void;
@@ -1198,6 +1412,8 @@ function ValidationWorkspace({
 }) {
   const t = translations[locale];
   const actionable = selected && ["pending", "observed"].includes(selected.status);
+  const territoryName = (territoryId: number) =>
+    territories.find((territory) => territory.id === territoryId)?.name ?? "—";
   return (
     <section className="reviewWorkspace">
       <aside className="reviewQueue">
@@ -1214,11 +1430,11 @@ function ValidationWorkspace({
               onClick={() => onSelect(observation.id)}
             >
               <span>
-                <strong>#{observation.id}</strong>
-                {t.categories[observation.category]}
+                <strong>#{observation.id} — {observation.record_title}</strong>
+                {territoryName(observation.territory_id)}
               </span>
               <span className={statusClass(observation.status)}>{t.statuses[observation.status]}</span>
-              <small>{observation.description}</small>
+              <small>{t.categories[observation.category]} · {observation.description}</small>
             </button>
           ))}
         </div>
@@ -1230,7 +1446,7 @@ function ValidationWorkspace({
           <>
             <div className="recordTitle">
               <div>
-                <span className="recordEyebrow">#{selected.id} · {t.categories[selected.category]}</span>
+                <span className="recordEyebrow">#{selected.id} — {selected.record_title} — {territoryName(selected.territory_id)}</span>
                 <h2>{t.review.title}</h2>
               </div>
               <div className="tagRow">
@@ -1326,10 +1542,12 @@ function RiskPanel({ risk, locale }: { risk?: RiskScore; locale: Locale }) {
 function AuditWorkspace({
   events,
   observations,
+  territories,
   locale,
 }: {
   events: AuditEvent[];
   observations: Observation[];
+  territories: Territory[];
   locale: Locale;
 }) {
   const t = translations[locale];
@@ -1352,7 +1570,28 @@ function AuditWorkspace({
     () => new Map(observations.map((observation) => [observation.id, observation])),
     [observations],
   );
-  const normalizedSearch = observationSearch.replace(/^#\s*/, "").trim();
+  const normalizedSearch = observationSearch
+    .replace(/^#\s*/, "")
+    .trim()
+    .toLocaleLowerCase(locale);
+  const matchingSearchObservationIds = React.useMemo(
+    () =>
+      new Set(
+        observations
+          .filter(
+            (observation) =>
+              !normalizedSearch ||
+              String(observation.id).includes(normalizedSearch) ||
+              observation.record_title
+                .toLocaleLowerCase(locale)
+                .includes(normalizedSearch),
+          )
+          .map((observation) => observation.id),
+      ),
+    [locale, normalizedSearch, observations],
+  );
+  const territoryName = (territoryId: number) =>
+    territories.find((territory) => territory.id === territoryId)?.name ?? "—";
   const eventTypes = React.useMemo(
     () => [...new Set(events.map((event) => event.event_type))].sort(),
     [events],
@@ -1385,7 +1624,8 @@ function AuditWorkspace({
         if (
           normalizedSearch &&
           (event.entity_type !== "observation" ||
-            !String(event.entity_id ?? "").includes(normalizedSearch))
+            event.entity_id === null ||
+            !matchingSearchObservationIds.has(event.entity_id))
         ) {
           return false;
         }
@@ -1416,6 +1656,7 @@ function AuditWorkspace({
     eventFilter,
     events,
     normalizedSearch,
+    matchingSearchObservationIds,
     observationById,
     sortDirection,
     statusFilter,
@@ -1435,7 +1676,7 @@ function AuditWorkspace({
   const eventFiltersActive = Boolean(eventFilter || actorFilter || dateFilter);
   const filteredObservations = observations
     .filter((observation) => {
-      if (normalizedSearch && !String(observation.id).includes(normalizedSearch)) {
+      if (normalizedSearch && !matchingSearchObservationIds.has(observation.id)) {
         return false;
       }
       if (categoryFilter && observation.category !== categoryFilter) return false;
@@ -1468,8 +1709,8 @@ function AuditWorkspace({
   if (selectedObservation) {
     const selectedTitle = replaceParams(t.audit.selectedObservation, {
       id: selectedObservation.id,
-      category: t.categories[selectedObservation.category],
-      status: t.statuses[selectedObservation.status],
+      title: selectedObservation.record_title,
+      territory: territoryName(selectedObservation.territory_id),
     });
     return (
       <section className="auditExplorer">
@@ -1512,7 +1753,6 @@ function AuditWorkspace({
               value={observationSearch}
               onChange={(event) => setObservationSearch(event.target.value)}
               placeholder={t.audit.observationSearchPlaceholder}
-              inputMode="numeric"
             />
           </div>
         </label>
@@ -1600,8 +1840,8 @@ function AuditWorkspace({
               {filteredObservations.map((observation) => {
                 const title = replaceParams(t.audit.selectedObservation, {
                   id: observation.id,
-                  category: t.categories[observation.category],
-                  status: t.statuses[observation.status],
+                  title: observation.record_title,
+                  territory: territoryName(observation.territory_id),
                 });
                 return (
                   <button
@@ -1614,7 +1854,9 @@ function AuditWorkspace({
                     onClick={() => setSelectedObservationId(observation.id)}
                   >
                     <strong>{title}</strong>
-                    <span>{formatDate(observation.observed_at, locale)}</span>
+                    <span>
+                      {t.categories[observation.category]} · {t.statuses[observation.status]} · {formatDate(observation.observed_at, locale)}
+                    </span>
                   </button>
                 );
               })}
@@ -1785,16 +2027,45 @@ function PublicSummaryPanel({
             },
           ]} />
           <SummaryGroup title={t.public.provenance} items={[
-            { label: t.provenance.public_real, count: summary.public_real },
-            { label: t.provenance.controlled_test, count: summary.controlled_test },
-            { label: t.provenance.synthetic_demo, count: summary.synthetic_demo },
+            {
+              label: t.provenance.public_real,
+              count: summary.public_real,
+              help: t.public.provenanceHelp.public_real,
+              helpLabel: replaceParams(t.public.provenanceHelpLabel, {
+                provenance: t.provenance.public_real,
+              }),
+            },
+            {
+              label: t.provenance.controlled_test,
+              count: summary.controlled_test,
+              help: t.public.provenanceHelp.controlled_test,
+              helpLabel: replaceParams(t.public.provenanceHelpLabel, {
+                provenance: t.provenance.controlled_test,
+              }),
+            },
+            {
+              label: t.provenance.synthetic_demo,
+              count: summary.synthetic_demo,
+              help: t.public.provenanceHelp.synthetic_demo,
+              helpLabel: replaceParams(t.public.provenanceHelpLabel, {
+                provenance: t.provenance.synthetic_demo,
+              }),
+            },
           ]} />
           <SummaryGroup
             title={t.public.risk}
-            items={Object.entries(summary.risk_levels).map(([level, count]) => ({
-              label: translateValue(t.riskLevels, level, level),
-              count,
-            }))}
+            titleHelp={t.public.riskFormulaHelp}
+            titleHelpLabel={t.public.riskFormulaHelpLabel}
+            items={Object.entries(summary.risk_levels).map(([level, count]) => {
+              const riskLevel = level as keyof typeof t.riskLevels;
+              const label = translateValue(t.riskLevels, level, level);
+              return {
+                label,
+                count,
+                help: t.public.riskHelp[riskLevel],
+                helpLabel: replaceParams(t.public.riskHelpLabel, { level: label }),
+              };
+            })}
           />
           <p className="privacyNotice"><ShieldCheck size={17} /> {t.public.privacy}</p>
         </>
@@ -1810,10 +2081,25 @@ type SummaryItem = {
   helpLabel?: string;
 };
 
-function SummaryGroup({ title, items }: { title: string; items: SummaryItem[] }) {
+function SummaryGroup({
+  title,
+  titleHelp,
+  titleHelpLabel,
+  items,
+}: {
+  title: string;
+  titleHelp?: string;
+  titleHelpLabel?: string;
+  items: SummaryItem[];
+}) {
   return (
     <div className="summaryGroup">
-      <h3>{title}</h3>
+      <h3>
+        {title}
+        {titleHelp && titleHelpLabel && (
+          <InfoTooltip label={titleHelpLabel} text={titleHelp} />
+        )}
+      </h3>
       <div>
         {items.map((item) => (
           <div className="summaryItem" key={item.label}>

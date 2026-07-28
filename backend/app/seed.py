@@ -109,6 +109,7 @@ def seed_demo_data() -> dict[str, int | bool]:
             project_id=project.id,
             territory_id=territory.id,
             created_by_id=monitor.id,
+            record_title="Synthetic waste observation - San Cristobal",
             category="waste",
             description="Synthetic observation for MRV flow structure: possible waste hotspot near public route.",
             hazard=3,

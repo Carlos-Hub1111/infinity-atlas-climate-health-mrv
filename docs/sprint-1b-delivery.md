@@ -1,6 +1,6 @@
 # Sprint 1B delivery
 
-Date: 2026-07-26
+Date: 2026-07-28
 
 Branch: `feature/sprint-1b-validation-risk-rbac`
 
@@ -15,6 +15,10 @@ Branch: `feature/sprint-1b-validation-risk-rbac`
 - Append-only normal-API traceability.
 - Territory timezone `Pacific/Galapagos` with UTC database storage.
 - Role-specific English/Spanish interface and aggregate-only public view.
+- Required short record title with an editable category/territory suggestion.
+- Number/title search in observation and audit workspaces.
+- Backend-enforced title editing and append-only `record_title_changed` traceability.
+- Accessible bilingual public explanations for provenance, risk levels and the non-clinical formula.
 - OpenAPI documentation and protected seed endpoint.
 
 ## Endpoints
@@ -30,7 +34,7 @@ Branch: `feature/sprint-1b-validation-risk-rbac`
 | POST | `/api/v1/observations` | Admin, monitor |
 | GET | `/api/v1/observations` | Role and ownership scoped |
 | GET | `/api/v1/observations/{id}` | Role and ownership scoped |
-| PATCH | `/api/v1/observations/{id}` | Admin or owning monitor while pending |
+| PATCH | `/api/v1/observations/{id}` | Admin; owning monitor content while pending and title while pending/observed |
 | POST | `/api/v1/observations/{id}/validation` | Admin, validator |
 | GET | `/api/v1/observations/{id}/audit` | Role and ownership scoped |
 | GET | `/api/v1/observations/{id}/risk-score` | Role and ownership scoped |
@@ -61,7 +65,10 @@ comments and actors. The experience findings and their resolutions are documente
   stored-data fallback messages.
 - Navigable administrator audit with observation search, filters, ordering and observation-only
   timelines.
-- Frontend coverage for all three findings.
+- Required short record titles, editable suggestions, role-based title corrections and searchable
+  display as `#id — title — territory`.
+- Accessible bilingual guidance for data provenance, risk levels and the methodological formula.
+- Frontend and backend coverage for all five findings.
 
 ## Captures
 
@@ -71,6 +78,15 @@ comments and actors. The experience findings and their resolutions are documente
 - `docs/screenshots/sprint-1b/validator-validated.png`
 - `docs/screenshots/sprint-1b/admin-users.png`
 - `docs/screenshots/sprint-1b/admin-audit.png`
+- `docs/screenshots/sprint-1b/final-record-title-desktop.png`
+- `docs/screenshots/sprint-1b/final-public-guidance-mobile.png`
+
+## Final automated verification
+
+- Backend: 27 tests passed.
+- Frontend: 14 tests passed.
+- Frontend TypeScript and production build: passed.
+- Mobile overlap and tooltip positioning: verified at the final responsive capture viewport.
 
 ## Scope intentionally excluded
 

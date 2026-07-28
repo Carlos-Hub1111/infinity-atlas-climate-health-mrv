@@ -94,6 +94,7 @@ class Observation(Base):
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False)
     territory_id: Mapped[int] = mapped_column(ForeignKey("territories.id"), nullable=False)
     created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    record_title: Mapped[str] = mapped_column(String(80), nullable=False)
     category: Mapped[str] = mapped_column(String(80), nullable=False)
     description: Mapped[str] = mapped_column(Text(), nullable=False)
     hazard: Mapped[int] = mapped_column(Integer, nullable=False)

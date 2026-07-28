@@ -123,6 +123,7 @@ class ObservationRead(BaseModel):
     project_id: int
     territory_id: int
     created_by_id: int | None
+    record_title: str
     category: ObservationCategory
     description: str
     hazard: int
@@ -149,6 +150,7 @@ class ObservationRead(BaseModel):
 class ObservationCreate(BaseModel):
     project_id: int
     territory_id: int
+    record_title: str = Field(min_length=1, max_length=80)
     category: ObservationCategory
     description: str = Field(min_length=5, max_length=2000)
     hazard: int = Field(ge=1, le=4)
@@ -163,6 +165,14 @@ class ObservationCreate(BaseModel):
     synthetic_confirmation: bool = False
     evidence: EvidenceCreate
 
+    @field_validator("record_title")
+    @classmethod
+    def normalize_record_title(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Record title cannot be blank.")
+        return normalized
+
     @model_validator(mode="after")
     def validate_provenance(self) -> "ObservationCreate":
         if self.data_provenance == "synthetic_demo" and not self.synthetic_confirmation:
@@ -171,10 +181,21 @@ class ObservationCreate(BaseModel):
 
 
 class ObservationUpdate(BaseModel):
+    record_title: str | None = Field(default=None, min_length=1, max_length=80)
     description: str | None = Field(default=None, min_length=5, max_length=2000)
     hazard: int | None = Field(default=None, ge=1, le=4)
     exposure: int | None = Field(default=None, ge=1, le=4)
     vulnerability: int | None = Field(default=None, ge=1, le=4)
+
+    @field_validator("record_title")
+    @classmethod
+    def normalize_record_title(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Record title cannot be blank.")
+        return normalized
 
     @model_validator(mode="after")
     def require_change(self) -> "ObservationUpdate":

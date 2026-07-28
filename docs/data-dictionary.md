@@ -49,12 +49,13 @@ for stale fallback.
 
 ## Observation
 
-Stores project, territory, creator, category, description, hazard/exposure/vulnerability (each 1-4),
-coordinates, UTC observation and creation times, source, responsible role/team, provenance, synthetic
-confirmation, status and synthetic marker.
+Stores project, territory, creator, required `record_title` (1-80 characters), category, description,
+hazard/exposure/vulnerability (each 1-4), coordinates, UTC observation and creation times, source,
+responsible role/team, provenance, synthetic confirmation, status and synthetic marker.
 
-Every new API record starts as `pending`. A monitor can update only their own pending record. Updating a
-risk component appends a new `RiskScore`.
+Every new API record starts as `pending`. A monitor can update the content of only their own pending
+record and can edit its title while it is `pending` or `observed`. An administrator can edit the title
+in any state; a validator cannot. Updating a risk component appends a new `RiskScore`.
 
 ## Evidence
 
@@ -90,5 +91,5 @@ critical.
 
 Append-only event fields are actor, actor role, UTC timestamp, event type, entity type/identifier,
 previous state, next state, comment and optional methodology version. Tracked events include
-observation creation/update, risk calculation, validation, status changes, successful/failed login,
-logout and user active-state changes.
+observation creation/update, `record_title_changed`, risk calculation, validation, status changes,
+successful/failed login, logout and user active-state changes.

@@ -74,7 +74,8 @@ class Sprint1BMigrationTests(unittest.TestCase):
                     "SELECT retrieved_at, data_provenance FROM climate_data WHERE id = 1"
                 ).fetchone()
                 observation = connection.execute(
-                    "SELECT created_at, data_provenance, synthetic_confirmed FROM observations WHERE id = 1"
+                    "SELECT created_at, data_provenance, synthetic_confirmed, record_title "
+                    "FROM observations WHERE id = 1"
                 ).fetchone()
                 evidence = connection.execute(
                     "SELECT observed_at, data_provenance FROM evidence WHERE id = 1"
@@ -101,7 +102,10 @@ class Sprint1BMigrationTests(unittest.TestCase):
                 connection.close()
 
             self.assertEqual(climate, ("2026-07-26 18:00:00", "synthetic_demo"))
-            self.assertEqual(observation, ("2026-07-26 18:00:00", "synthetic_demo", 1))
+            self.assertEqual(
+                observation,
+                ("2026-07-26 18:00:00", "synthetic_demo", 1, "Observation #1"),
+            )
             self.assertEqual(evidence, ("2026-07-26 18:00:00", "synthetic_demo"))
             self.assertEqual(reference_projects, 0)
             self.assertEqual(reference_territories, 0)

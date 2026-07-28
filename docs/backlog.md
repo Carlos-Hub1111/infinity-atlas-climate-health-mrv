@@ -20,7 +20,7 @@ Status: completed and frozen at commit `2086d25289908a4438ed53cd6efbbae74dd76aa9
 
 ## Sprint 1B - Validation, risk score and traceability
 
-Status: implemented on `feature/sprint-1b-validation-risk-rbac`, pending Product Owner review.
+Status: implemented on `feature/sprint-1b-validation-risk-rbac`, pending final freeze approval.
 
 - Argon2 authentication, revocable JWT sessions and logout.
 - Backend-enforced admin, monitor, validator and public roles.
@@ -28,6 +28,8 @@ Status: implemented on `feature/sprint-1b-validation-risk-rbac`, pending Product
 - Transparent risk formula and versioned score snapshots.
 - Append-only audit events and territory timezone.
 - English/Spanish role workspaces and aggregate-only public view.
+- Searchable short record titles with role-based edits and append-only history.
+- Accessible public guidance for workflow state, provenance and risk.
 
 ## Sprint 1C - Dashboard, map, report and public view
 

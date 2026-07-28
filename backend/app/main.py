@@ -373,6 +373,7 @@ def create_observation(
         project_id=project.id,
         territory_id=territory.id,
         created_by_id=current_user.id,
+        record_title=payload.record_title,
         category=payload.category,
         description=payload.description,
         hazard=payload.hazard,
@@ -435,28 +436,59 @@ def update_observation(
     db: Annotated[Session, Depends(get_db)],
 ):
     observation = _get_observation_or_404(db, observation_id)
+    supplied_fields = payload.model_fields_set
     if current_user.role.name == "monitor":
-        if observation.created_by_id != current_user.id or observation.status != "pending":
-            raise HTTPException(status_code=403, detail="Monitor can update only own pending records.")
+        if observation.created_by_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Monitor can update only own records.")
+        if "record_title" in supplied_fields and observation.status not in {"pending", "observed"}:
+            raise HTTPException(
+                status_code=403,
+                detail="Monitor can rename only own pending or observed records.",
+            )
+        if supplied_fields - {"record_title"} and observation.status != "pending":
+            raise HTTPException(
+                status_code=403,
+                detail="Monitor can update record content only while it is pending.",
+            )
     elif current_user.role.name != "admin":
         raise HTTPException(status_code=403, detail="You cannot modify observations.")
 
+    previous_title = observation.record_title
     old_components = f"{observation.hazard}+{observation.exposure}+{observation.vulnerability}"
     component_changed = False
-    for field in ("description", "hazard", "exposure", "vulnerability"):
+    content_changed = False
+    title_changed = False
+    for field in ("record_title", "description", "hazard", "exposure", "vulnerability"):
         value = getattr(payload, field)
-        if field in payload.model_fields_set and value != getattr(observation, field):
+        if field in supplied_fields and value != getattr(observation, field):
             setattr(observation, field, value)
-            component_changed = component_changed or field != "description"
-    record_audit_event(
-        db,
-        event_type="observation_updated",
-        entity_type="observation",
-        entity_id=observation.id,
-        actor=current_user,
-        previous_state=old_components,
-        new_state=f"{observation.hazard}+{observation.exposure}+{observation.vulnerability}",
-    )
+            title_changed = title_changed or field == "record_title"
+            content_changed = content_changed or field != "record_title"
+            component_changed = component_changed or field in {
+                "hazard",
+                "exposure",
+                "vulnerability",
+            }
+    if title_changed:
+        record_audit_event(
+            db,
+            event_type="record_title_changed",
+            entity_type="observation",
+            entity_id=observation.id,
+            actor=current_user,
+            previous_state=previous_title,
+            new_state=observation.record_title,
+        )
+    if content_changed:
+        record_audit_event(
+            db,
+            event_type="observation_updated",
+            entity_type="observation",
+            entity_id=observation.id,
+            actor=current_user,
+            previous_state=old_components,
+            new_state=f"{observation.hazard}+{observation.exposure}+{observation.vulnerability}",
+        )
     if component_changed:
         calculate_and_store_risk(db, observation, current_user)
     db.commit()

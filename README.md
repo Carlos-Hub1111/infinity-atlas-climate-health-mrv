@@ -181,11 +181,14 @@ modules:
 - revocable server-side sessions and functional logout;
 - server-enforced `admin`, `monitor`, `validator` and `public` roles;
 - owner-scoped monitor records and aggregate-only public access;
+- required 80-character record titles with category/territory suggestions and number/title search;
+- role-protected record-title correction with append-only change history;
 - append-only validation decisions and audit events;
 - backend risk calculation using hazard + exposure + vulnerability;
 - methodology version `climate-health-risk-v0.1`;
 - territory-configured `Pacific/Galapagos` display time with UTC database storage;
 - English default and Spanish selectable across all role views.
+- accessible bilingual public guidance for review states, data provenance and risk levels.
 
 Validation confirms record completeness and methodological review. It is not a medical diagnosis and
 does not independently verify a territorial event. The risk score is also non-clinical and records its
