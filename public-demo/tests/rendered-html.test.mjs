@@ -40,6 +40,8 @@ test("keeps deployment health and climate routes portable", async () => {
 
   assert.match(healthAlias, /api\/health\/route/);
   assert.match(climateRoute, /AbortController/);
+  assert.match(climateRoute, /climateSnapshots/);
+  assert.match(climateRoute, /is_stale: true/);
   assert.match(climateRoute, /stale-while-revalidate=900/);
   assert.doesNotMatch(climateRoute, /cacheEverything|cacheTtl/);
 });
