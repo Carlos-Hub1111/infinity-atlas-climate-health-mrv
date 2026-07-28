@@ -55,7 +55,7 @@ async function currentClimate() {
       "https://api.open-meteo.com/v1/forecast?latitude=-0.9002&longitude=-89.6127&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code&timezone=auto",
       { signal: controller.signal },
     );
-    if (!response.ok) return null;
+    if (!response.ok) throw new Error(`Provider response ${response.status}`);
     const body = await response.json() as {
       current?: Record<string, number | string>;
     };
