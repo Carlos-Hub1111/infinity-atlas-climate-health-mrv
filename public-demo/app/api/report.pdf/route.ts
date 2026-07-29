@@ -34,14 +34,15 @@ function drawDistribution(
   page: PDFPage,
   title: string,
   values: Record<string, number>,
+  labels: Record<string, string>,
   y: number,
   regular: PDFFont,
   bold: PDFFont,
 ) {
   drawLine(page, title, y, bold, 11, rgb(0, 0.32, 0.35));
   let rowY = y - 19;
-  for (const [label, value] of Object.entries(values)) {
-    drawLine(page, `${label.replaceAll("_", " ")}: ${value}`, rowY, regular, 9);
+  for (const [key, value] of Object.entries(values)) {
+    drawLine(page, `${labels[key] ?? key.replaceAll("_", " ")}: ${value}`, rowY, regular, 9);
     rowY -= 15;
   }
   return rowY - 8;
@@ -99,8 +100,9 @@ export async function GET(request: Request) {
   const generatedAt = new Date().toISOString();
   const reportId = `IA-PUBLIC-${generatedAt.replace(/\D/g, "").slice(0, 14)}`;
   const dates = rows.map((row) => row.observedAt.slice(0, 10)).sort();
-  const periodStart = filters.date_from || dates[0] || "No data";
-  const periodEnd = filters.date_to || dates.at(-1) || "No data";
+  const noData = locale === "es" ? "Sin datos" : "No data";
+  const periodStart = filters.date_from || dates[0] || noData;
+  const periodEnd = filters.date_to || dates.at(-1) || noData;
   const status = counts(rows, "reviewStatus", filterOptions.status);
   const provenance = counts(rows, "dataProvenance", filterOptions.provenance);
   const risks = counts(rows, "riskLevel", filterOptions.risk_level);
@@ -109,6 +111,7 @@ export async function GET(request: Request) {
   const copy = locale === "es"
     ? {
         report: "Reporte público de inteligencia territorial",
+        results: "InfinityAtlas - Resultados públicos agregados",
         territory: "San Cristóbal, Galápagos, Ecuador",
         period: "Periodo consultado",
         generated: "Generado en UTC",
@@ -117,7 +120,15 @@ export async function GET(request: Request) {
         summaryText: `La selección contiene ${rows.length} registros controlados y autorizados para la vista pública.`,
         climate: "Condiciones climáticas públicas",
         unavailable: "La fuente climática no estuvo disponible durante la generación.",
+        temperature: "Temperatura",
+        humidity: "Humedad",
+        apparent: "Sensación térmica",
+        precipitation: "Precipitación",
+        weatherCode: "Código meteorológico",
+        observed: "Observado",
+        storedFallback: "Respaldo almacenado",
         indicators: "Indicadores agregados",
+        totalRecords: "Registros totales",
         status: "Estados de revisión",
         provenance: "Procedencia del dato",
         risk: "Niveles de riesgo",
@@ -129,9 +140,35 @@ export async function GET(request: Request) {
         limitText: "Este reporte no constituye diagnóstico clínico ni verifica por sí solo un evento territorial. Las ubicaciones públicas usan reglas de privacidad geográfica.",
         notice: "PROTOTIPO / PRUEBA CONTROLADA - NO CONSTITUYE UN PILOTO TERRITORIAL VALIDADO",
         map: "El mapa territorial interactivo y sus ubicaciones seguras están disponibles en la URL pública de InfinityAtlas.",
+        weatherSource: "Datos meteorológicos: Open-Meteo.com, CC BY 4.0.",
+        mapSource: "Datos del mapa: (c) colaboradores de OpenStreetMap, ODbL.",
+        statusLabels: {
+          pending: "Pendiente",
+          validated: "Validado",
+          observed: "Observado",
+          rejected: "Rechazado",
+        },
+        provenanceLabels: {
+          public_real: "Dato público real",
+          controlled_test: "Prueba controlada",
+          synthetic_demo: "Demo sintética",
+        },
+        riskLabels: {
+          low: "Bajo",
+          moderate: "Moderado",
+          high: "Alto",
+          critical: "Crítico",
+        },
+        categoryLabels: {
+          water: "Agua",
+          waste: "Residuos",
+          heat: "Calor",
+          environmental_pollution: "Contaminación ambiental",
+        },
       }
     : {
         report: "Public territorial intelligence report",
+        results: "InfinityAtlas - Aggregated public results",
         territory: "San Cristobal, Galapagos, Ecuador",
         period: "Consulted period",
         generated: "Generated at UTC",
@@ -140,7 +177,15 @@ export async function GET(request: Request) {
         summaryText: `The selection contains ${rows.length} controlled records authorized for the public view.`,
         climate: "Public climate conditions",
         unavailable: "The climate source was unavailable during report generation.",
+        temperature: "Temperature",
+        humidity: "Humidity",
+        apparent: "Apparent temperature",
+        precipitation: "Precipitation",
+        weatherCode: "Weather code",
+        observed: "Observed",
+        storedFallback: "Stored fallback",
         indicators: "Aggregated indicators",
+        totalRecords: "Total records",
         status: "Review status",
         provenance: "Data provenance",
         risk: "Risk levels",
@@ -152,6 +197,31 @@ export async function GET(request: Request) {
         limitText: "This report is not a clinical diagnosis and does not independently verify a territorial event. Public locations follow geographic privacy rules.",
         notice: "PROTOTYPE / CONTROLLED TEST - NOT A VALIDATED FIELD PILOT",
         map: "The interactive territorial map and its safe public locations are available at the InfinityAtlas public URL.",
+        weatherSource: "Weather data: Open-Meteo.com, CC BY 4.0.",
+        mapSource: "Map data: (c) OpenStreetMap contributors, ODbL.",
+        statusLabels: {
+          pending: "Pending",
+          validated: "Validated",
+          observed: "Observed",
+          rejected: "Rejected",
+        },
+        provenanceLabels: {
+          public_real: "Public real data",
+          controlled_test: "Controlled test",
+          synthetic_demo: "Synthetic demo",
+        },
+        riskLabels: {
+          low: "Low",
+          moderate: "Moderate",
+          high: "High",
+          critical: "Critical",
+        },
+        categoryLabels: {
+          water: "Water",
+          waste: "Waste",
+          heat: "Heat",
+          environmental_pollution: "Environmental pollution",
+        },
       };
 
   const pdf = await PDFDocument.create();
@@ -182,14 +252,14 @@ export async function GET(request: Request) {
   if (climate) {
     drawLine(
       cover,
-      `Temperature ${climate.temperature_2m} C | Humidity ${climate.relative_humidity_2m}% | Apparent ${climate.apparent_temperature} C`,
+      `${copy.temperature} ${climate.temperature_2m} C | ${copy.humidity} ${climate.relative_humidity_2m}% | ${copy.apparent} ${climate.apparent_temperature} C`,
       469,
       regular,
       9,
     );
     drawLine(
       cover,
-      `Precipitation ${climate.precipitation} mm | Weather code ${climate.weather_code} | Observed ${climate.time}${climate.is_stale ? " | Stored fallback" : ""}`,
+      `${copy.precipitation} ${climate.precipitation} mm | ${copy.weatherCode} ${climate.weather_code} | ${copy.observed} ${climate.time}${climate.is_stale ? ` | ${copy.storedFallback}` : ""}`,
       451,
       regular,
       9,
@@ -198,25 +268,25 @@ export async function GET(request: Request) {
     drawLine(cover, copy.unavailable, 469, regular, 9, rgb(0.55, 0.25, 0.08));
   }
   drawLine(cover, copy.indicators, 400, bold, 12, teal);
-  drawLine(cover, `Total records: ${rows.length}`, 374, bold, 11);
+  drawLine(cover, `${copy.totalRecords}: ${rows.length}`, 374, bold, 11);
   drawLine(cover, copy.notice, 122, bold, 9, rgb(0.55, 0.25, 0.08));
   drawLine(cover, "INFINITYGAIA S.A.S. B.I.C.", 74, bold, 9, teal);
 
   const details = pdf.addPage([595, 842]);
   details.drawRectangle({ x: 0, y: 800, width: 595, height: 42, color: teal });
-  details.drawText("InfinityAtlas - Aggregated public results", {
+  details.drawText(copy.results, {
     x: 44, y: 817, size: 12, font: bold, color: rgb(1, 1, 1),
   });
   let y = 770;
-  y = drawDistribution(details, copy.status, status, y, regular, bold);
-  y = drawDistribution(details, copy.provenance, provenance, y, regular, bold);
-  y = drawDistribution(details, copy.risk, risks, y, regular, bold);
-  y = drawDistribution(details, copy.category, categories, y, regular, bold);
+  y = drawDistribution(details, copy.status, status, copy.statusLabels, y, regular, bold);
+  y = drawDistribution(details, copy.provenance, provenance, copy.provenanceLabels, y, regular, bold);
+  y = drawDistribution(details, copy.risk, risks, copy.riskLabels, y, regular, bold);
+  y = drawDistribution(details, copy.category, categories, copy.categoryLabels, y, regular, bold);
   drawLine(details, copy.method, y, bold, 11, teal);
   drawLine(details, copy.methodText, y - 20, regular, 8.5);
   drawLine(details, copy.sources, y - 60, bold, 11, teal);
-  drawLine(details, "Weather: Open-Meteo.com, CC BY 4.0.", y - 80, regular, 8.5);
-  drawLine(details, "Map data: (c) OpenStreetMap contributors, ODbL.", y - 95, regular, 8.5);
+  drawLine(details, copy.weatherSource, y - 80, regular, 8.5);
+  drawLine(details, copy.mapSource, y - 95, regular, 8.5);
   drawLine(details, copy.map, y - 110, regular, 8.5);
   drawLine(details, copy.limits, y - 150, bold, 11, teal);
   drawLine(details, copy.limitText, y - 170, regular, 8.5);

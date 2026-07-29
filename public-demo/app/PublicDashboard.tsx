@@ -13,6 +13,7 @@ import {
   Eraser,
   Filter,
   Gauge,
+  Info,
   Languages,
   MapPin,
   RefreshCw,
@@ -115,6 +116,9 @@ const copy = {
     refresh: "Refresh climate",
     refreshing: "Updating climate…",
     climateError: "Climate source is temporarily unavailable.",
+    climateStart: "Climate update started.",
+    climateSuccess: "Climate updated successfully.",
+    climateFailure: "Climate update failed.",
     climateCurrent: "Current provider response",
     climateStale: "Stored real observation · Provider temporarily unavailable",
     temperature: "Temperature",
@@ -154,12 +158,33 @@ const copy = {
       observed: "Observed",
       rejected: "Rejected",
     },
+    statusHelpLabel: "More information about {status}",
+    statusHelp: {
+      pending: "Record received and not yet reviewed by an authorized person.",
+      validated: "Record methodologically reviewed and considered complete. It does not by itself confirm that the event occurred.",
+      observed: "Reviewed record that needs clarification, correction or additional evidence.",
+      rejected: "Record that did not meet the minimum quality or evidence requirements for validation.",
+    },
     provenances: {
       public_real: "Public real data",
       controlled_test: "Controlled test",
       synthetic_demo: "Synthetic demo",
     },
+    provenanceHelpLabel: "More information about {provenance}",
+    provenanceHelp: {
+      public_real: "Data obtained from an identified and verifiable public source. Its provenance must remain visible.",
+      controlled_test: "Record created during a controlled prototype test. It does not represent a validated territorial event.",
+      synthetic_demo: "Fictitious data created only for demonstration or testing. It must never be interpreted as real data.",
+    },
     risks: { low: "Low", moderate: "Moderate", high: "High", critical: "Critical" },
+    riskHelpLabel: "More information about {level} risk",
+    riskHelp: {
+      low: "Methodological score from 3 to 5. It is not a clinical assessment.",
+      moderate: "Methodological score from 6 to 8. It is not a clinical assessment.",
+      high: "Methodological score from 9 to 10. It is not a clinical assessment.",
+      critical: "Methodological score from 11 to 12. It is not a clinical assessment.",
+    },
+    riskFormulaHelpLabel: "How the methodological risk score is calculated",
   },
   es: {
     language: "Idioma",
@@ -192,6 +217,9 @@ const copy = {
     refresh: "Actualizar clima",
     refreshing: "Actualizando clima…",
     climateError: "La fuente climática no está disponible temporalmente.",
+    climateStart: "Actualización climática iniciada.",
+    climateSuccess: "Clima actualizado correctamente.",
+    climateFailure: "No se pudo actualizar el clima.",
     climateCurrent: "Respuesta actual del proveedor",
     climateStale: "Observación real almacenada · Proveedor temporalmente no disponible",
     temperature: "Temperatura",
@@ -231,12 +259,33 @@ const copy = {
       observed: "Observado",
       rejected: "Rechazado",
     },
+    statusHelpLabel: "Más información sobre {status}",
+    statusHelp: {
+      pending: "Registro recibido y aún no revisado por una persona autorizada.",
+      validated: "Registro revisado metodológicamente y considerado completo. No confirma por sí solo que el evento ocurrió.",
+      observed: "Registro revisado que necesita aclaraciones, correcciones o evidencia adicional.",
+      rejected: "Registro que no cumplió los requisitos mínimos de calidad o evidencia para ser validado.",
+    },
     provenances: {
       public_real: "Dato público real",
       controlled_test: "Prueba controlada",
       synthetic_demo: "Demo sintética",
     },
+    provenanceHelpLabel: "Más información sobre {provenance}",
+    provenanceHelp: {
+      public_real: "Dato obtenido de una fuente pública identificada y verificable. Su procedencia debe mantenerse visible.",
+      controlled_test: "Registro creado durante una prueba controlada del prototipo. No representa un evento territorial validado.",
+      synthetic_demo: "Dato ficticio creado únicamente para demostración o pruebas. Nunca debe interpretarse como un dato real.",
+    },
     risks: { low: "Bajo", moderate: "Moderado", high: "Alto", critical: "Crítico" },
+    riskHelpLabel: "Más información sobre riesgo {level}",
+    riskHelp: {
+      low: "Puntaje metodológico de 3 a 5. No constituye una evaluación clínica.",
+      moderate: "Puntaje metodológico de 6 a 8. No constituye una evaluación clínica.",
+      high: "Puntaje metodológico de 9 a 10. No constituye una evaluación clínica.",
+      critical: "Puntaje metodológico de 11 a 12. No constituye una evaluación clínica.",
+    },
+    riskFormulaHelpLabel: "Cómo se calcula el puntaje metodológico de riesgo",
   },
 } as const;
 
@@ -264,8 +313,12 @@ function query(filters: Filters) {
   return params.toString();
 }
 
-function label(labels: Record<string, string>, key: string) {
+function label(labels: Readonly<Record<string, string>>, key: string) {
   return labels[key] ?? key.replaceAll("_", " ");
+}
+
+function interpolate(template: string, token: string, value: string) {
+  return template.replace(`{${token}}`, value);
 }
 
 function formatDate(value: string, locale: Locale, withTime = false) {
@@ -276,11 +329,79 @@ function formatDate(value: string, locale: Locale, withTime = false) {
   }).format(new Date(value));
 }
 
-function Metric({ value, labelText, tone }: { value: number; labelText: string; tone: string }) {
+function InfoTooltip({ labelText, text }: { labelText: string; text: string }) {
+  const [hovered, setHovered] = React.useState(false);
+  const [focused, setFocused] = React.useState(false);
+  const [pinned, setPinned] = React.useState(false);
+  const tooltipId = React.useId();
+  const open = hovered || focused || pinned;
+
+  return (
+    <span
+      className="infoTooltip"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setFocused(false);
+          setPinned(false);
+        }
+      }}
+    >
+      <button
+        type="button"
+        className="infoTooltipButton"
+        aria-label={labelText}
+        aria-expanded={open}
+        aria-describedby={open ? tooltipId : undefined}
+        onClick={(event) => {
+          if (pinned) {
+            setPinned(false);
+            setFocused(false);
+            event.currentTarget.blur();
+          } else {
+            setPinned(true);
+          }
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            setHovered(false);
+            setFocused(false);
+            setPinned(false);
+            event.currentTarget.blur();
+          }
+        }}
+      >
+        <Info size={15} aria-hidden="true" />
+      </button>
+      {open && (
+        <span className="infoTooltipContent" id={tooltipId} role="tooltip">
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function Metric({
+  value,
+  labelText,
+  tone,
+  help,
+}: {
+  value: number;
+  labelText: string;
+  tone: string;
+  help?: { labelText: string; text: string };
+}) {
   return (
     <div className="metric" style={{ borderTopColor: colors[tone] ?? "#003b49" }}>
       <strong>{value}</strong>
-      <span>{labelText}</span>
+      <div className="metricLabel">
+        <span>{labelText}</span>
+        {help && <InfoTooltip labelText={help.labelText} text={help.text} />}
+      </div>
     </div>
   );
 }
@@ -290,16 +411,21 @@ function BarGroup({
   values,
   labels,
   help,
+  titleHelp,
 }: {
   title: string;
   values: Record<string, number>;
   labels: Record<string, string>;
   help: string;
+  titleHelp?: { labelText: string; text: string };
 }) {
   const max = Math.max(1, ...Object.values(values));
   return (
     <section className="chart">
-      <h3>{title}</h3>
+      <h3>
+        {title}
+        {titleHelp && <InfoTooltip labelText={titleHelp.labelText} text={titleHelp.text} />}
+      </h3>
       <p>{help}</p>
       <div>
         {Object.entries(values).map(([key, value]) => (
@@ -325,6 +451,7 @@ export function PublicDashboard() {
   const [apiOk, setApiOk] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [climateLoading, setClimateLoading] = React.useState(false);
+  const [climateAnnouncement, setClimateAnnouncement] = React.useState("");
   const [error, setError] = React.useState(false);
   const mapHost = React.useRef<HTMLDivElement | null>(null);
   const map = React.useRef<LeafletMap | null>(null);
@@ -346,14 +473,21 @@ export function PublicDashboard() {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  const loadClimate = React.useCallback(async () => {
+  const loadClimate = React.useCallback(async (announcement?: {
+    start: string;
+    success: string;
+    failure: string;
+  }) => {
     setClimateLoading(true);
+    if (announcement) setClimateAnnouncement(announcement.start);
     try {
       const response = await fetch("/api/climate", { cache: "no-store" });
       if (!response.ok) throw new Error("climate");
       setClimate(await response.json());
+      if (announcement) setClimateAnnouncement(announcement.success);
     } catch {
       setClimate(null);
+      if (announcement) setClimateAnnouncement(announcement.failure);
     } finally {
       setClimateLoading(false);
     }
@@ -548,16 +682,39 @@ export function PublicDashboard() {
 
           <section className="metrics" aria-label={t.indicators}>
             <Metric value={data.total} labelText={t.total} tone="total" />
-            {Object.entries(data.status).map(([key, value]) => <Metric key={key} value={value} labelText={label(t.statuses, key)} tone={key} />)}
-            {Object.entries(data.provenance).map(([key, value]) => <Metric key={key} value={value} labelText={label(t.provenances, key)} tone={key} />)}
-            {Object.entries(data.risk).map(([key, value]) => <Metric key={key} value={value} labelText={label(t.risks, key)} tone={key} />)}
+            {Object.entries(data.status).map(([key, value]) => {
+              const labelText = label(t.statuses, key);
+              return <Metric key={key} value={value} labelText={labelText} tone={key} help={{ labelText: interpolate(t.statusHelpLabel, "status", labelText), text: label(t.statusHelp, key) }} />;
+            })}
+            {Object.entries(data.provenance).map(([key, value]) => {
+              const labelText = label(t.provenances, key);
+              return <Metric key={key} value={value} labelText={labelText} tone={key} help={{ labelText: interpolate(t.provenanceHelpLabel, "provenance", labelText), text: label(t.provenanceHelp, key) }} />;
+            })}
+            {Object.entries(data.risk).map(([key, value]) => {
+              const labelText = label(t.risks, key);
+              return <Metric key={key} value={value} labelText={labelText} tone={key} help={{ labelText: interpolate(t.riskHelpLabel, "level", labelText), text: label(t.riskHelp, key) }} />;
+            })}
           </section>
 
           <section className="climate">
             <header>
               <div><CloudSun size={20} /><div><h2>{t.climate}</h2>{climate && <p>{climate.source_name} · {formatDate(climate.observed_at, locale, true)} <span className={climate.is_stale ? "climateStale" : "climateCurrent"}>{climate.is_stale ? t.climateStale : t.climateCurrent}</span></p>}</div></div>
-              <button disabled={climateLoading} onClick={() => void loadClimate()}><RefreshCw className={climateLoading ? "spin" : ""} size={16} />{climateLoading ? t.refreshing : t.refresh}</button>
+              <button
+                aria-busy={climateLoading}
+                disabled={climateLoading}
+                onClick={() => void loadClimate({
+                  start: t.climateStart,
+                  success: t.climateSuccess,
+                  failure: t.climateFailure,
+                })}
+              >
+                <RefreshCw className={climateLoading ? "spin" : ""} size={16} />
+                {climateLoading ? t.refreshing : t.refresh}
+              </button>
             </header>
+            <p className="srOnly" role="status" aria-live="polite" aria-atomic="true">
+              {climateAnnouncement}
+            </p>
             {climate ? (
               <div className="climateGrid">
                 <div><Thermometer size={18} /><span>{t.temperature}</span><strong>{climate.temperature_c} °C</strong></div>
@@ -572,7 +729,13 @@ export function PublicDashboard() {
 
           <section className="charts" aria-label={t.indicators}>
             <BarGroup title={t.charts.status} values={data.status} labels={t.statuses} help={t.chartHelp} />
-            <BarGroup title={t.charts.risk} values={data.risk} labels={t.risks} help={t.method} />
+            <BarGroup
+              title={t.charts.risk}
+              values={data.risk}
+              labels={t.risks}
+              help={t.method}
+              titleHelp={{ labelText: t.riskFormulaHelpLabel, text: t.method }}
+            />
             <BarGroup title={t.charts.category} values={data.categories} labels={t.categories} help={t.chartHelp} />
             <BarGroup title={t.charts.provenance} values={data.provenance} labels={t.provenances} help={t.chartHelp} />
             <section className="chart trendChart">
