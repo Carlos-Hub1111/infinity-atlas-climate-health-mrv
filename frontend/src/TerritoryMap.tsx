@@ -1,4 +1,5 @@
 import React from "react";
+import { normalizeSanCristobal } from "./presentation";
 import L from "leaflet";
 import { Crosshair, EyeOff, Layers3, MapPin } from "lucide-react";
 import { getJson, MapObservation, MapResponse, User } from "./api";
@@ -109,7 +110,7 @@ export function TerritoryMap({
         const popup = document.createElement("article");
         popup.className = "mapPopup";
         const title = document.createElement("strong");
-        title.textContent = `#${observation.id} · ${observation.record_title}`;
+        title.textContent = `#${observation.id} · ${normalizeSanCristobal(observation.record_title)}`;
         popup.append(title);
         const facts = document.createElement("dl");
         const addFact = (label: string, value: string) => {
@@ -158,8 +159,8 @@ export function TerritoryMap({
         L.marker([observation.latitude!, observation.longitude!], {
           icon: markerIcon(observation),
           keyboard: true,
-          title: `#${observation.id} ${observation.record_title}`,
-          alt: `#${observation.id} ${observation.record_title}`,
+          title: `#${observation.id} ${normalizeSanCristobal(observation.record_title)}`,
+          alt: `#${observation.id} ${normalizeSanCristobal(observation.record_title)}`,
         })
           .bindPopup(popup)
           .addTo(markerLayer.current!);
@@ -238,7 +239,9 @@ export function TerritoryMap({
               <ul>
                 {data.observations.map((observation) => (
                   <li key={observation.id}>
-                    <strong>#{observation.id} · {observation.record_title}</strong>
+                    <strong>
+                      #{observation.id} · {normalizeSanCristobal(observation.record_title)}
+                    </strong>
                     <span>
                       {translateValue(t.categories, observation.category, observation.category)}
                       {" · "}

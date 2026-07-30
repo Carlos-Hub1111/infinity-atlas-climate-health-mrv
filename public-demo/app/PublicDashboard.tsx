@@ -103,7 +103,7 @@ const emptyFilters: Filters = {
 const copy = {
   en: {
     language: "Language",
-    eyebrow: "Controlled public demonstration · San Cristobal",
+    eyebrow: "Controlled public demonstration · San Cristóbal",
     title: "InfinityAtlas",
     product: "Climate & Health MRV Toolkit",
     identity: "Territorial intelligence, traceability and trusted impact data.",
@@ -118,7 +118,7 @@ const copy = {
     d1HelpLabel: "What Cloudflare D1 means in this demonstration",
     d1Help: "Cloudflare D1 is the separate public database used by this read-only demonstration. It contains only controlled public observations and no internal users, evidence, comments or audit data.",
     territory: "Territory",
-    territoryShort: "San Cristobal, Galapagos",
+    territoryShort: "San Cristóbal, Galapagos",
     filters: "Global filters",
     filterHelpLabel: "How public filters work",
     filterHelp: "Filters apply together to the indicators, visualizations, map, public results, PDF and technical CSV. Applying them also preserves the selection in the page URL.",

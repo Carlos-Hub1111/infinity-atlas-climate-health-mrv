@@ -55,7 +55,7 @@ export async function GET(request: Request) {
   return Response.json({
     generated_at: new Date().toISOString(),
     territory: {
-      name: "San Cristobal",
+      name: "San Cristóbal",
       province: "Galapagos",
       country: "Ecuador",
       timezone: "Pacific/Galapagos",

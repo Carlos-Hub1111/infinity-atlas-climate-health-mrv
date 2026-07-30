@@ -696,7 +696,7 @@ export async function GET(request: Request) {
         scope: isFilteredReport
           ? `FILTERED REPORT · ${recordCountText}`
           : `AGGREGATE REPORT · ${recordCountText}`,
-        territory: "San Cristobal · Galapagos · Ecuador",
+        territory: "San Cristóbal · Galápagos · Ecuador",
         period: "Consulted period",
         generated: "Generated at UTC",
         issued: "Issue date UTC",
@@ -849,7 +849,7 @@ export async function GET(request: Request) {
         };
     const prologueText = locale === "es"
       ? `Este informe contiene ${recordCountText}, observados entre ${periodStart} y ${periodEnd}. Su finalidad es presentar una lectura pública, reproducible y metodológicamente trazable de datos controlados de InfinityAtlas para San Cristóbal. Es una demostración pública controlada: no constituye un diagnóstico clínico, no verifica por sí sola un evento territorial y no presenta los puntajes como emergencias reales.`
-      : `This report contains ${recordCountText}, observed from ${periodStart} to ${periodEnd}. Its purpose is to provide a public, reproducible and methodologically traceable reading of controlled InfinityAtlas data for San Cristobal. It is a controlled public demonstration: it is not a clinical diagnosis, does not independently verify a territorial event and does not present scores as real emergencies.`;
+      : `This report contains ${recordCountText}, observed from ${periodStart} to ${periodEnd}. Its purpose is to provide a public, reproducible and methodologically traceable reading of controlled InfinityAtlas data for San Cristóbal. It is a controlled public demonstration: it is not a clinical diagnosis, does not independently verify a territorial event and does not present scores as real emergencies.`;
     const purposeText = locale === "es"
       ? "Organizar cada registro autorizado, su trazabilidad pública, sus componentes metodológicos y su ubicación permitida para revisión y demostración del prototipo."
       : "Organize each authorized record, its public traceability, methodological components and permitted location for prototype review and demonstration.";

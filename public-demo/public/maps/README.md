@@ -1,4 +1,4 @@
-# San Cristobal Public Map Base
+# San Cristóbal Public Map Base
 
 `san-cristobal-osm-z11.png` is a static OpenStreetMap base used only by the
 public PDF report.

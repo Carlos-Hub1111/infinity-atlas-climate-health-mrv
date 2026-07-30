@@ -4,7 +4,7 @@ import { PublicDashboard } from "./PublicDashboard";
 export const metadata: Metadata = {
   title: "InfinityAtlas Climate & Health MRV Toolkit",
   description:
-    "Controlled public demonstration of territorial climate and health MRV for San Cristobal, Galapagos.",
+    "Controlled public demonstration of territorial climate and health MRV for San Cristóbal, Galapagos.",
 };
 
 export default function Home() {

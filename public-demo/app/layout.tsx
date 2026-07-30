@@ -4,7 +4,7 @@ import "./globals.css";
 
 const title = "InfinityAtlas Climate & Health MRV Toolkit";
 const description =
-  "Controlled public territorial intelligence demonstration for San Cristobal, Galapagos.";
+  "Controlled public territorial intelligence demonstration for San Cristóbal, Galapagos.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const incoming = await headers();

@@ -475,7 +475,9 @@ async function loginAs(role: keyof typeof users) {
     target: { value: "local-password" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-  await screen.findByText(users[role].full_name);
+  await screen.findByText(
+    role === "admin" ? "Demo Administrator" : users[role].full_name,
+  );
 }
 
 async function openPublicSurface(): Promise<HTMLIFrameElement> {
@@ -646,11 +648,11 @@ describe("Sprint 1B application", () => {
     expect(screen.getByText("climate-health-risk-v0.1")).toBeInTheDocument();
 
     const recordTitle = screen.getByLabelText("Record title");
-    expect(recordTitle).toHaveValue("Water observation — San Cristobal");
+    expect(recordTitle).toHaveValue("Water observation — San Cristóbal");
     fireEvent.change(screen.getByLabelText("Category"), {
       target: { value: "heat" },
     });
-    expect(recordTitle).toHaveValue("Heat observation — San Cristobal");
+    expect(recordTitle).toHaveValue("Heat observation — San Cristóbal");
     fireEvent.change(recordTitle, {
       target: { value: "Heat risk near the controlled route" },
     });
@@ -691,11 +693,11 @@ describe("Sprint 1B application", () => {
     const search = screen.getByLabelText("Search observations");
     fireEvent.change(search, { target: { value: "controlled water" } });
     expect(
-      screen.getByText("#4 — Controlled water observation — San Cristobal"),
+      screen.getByText("#4 — Controlled water observation — San Cristóbal"),
     ).toBeInTheDocument();
     fireEvent.change(search, { target: { value: "#4" } });
     expect(
-      screen.getByText("#4 — Controlled water observation — San Cristobal"),
+      screen.getByText("#4 — Controlled water observation — San Cristóbal"),
     ).toBeInTheDocument();
 
     fireEvent.click(
@@ -708,7 +710,7 @@ describe("Sprint 1B application", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save title" }));
     expect(
       await screen.findByText(
-        "#4 — Controlled water evidence review — San Cristobal",
+        "#4 — Controlled water evidence review — San Cristóbal",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Record #4 title updated.")).toBeInTheDocument();
@@ -721,7 +723,7 @@ describe("Sprint 1B application", () => {
     await loginAs("monitor");
     expect(
       await screen.findByText(
-        "#4 — Controlled water observation — San Cristobal",
+        "#4 — Controlled water observation — San Cristóbal",
       ),
     ).toBeInTheDocument();
     expect(
@@ -816,7 +818,7 @@ describe("Sprint 1B application", () => {
     render(<App />);
     await loginAs("public");
     expect(screen.getByText("Public user")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "San Cristobal climate and health dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "San Cristóbal climate and health dashboard" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
   });
@@ -889,6 +891,7 @@ describe("Sprint 1B application", () => {
     fireEvent.change(screen.getByLabelText("Language"), {
       target: { value: "es" },
     });
+    expect(screen.getByText("Demo Administrador")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Estado de publicación pública" }),
     ).toBeInTheDocument();
@@ -913,7 +916,7 @@ describe("Sprint 1B application", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save title" }));
     expect(
       await screen.findByText(
-        "#6 — Validated heat risk review — San Cristobal",
+        "#6 — Validated heat risk review — San Cristóbal",
       ),
     ).toBeInTheDocument();
   });
@@ -940,15 +943,15 @@ describe("Sprint 1B application", () => {
     );
     fireEvent.change(observationSearch, { target: { value: "6" } });
     expect(
-      screen.getByText("#6 — Heat risk controlled test — San Cristobal"),
+      screen.getByText("#6 — Heat risk controlled test — San Cristóbal"),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText("#4 — Controlled water observation — San Cristobal"),
+      screen.queryByText("#4 — Controlled water observation — San Cristóbal"),
     ).not.toBeInTheDocument();
 
     fireEvent.change(observationSearch, { target: { value: "heat risk" } });
     expect(
-      screen.getByText("#6 — Heat risk controlled test — San Cristobal"),
+      screen.getByText("#6 — Heat risk controlled test — San Cristóbal"),
     ).toBeInTheDocument();
 
     fireEvent.change(observationSearch, { target: { value: "" } });
@@ -956,10 +959,10 @@ describe("Sprint 1B application", () => {
       target: { value: "heat" },
     });
     expect(
-      screen.getByText("#6 — Heat risk controlled test — San Cristobal"),
+      screen.getByText("#6 — Heat risk controlled test — San Cristóbal"),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText("#4 — Controlled water observation — San Cristobal"),
+      screen.queryByText("#4 — Controlled water observation — San Cristóbal"),
     ).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Event"), {
@@ -977,7 +980,7 @@ describe("Sprint 1B application", () => {
     );
     expect(
       screen.getByRole("heading", {
-        name: "#6 — Heat risk controlled test — San Cristobal",
+        name: "#6 — Heat risk controlled test — San Cristóbal",
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Clarification requested.")).toBeInTheDocument();

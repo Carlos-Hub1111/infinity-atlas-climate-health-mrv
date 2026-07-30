@@ -65,6 +65,7 @@ import {
   translations,
   translateValue,
 } from "./i18n";
+import { localizedUserName, normalizeSanCristobal } from "./presentation";
 
 type WorkspaceView = "dashboard" | "observations" | "review" | "users" | "audit";
 type EntrySurface = "portal" | "public" | "institutional";
@@ -145,7 +146,7 @@ export function suggestedRecordTitle(
 ): string {
   return replaceParams(translations[locale].observationForm.recordTitleSuggestion, {
     category: translations[locale].categories[category],
-    territory: territoryName,
+    territory: normalizeSanCristobal(territoryName),
   }).slice(0, 80);
 }
 
@@ -169,6 +170,36 @@ function statusClass(status: Observation["status"]): string {
 
 function riskClass(level: RiskScore["risk_level"]): string {
   return `riskValue risk-${level}`;
+}
+
+function normalizeObservationForDisplay(observation: Observation): Observation {
+  return {
+    ...observation,
+    record_title: normalizeSanCristobal(observation.record_title),
+    description: normalizeSanCristobal(observation.description),
+    source_name: normalizeSanCristobal(observation.source_name),
+    responsible_role: normalizeSanCristobal(observation.responsible_role),
+    evidence_items: observation.evidence_items.map((evidence) => ({
+      ...evidence,
+      description: evidence.description
+        ? normalizeSanCristobal(evidence.description)
+        : evidence.description,
+      source_name: normalizeSanCristobal(evidence.source_name),
+    })),
+  };
+}
+
+function normalizeAuditForDisplay(event: AuditEvent): AuditEvent {
+  return {
+    ...event,
+    previous_state: event.previous_state
+      ? normalizeSanCristobal(event.previous_state)
+      : event.previous_state,
+    new_state: event.new_state
+      ? normalizeSanCristobal(event.new_state)
+      : event.new_state,
+    comment: event.comment ? normalizeSanCristobal(event.comment) : event.comment,
+  };
 }
 
 function evidenceDomain(uri: string): string | null {
@@ -309,7 +340,11 @@ export function App() {
 
   const loadPublicSummary = React.useCallback(async () => {
     try {
-      setPublicSummary(await getJson<PublicSummary>("/api/v1/public/summary", false));
+      const summary = await getJson<PublicSummary>("/api/v1/public/summary", false);
+      setPublicSummary({
+        ...summary,
+        territory_name: normalizeSanCristobal(summary.territory_name),
+      });
       setPublicError(false);
     } catch {
       setPublicError(true);
@@ -360,13 +395,22 @@ export function App() {
           getJson<Observation[]>("/api/v1/observations"),
         ]);
         setProjects(nextProjects);
-        setTerritories(nextTerritories);
-        setObservations(nextObservations);
+        setTerritories(
+          nextTerritories.map((territory) => ({
+            ...territory,
+            name: normalizeSanCristobal(territory.name),
+          })),
+        );
+        setObservations(
+          nextObservations.map(normalizeObservationForDisplay),
+        );
         await loadRisks(nextObservations);
 
         const preferred =
           nextTerritories.find(
-            (territory) => territory.name === "San Cristobal" && !territory.is_synthetic,
+            (territory) =>
+              normalizeSanCristobal(territory.name) === "San Cristóbal" &&
+              !territory.is_synthetic,
           ) ?? nextTerritories[0];
         if (preferred) {
           setForm((current) => ({
@@ -405,7 +449,14 @@ export function App() {
       getJson<PublicSummary>("/api/v1/public/summary", false).catch(() => null),
     ]);
     setHealth(nextHealth);
-    setPublicSummary(nextSummary);
+    setPublicSummary(
+      nextSummary
+        ? {
+            ...nextSummary,
+            territory_name: normalizeSanCristobal(nextSummary.territory_name),
+          }
+        : null,
+    );
     setPublicError(!nextSummary);
     setServiceChecks({
       frontend: frontendReady,
@@ -449,7 +500,7 @@ export function App() {
       return;
     }
     getJson<AuditEvent[]>(`/api/v1/observations/${selectedId}/audit`)
-      .then(setSelectedAudit)
+      .then((events) => setSelectedAudit(events.map(normalizeAuditForDisplay)))
       .catch(() => setSelectedAudit([]));
   }, [selectedId, user]);
 
@@ -583,9 +634,11 @@ export function App() {
       if (user) await loadWorkspace(user);
       setSelectedId(selectedObservation.id);
       setSelectedAudit(
-        await getJson<AuditEvent[]>(
-          `/api/v1/observations/${selectedObservation.id}/audit`,
-        ),
+        (
+          await getJson<AuditEvent[]>(
+            `/api/v1/observations/${selectedObservation.id}/audit`,
+          )
+        ).map(normalizeAuditForDisplay),
       );
       await loadPublicSummary();
     } catch {
@@ -611,7 +664,11 @@ export function App() {
     setView(nextView);
     if (nextView === "audit") {
       try {
-        setAdminAudit(await getJson<AuditEvent[]>("/api/v1/admin/audit"));
+        setAdminAudit(
+          (await getJson<AuditEvent[]>("/api/v1/admin/audit")).map(
+            normalizeAuditForDisplay,
+          ),
+        );
       } catch {
         setAdminAudit([]);
       }
@@ -684,7 +741,7 @@ export function App() {
               <div className="userIdentity">
                 <UserRound size={17} />
                 <div>
-                  <strong>{user.full_name}</strong>
+                  <strong>{localizedUserName(user.full_name, user.username, locale)}</strong>
                   <span>{translateValue(t.roles, user.role.name, user.role.name)}</span>
                 </div>
               </div>
@@ -1141,7 +1198,9 @@ function ObservationForm({
             <span>{t.observationForm.territory}</span>
             <select value={form.territoryId} onChange={(event) => chooseTerritory(event.target.value)} required>
               {availableTerritories.map((territory) => (
-                <option key={territory.id} value={territory.id}>{territory.name}</option>
+                <option key={territory.id} value={territory.id}>
+                  {normalizeSanCristobal(territory.name)}
+                </option>
               ))}
             </select>
           </label>
@@ -2125,7 +2184,7 @@ function UserAdministration({
         {users.map((account) => (
           <div className="userRow" role="row" key={account.id}>
             <div>
-              <strong>{account.full_name}</strong>
+              <strong>{localizedUserName(account.full_name, account.username, locale)}</strong>
               <span>@{account.username}</span>
             </div>
             <span className="tag tagNeutral">{t.roles[account.role.name]}</span>
@@ -2162,7 +2221,10 @@ function PublicSummaryPanel({
       ) : (
         <>
           <div className="publicMeta">
-            <div><span>{t.public.territory}</span><strong>{summary.territory_name}</strong></div>
+            <div>
+              <span>{t.public.territory}</span>
+              <strong>{normalizeSanCristobal(summary.territory_name)}</strong>
+            </div>
             <div><span>{t.public.timezone}</span><strong>{summary.timezone}</strong></div>
             <div><span>{t.public.total}</span><strong>{summary.total_observations}</strong></div>
           </div>

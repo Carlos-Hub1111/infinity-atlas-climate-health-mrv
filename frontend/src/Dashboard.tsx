@@ -49,6 +49,7 @@ import {
   translateValue,
 } from "./i18n";
 import { TerritoryMap } from "./TerritoryMap";
+import { normalizeSanCristobal } from "./presentation";
 import "./dashboard.css";
 
 type Filters = {
@@ -366,7 +367,16 @@ export function Dashboard({
         `${endpoint}${queryString(applied)}`,
         isInternal,
       );
-      setDashboard(result);
+      setDashboard({
+        ...result,
+        territory: result.territory
+          ? { ...result.territory, name: normalizeSanCristobal(result.territory.name) }
+          : null,
+        available_territories: result.available_territories.map((territory) => ({
+          ...territory,
+          name: normalizeSanCristobal(territory.name),
+        })),
+      });
       if (result.territory) {
         setClimateLoading(true);
         try {
@@ -601,7 +611,9 @@ export function Dashboard({
             >
               <option value="">{t.dashboard.defaultTerritory}</option>
               {dashboard?.available_territories.map((territory) => (
-                <option key={territory.id} value={territory.id}>{territory.name}</option>
+                <option key={territory.id} value={territory.id}>
+                  {normalizeSanCristobal(territory.name)}
+                </option>
               ))}
             </select>
           </label>
