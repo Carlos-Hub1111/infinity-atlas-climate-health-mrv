@@ -32,6 +32,9 @@ function Stop-TrustedProcessTree {
     Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
 }
 
+if ($record.public_demo) {
+    Stop-TrustedProcessTree -ProcessId ([int]$record.public_demo)
+}
 Stop-TrustedProcessTree -ProcessId ([int]$record.frontend)
 Stop-TrustedProcessTree -ProcessId ([int]$record.backend)
 Remove-Item -LiteralPath $RuntimeFile -Force

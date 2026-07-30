@@ -307,6 +307,12 @@ function installFetchMock(options?: {
     vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = String(input);
       const method = init?.method ?? "GET";
+      if (url.endsWith("/health.json")) {
+        return response({
+          status: "ok",
+          component: "infinityatlas-central-portal",
+        });
+      }
       if (url.endsWith("/health")) {
         return response({
           status: "ok",
@@ -472,19 +478,19 @@ async function loginAs(role: keyof typeof users) {
   await screen.findByText(users[role].full_name);
 }
 
-async function openPublicSurface() {
+async function openPublicSurface(): Promise<HTMLIFrameElement> {
   const returnToPortal = screen.queryByRole("button", {
     name: "Back to Central Access Portal",
   });
   if (returnToPortal) fireEvent.click(returnToPortal);
-  if (!screen.queryByRole("heading", { name: "San Cristobal climate and health dashboard" })) {
+  if (!screen.queryByTitle("InfinityAtlas approved public dashboard")) {
     fireEvent.click(
       await screen.findByRole("button", { name: "Open public information" }),
     );
   }
-  await screen.findByRole("heading", {
-    name: "San Cristobal climate and health dashboard",
-  });
+  return screen.findByTitle(
+    "InfinityAtlas approved public dashboard",
+  ) as Promise<HTMLIFrameElement>;
 }
 
 async function openInstitutionalSurface() {
@@ -530,12 +536,15 @@ describe("Sprint 1B application", () => {
     expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Username or email")).not.toBeInTheDocument();
 
-    await openPublicSurface();
-    expect(screen.getByRole("heading", { name: "San Cristobal climate and health dashboard" })).toBeInTheDocument();
-    expect((await screen.findAllByText("San Cristobal")).length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText("Territorial intelligence, traceability and trusted impact data.").length,
-    ).toBeGreaterThan(0);
+    const publicDashboard = await openPublicSurface();
+    expect(publicDashboard).toHaveAttribute(
+      "src",
+      "http://127.0.0.1:4173/?lang=en",
+    );
+    expect(publicDashboard).toHaveAttribute(
+      "sandbox",
+      expect.stringContaining("allow-downloads"),
+    );
     expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Back to Central Access Portal" }));
@@ -554,59 +563,48 @@ describe("Sprint 1B application", () => {
     ).toBeInTheDocument();
   });
 
-  it("explains every public review status with accessible bilingual tooltips", async () => {
+  it("reports real platform checks with an accessible bilingual status tooltip", async () => {
     render(<App />);
-    await openPublicSurface();
+    expect(
+      await screen.findAllByText("Platform services available"),
+    ).toHaveLength(2);
+    const statusHelp = screen.getAllByRole("button", {
+      name: "What the platform service status checks",
+    })[0];
+    expect(statusHelp).toHaveAttribute("aria-expanded", "false");
+    fireEvent.mouseEnter(statusHelp.parentElement!);
+    expect(await screen.findByRole("tooltip")).toBeInTheDocument();
+    fireEvent.mouseLeave(statusHelp.parentElement!);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
 
-    const pendingHelp = await screen.findByRole("button", {
-      name: "More information about Pending",
-    });
-    expect(pendingHelp).toHaveAttribute("aria-expanded", "false");
-    fireEvent.focus(pendingHelp);
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Record received and not yet reviewed by an authorized person.",
+    fireEvent.focus(statusHelp);
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent(
+      "Central Portal: available",
     );
-    expect(pendingHelp).toHaveAttribute("aria-expanded", "true");
-    fireEvent.keyDown(pendingHelp, { key: "Escape" });
+    expect(tooltip).toHaveTextContent("Backend /health: available");
+    expect(tooltip).toHaveTextContent("Public API: available");
+    expect(tooltip).toHaveClass("serviceTooltipFloating");
+    expect(tooltip.parentElement).toBe(document.body);
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    fireEvent.click(statusHelp);
+    expect(await screen.findByRole("tooltip")).toBeInTheDocument();
+    fireEvent.click(statusHelp);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    fireEvent.focus(statusHelp);
+    expect(await screen.findByRole("tooltip")).toBeInTheDocument();
+    fireEvent.keyDown(statusHelp, { key: "Escape" });
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Language"), {
       target: { value: "es" },
     });
-    const validatedHelp = screen.getByRole("button", {
-      name: "Más información sobre Validado",
-    });
-    fireEvent.click(validatedHelp);
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Registro revisado metodológicamente y considerado completo. No confirma por sí solo que el evento ocurrió.",
-    );
-
-    fireEvent.click(validatedHelp);
-    const provenanceHelp = screen.getByRole("button", {
-      name: "Más información sobre Prueba controlada",
-    });
-    fireEvent.click(provenanceHelp);
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "No representa un evento territorial validado.",
-    );
-    fireEvent.click(provenanceHelp);
-
-    const formulaHelp = screen.getByRole("button", {
-      name: "Cómo se calcula el puntaje metodológico de riesgo",
-    });
-    fireEvent.focus(formulaHelp);
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Puntaje de riesgo = Peligro + Exposición + Vulnerabilidad.",
-    );
-    fireEvent.keyDown(formulaHelp, { key: "Escape" });
-
-    const moderateHelp = screen.getByRole("button", {
-      name: "Más información sobre riesgo Moderado",
-    });
-    fireEvent.click(moderateHelp);
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Puntaje metodológico de 6 a 8.",
-    );
+    expect(
+      screen.getAllByText("Servicios de la plataforma disponibles"),
+    ).toHaveLength(2);
   });
 
   it("renders login errors without exposing credential details", async () => {
@@ -642,6 +640,9 @@ describe("Sprint 1B application", () => {
     expect(await screen.findByText("26.6 °C")).toBeInTheDocument();
     expect(screen.getByText("Monitor / Technician")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Public release status" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("climate-health-risk-v0.1")).toBeInTheDocument();
 
     const recordTitle = screen.getByLabelText("Record title");
@@ -797,7 +798,7 @@ describe("Sprint 1B application", () => {
 
     expect(await screen.findByRole("heading", { name: "Methodological validation" })).toBeInTheDocument();
     expect(screen.getByText("Hazard 2 + Exposure 3 + Vulnerability 2 = 7")).toBeInTheDocument();
-    expect(screen.getByText("Observation created")).toBeInTheDocument();
+    expect(await screen.findByText("Observation created")).toBeInTheDocument();
     expect(screen.getByText(/does not constitute a medical diagnosis/)).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
 
@@ -820,35 +821,27 @@ describe("Sprint 1B application", () => {
     expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
   });
 
-  it("applies reproducible dashboard filters and renders a clear empty state", async () => {
+  it("routes #public to the frozen public-demo surface instead of a reduced dashboard", async () => {
     render(<App />);
-    await openPublicSurface();
-    await screen.findByRole("button", { name: "More information about Pending" });
-    fireEvent.change(screen.getByLabelText("From date"), {
-      target: { value: "2027-01-01" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
-    expect(await screen.findByText("1 active filters")).toBeInTheDocument();
-    expect(window.location.search).toContain("date_from=2027-01-01");
-    expect(
-      (await screen.findAllByText("No data matches the active filters.")).length,
-    ).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
-    await waitFor(() => expect(window.location.search).toBe(""));
+    const dashboardFrame = await openPublicSurface();
+    expect(window.location.hash).toBe("#public");
+    expect(dashboardFrame).toHaveAttribute(
+      "src",
+      "http://127.0.0.1:4173/?lang=en",
+    );
+    expect(screen.queryByText("Global filters")).not.toBeInTheDocument();
+    expect(screen.queryByText("Internal PDF")).not.toBeInTheDocument();
   });
 
-  it("renders a filter-consistent map with safe popup content and attribution", async () => {
+  it("keeps the approved public surface isolated from institutional controls", async () => {
     render(<App />);
-    await openPublicSurface();
-    expect(
-      await screen.findByRole("heading", { name: "Territorial map" }),
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText("#4 · Controlled water observation"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Map data (c) OpenStreetMap contributors")).toBeInTheDocument();
-    expect(screen.getAllByText("Controlled test").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Territorial monitor")).not.toBeInTheDocument();
+    const dashboardFrame = await openPublicSurface();
+    expect(dashboardFrame).toHaveAttribute(
+      "sandbox",
+      expect.not.stringContaining("allow-top-navigation"),
+    );
+    expect(screen.queryByLabelText("Username or email")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
     expect(screen.queryByText("Clarification requested.")).not.toBeInTheDocument();
   });
 
@@ -864,9 +857,7 @@ describe("Sprint 1B application", () => {
 
   it("shows only public downloads publicly and authorized downloads internally", async () => {
     render(<App />);
-    await openPublicSurface();
-    expect(await screen.findByRole("button", { name: "Public PDF" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Public CSV" })).toBeInTheDocument();
+    expect(await openPublicSurface()).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Internal PDF" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Internal CSV" })).not.toBeInTheDocument();
 
@@ -874,6 +865,38 @@ describe("Sprint 1B application", () => {
     fireEvent.click(screen.getByRole("button", { name: "Dashboard" }));
     expect(await screen.findByRole("button", { name: "Internal PDF" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Internal CSV" })).toBeInTheDocument();
+  });
+
+  it("shows the bilingual publication boundary to administrators without a release action", async () => {
+    render(<App />);
+    await loginAs("admin");
+
+    expect(
+      await screen.findByRole("heading", { name: "Public release status" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Internal use — Not authorized for public release"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Methodological validation does not produce automatic publication.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /publish|release/i }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Language"), {
+      target: { value: "es" },
+    });
+    expect(
+      screen.getByRole("heading", { name: "Estado de publicación pública" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Uso interno — No autorizado para publicación pública",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("lets an administrator rename a validated record", async () => {
@@ -902,7 +925,8 @@ describe("Sprint 1B application", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Demo users" }));
     expect(await screen.findByRole("heading", { name: "Local demonstration users" })).toBeInTheDocument();
     const toggles = screen.getAllByRole("checkbox");
-    expect(toggles.length).toBe(3);
+    expect(toggles.length).toBe(2);
+    expect(screen.queryByText("@demo-validator")).not.toBeInTheDocument();
     fireEvent.click(toggles[1]);
     await waitFor(() => expect(toggles[1]).not.toBeChecked());
 

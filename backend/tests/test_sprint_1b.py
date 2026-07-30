@@ -43,8 +43,10 @@ class Sprint1BApiTests(unittest.TestCase):
         )
         self.original_secret = settings.jwt_secret_key
         self.original_expiry = settings.jwt_access_token_expire_minutes
+        self.original_demo_validator_enabled = settings.demo_validator_enabled
         settings.jwt_secret_key = "test-only-signing-key-with-at-least-32-characters"
         settings.jwt_access_token_expire_minutes = 60
+        settings.demo_validator_enabled = False
 
         with self.session_factory() as db:
             roles = {}
@@ -97,6 +99,7 @@ class Sprint1BApiTests(unittest.TestCase):
         app.dependency_overrides.clear()
         settings.jwt_secret_key = self.original_secret
         settings.jwt_access_token_expire_minutes = self.original_expiry
+        settings.demo_validator_enabled = self.original_demo_validator_enabled
         self.engine.dispose()
 
     def login(self, role: str, password: str = PASSWORD) -> dict[str, str]:
@@ -184,6 +187,35 @@ class Sprint1BApiTests(unittest.TestCase):
                     .where(AuthSession.revoked_at.is_not(None))
                 )
             )
+
+    def test_optional_demo_validator_login_is_disabled_by_configuration(self) -> None:
+        with self.session_factory() as db:
+            validator_role = db.scalar(select(Role).where(Role.name == "validator"))
+            db.add(
+                User(
+                    full_name="Optional Demo Validator",
+                    username="demo-validator",
+                    email="demo.validator@example.local",
+                    password_hash=hash_password(PASSWORD),
+                    role_id=validator_role.id,
+                    is_active=True,
+                    is_synthetic=True,
+                )
+            )
+            db.commit()
+
+        blocked = self.client.post(
+            "/api/v1/auth/login",
+            json={"identifier": "demo-validator", "password": PASSWORD},
+        )
+        self.assertEqual(blocked.status_code, 401)
+
+        settings.demo_validator_enabled = True
+        enabled = self.client.post(
+            "/api/v1/auth/login",
+            json={"identifier": "demo-validator", "password": PASSWORD},
+        )
+        self.assertEqual(enabled.status_code, 200)
 
     def test_role_permissions_and_public_aggregation(self) -> None:
         created, monitor_headers = self.create_as_monitor()
@@ -341,6 +373,50 @@ class Sprint1BApiTests(unittest.TestCase):
                 2,
             )
 
+    def test_administrator_reuses_validation_rules_and_records_audit(self) -> None:
+        created, _ = self.create_as_monitor()
+        admin_headers = self.login("admin")
+
+        missing_comment = self.client.post(
+            f"/api/v1/observations/{created['id']}/validation",
+            json={"status": "observed"},
+            headers=admin_headers,
+        )
+        self.assertEqual(missing_comment.status_code, 422)
+
+        observed = self.client.post(
+            f"/api/v1/observations/{created['id']}/validation",
+            json={"status": "observed", "comment": "Administrative methodological review."},
+            headers=admin_headers,
+        )
+        self.assertEqual(observed.status_code, 201)
+        validated = self.client.post(
+            f"/api/v1/observations/{created['id']}/validation",
+            json={"status": "validated", "comment": "Controlled clarification accepted."},
+            headers=admin_headers,
+        )
+        self.assertEqual(validated.status_code, 201)
+
+        rejected_record, _ = self.create_as_monitor()
+        rejected = self.client.post(
+            f"/api/v1/observations/{rejected_record['id']}/validation",
+            json={"status": "rejected", "comment": "Minimum evidence requirements not met."},
+            headers=admin_headers,
+        )
+        self.assertEqual(rejected.status_code, 201)
+
+        audit = self.client.get(
+            f"/api/v1/observations/{created['id']}/audit",
+            headers=admin_headers,
+        )
+        validation_events = [
+            event
+            for event in audit.json()
+            if event["event_type"] == "validation_created"
+        ]
+        self.assertEqual(len(validation_events), 2)
+        self.assertTrue(all(event["actor_role"] == "admin" for event in validation_events))
+
     def test_risk_formula_bands_version_and_recalculation(self) -> None:
         self.assertEqual(calculate_risk(1, 1, 1), (3, "low"))
         self.assertEqual(calculate_risk(2, 2, 2), (6, "moderate"))
@@ -407,7 +483,18 @@ class DemoUserBootstrapTests(unittest.TestCase):
                     app_env="test",
                     reset_passwords=True,
                 )
-                self.assertEqual(len(reset["passwords_reset"]), 3)
+                self.assertEqual(len(reset["passwords_reset"]), 2)
+                validator = db.scalar(select(User).where(User.username == "demo-validator"))
+                self.assertFalse(validator.is_active)
+                reactivated = bootstrap_demo_users(
+                    db,
+                    app_env="test",
+                    reset_passwords=True,
+                    validator_enabled=True,
+                )
+                self.assertEqual(len(reactivated["passwords_reset"]), 3)
+                db.refresh(validator)
+                self.assertTrue(validator.is_active)
                 self.assertEqual(
                     set(db.scalars(select(Role.name))),
                     {"admin", "monitor", "validator", "public"},

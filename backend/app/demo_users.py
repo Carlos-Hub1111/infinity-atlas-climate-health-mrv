@@ -43,6 +43,7 @@ def bootstrap_demo_users(
     *,
     app_env: str,
     reset_passwords: bool = False,
+    validator_enabled: bool = False,
 ) -> dict:
     if app_env.lower() not in LOCAL_ENVIRONMENTS:
         raise RuntimeError("Demo user creation is disabled outside local development and test.")
@@ -63,6 +64,7 @@ def bootstrap_demo_users(
     passwords_reset: list[str] = []
     generated_passwords: dict[str, str] = {}
     for role_name, (username, email, full_name) in DEMO_USERS.items():
+        account_enabled = role_name != "validator" or validator_enabled
         user = db.scalar(select(User).where(User.username == username))
         if user is None:
             user = db.scalar(select(User).where(User.email == email))
@@ -74,21 +76,21 @@ def bootstrap_demo_users(
                 full_name=full_name,
                 password_hash=hash_password(password),
                 role_id=roles[role_name].id,
-                is_active=True,
+                is_active=account_enabled,
                 is_synthetic=True,
             )
             db.add(user)
             created.append(username)
-            if generated:
+            if generated and account_enabled:
                 generated_passwords[username] = password
         else:
             user.username = username
             user.email = email
             user.full_name = full_name
             user.role_id = roles[role_name].id
-            user.is_active = True
+            user.is_active = account_enabled
             user.is_synthetic = True
-            if reset_passwords:
+            if reset_passwords and account_enabled:
                 password, generated = _password_for(role_name)
                 user.password_hash = hash_password(password)
                 passwords_reset.append(username)
@@ -103,6 +105,7 @@ def bootstrap_demo_users(
         "passwords_reset": passwords_reset,
         "retained_without_password_reset": retained,
         "generated_passwords_displayed_once": generated_passwords,
+        "validator_demo_enabled": validator_enabled,
     }
 
 
@@ -119,6 +122,7 @@ def main() -> None:
             db,
             app_env=settings.app_env,
             reset_passwords=arguments.reset_passwords,
+            validator_enabled=settings.demo_validator_enabled,
         )
     print(json.dumps(result, indent=2, sort_keys=True))
     if result["generated_passwords_displayed_once"]:

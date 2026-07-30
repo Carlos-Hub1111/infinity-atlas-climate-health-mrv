@@ -5,7 +5,7 @@ import test from "node:test";
 const file = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
 test("keeps the public surface branded, read-only and responsive", async () => {
-  const [page, layout, dashboard, css, packageJson, schema, brand] =
+  const [page, layout, dashboard, css, packageJson, schema, brand, worker] =
     await Promise.all([
       file("../app/page.tsx"),
       file("../app/layout.tsx"),
@@ -14,6 +14,7 @@ test("keeps the public surface branded, read-only and responsive", async () => {
       file("../package.json"),
       file("../db/schema.ts"),
       file("../../BRAND.md"),
+      file("../worker/index.ts"),
     ]);
 
   assert.match(page, /<PublicDashboard \/>/);
@@ -31,6 +32,9 @@ test("keeps the public surface branded, read-only and responsive", async () => {
   );
   assert.match(brand, /INFINITYGAIA S\.A\.S\. B\.I\.C\./);
   assert.match(brand, /does not grant permission/i);
+  assert.match(worker, /request\.method !== "GET" && request\.method !== "HEAD"/);
+  assert.match(worker, /status: 405/);
+  assert.match(worker, /Allow: "GET, HEAD"/);
   assert.doesNotMatch(dashboard, /UNICEF/);
 });
 
@@ -66,6 +70,9 @@ test("provides reproducible filters, safe results and filtered downloads", async
 
   assert.match(dashboard, /window\.history\.replaceState/);
   assert.match(dashboard, /function pageQuery\(filters: Filters, locale: Locale\)/);
+  assert.match(dashboard, /infinityatlas:set-locale/);
+  assert.match(dashboard, /infinityatlas:locale/);
+  assert.match(dashboard, /event\.origin !== parentOrigin/);
   assert.match(dashboard, /params\.set\("lang", "es"\)/);
   assert.match(dashboard, /setLocale\(params\.get\("lang"\) === "es"/);
   assert.match(dashboard, /activeFilterChips/);

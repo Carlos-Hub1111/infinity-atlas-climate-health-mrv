@@ -189,7 +189,17 @@ def health() -> HealthResponse:
 @app.post("/api/v1/auth/login", response_model=AuthResponse)
 def login(payload: LoginRequest, db: Annotated[Session, Depends(get_db)]) -> AuthResponse:
     user = find_user_by_identifier(db, payload.identifier)
-    if user is None or not user.is_active or not verify_password(payload.password, user.password_hash):
+    validator_demo_disabled = bool(
+        user
+        and user.username == "demo-validator"
+        and not settings.demo_validator_enabled
+    )
+    if (
+        user is None
+        or not user.is_active
+        or validator_demo_disabled
+        or not verify_password(payload.password, user.password_hash)
+    ):
         record_audit_event(
             db,
             event_type="login_failed",
@@ -652,6 +662,15 @@ def update_user_status(
         raise HTTPException(status_code=404, detail="User not found.")
     if user.id == current_user.id and not payload.is_active:
         raise HTTPException(status_code=409, detail="Administrators cannot deactivate themselves.")
+    if (
+        user.username == "demo-validator"
+        and payload.is_active
+        and not settings.demo_validator_enabled
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="The optional demo validator is disabled by configuration.",
+        )
     previous = str(user.is_active).lower()
     user.is_active = payload.is_active
     record_audit_event(

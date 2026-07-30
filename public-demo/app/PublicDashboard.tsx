@@ -975,6 +975,35 @@ export function PublicDashboard() {
   }, [locale]);
 
   React.useEffect(() => {
+    let parentOrigin: string | null = null;
+    try {
+      parentOrigin = document.referrer ? new URL(document.referrer).origin : null;
+    } catch {
+      parentOrigin = null;
+    }
+    const handlePortalMessage = (event: MessageEvent) => {
+      if (
+        !parentOrigin ||
+        event.origin !== parentOrigin ||
+        event.source !== window.parent ||
+        event.data?.type !== "infinityatlas:set-locale"
+      ) {
+        return;
+      }
+      if (event.data.locale !== "en" && event.data.locale !== "es") return;
+      setLocale(event.data.locale);
+      const value = pageQuery(filters, event.data.locale);
+      window.history.replaceState(
+        {},
+        "",
+        value ? `?${value}` : window.location.pathname,
+      );
+    };
+    window.addEventListener("message", handlePortalMessage);
+    return () => window.removeEventListener("message", handlePortalMessage);
+  }, [filters]);
+
+  React.useEffect(() => {
     if (!selectAllRef.current || !data) return;
     const visibleIds = data.observations.map((item) => item.id);
     const selectedVisible = visibleIds.filter((id) => selectedIds.has(id)).length;
@@ -1212,6 +1241,16 @@ export function PublicDashboard() {
       "",
       value ? `?${value}` : window.location.pathname,
     );
+    if (window.parent !== window && document.referrer) {
+      try {
+        window.parent.postMessage(
+          { type: "infinityatlas:locale", locale: nextLocale },
+          new URL(document.referrer).origin,
+        );
+      } catch {
+        // The dashboard continues independently when no trusted portal origin is available.
+      }
+    }
   }
 
   const selectedIdsValue = [...selectedIds]

@@ -25,6 +25,22 @@ export const es = {
     description:
       "Ingrese a la información pública autorizada o continúe al espacio institucional seguro.",
     availability: "Servicios de la plataforma disponibles",
+    serviceStatus: {
+      checking: "Comprobando servicios de la plataforma",
+      available: "Servicios de la plataforma disponibles",
+      partial: "Servicios parcialmente disponibles",
+      unavailable: "Plataforma no disponible",
+    },
+    serviceHelpLabel: "Qué comprueba el estado de servicios de la plataforma",
+    serviceHelp:
+      "InfinityAtlas comprueba la respuesta del Portal Central, el endpoint de salud del backend y la disponibilidad de la API pública.",
+    serviceChecks: {
+      frontend: "Portal Central",
+      backend: "Backend /health",
+      api: "API pública",
+    },
+    serviceReady: "disponible",
+    serviceUnavailable: "no disponible",
     publicTitle: "Explorar Dashboard Público",
     publicDescription:
       "Consulte indicadores agregados, clima, mapas, niveles de riesgo y reportes públicos autorizados sin iniciar sesión.",
@@ -38,6 +54,8 @@ export const es = {
     publicLocation: "Información pública",
     institutionalLocation: "Acceso institucional",
     backToPortal: "Volver al Portal Central de Acceso",
+    publicFrameTitle: "Dashboard público aprobado de InfinityAtlas",
+    publicFrameLoading: "Cargando el dashboard público aprobado",
     securityNote:
       "Las fronteras de datos públicos e institucionales permanecen separadas. La API de InfinityAtlas aplica los permisos.",
   },
@@ -126,8 +144,19 @@ export const es = {
     dashboard: "Dashboard",
     observations: "Observaciones",
     review: "Cola de validación",
+    adminReview: "Cola de revisión",
     users: "Usuarios demo",
     audit: "Auditoría",
+  },
+  publicRelease: {
+    title: "Estado de publicación pública",
+    status: "Uso interno — No autorizado para publicación pública",
+    details: [
+      "El registro permanece en el entorno institucional.",
+      "La validación metodológica no produce publicación automática.",
+      "La publicación externa está deshabilitada en este prototipo controlado.",
+      "Una fase financiada incorporará autorización, sanitización, auditoría, publicación y retiro seguro.",
+    ],
   },
   climate: {
     title: "Condiciones climáticas actuales",

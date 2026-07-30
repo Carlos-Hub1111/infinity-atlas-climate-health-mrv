@@ -31,8 +31,14 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { CentralPortal } from "./CentralPortal";
+import {
+  CentralPortal,
+  PlatformAvailability,
+  PlatformChecks,
+  PlatformServiceStatus,
+} from "./CentralPortal";
 import { Dashboard } from "./Dashboard";
+import { PublicDashboardBridge } from "./PublicDashboardBridge";
 import {
   AuditEvent,
   AuthResponse,
@@ -197,6 +203,12 @@ export function App() {
   const [health, setHealth] = React.useState<Health | null>(null);
   const [publicSummary, setPublicSummary] = React.useState<PublicSummary | null>(null);
   const [publicError, setPublicError] = React.useState(false);
+  const [serviceChecks, setServiceChecks] = React.useState<PlatformChecks>({
+    frontend: false,
+    backend: false,
+    api: false,
+  });
+  const [serviceChecksComplete, setServiceChecksComplete] = React.useState(false);
   const [sessionReady, setSessionReady] = React.useState(false);
   const [user, setUser] = React.useState<User | null>(null);
   const [loginIdentifier, setLoginIdentifier] = React.useState("");
@@ -370,7 +382,8 @@ export function App() {
           await loadClimate(preferred.id);
         }
         if (activeUser.role.name === "admin") {
-          setDemoUsers(await getJson<User[]>("/api/v1/admin/users"));
+          const accounts = await getJson<User[]>("/api/v1/admin/users");
+          setDemoUsers(accounts.filter((account) => account.username !== "demo-validator"));
         }
         if (activeUser.role.name !== "monitor") {
           setView("review");
@@ -383,19 +396,40 @@ export function App() {
     [loadClimate, loadRisks],
   );
 
-  React.useEffect(() => {
-    let active = true;
-    Promise.all([
+  const checkPlatformServices = React.useCallback(async () => {
+    const [frontendReady, nextHealth, nextSummary] = await Promise.all([
+      fetch("/health.json", { cache: "no-store" })
+        .then((response) => response.ok)
+        .catch(() => false),
       getJson<Health>("/health", false).catch(() => null),
       getJson<PublicSummary>("/api/v1/public/summary", false).catch(() => null),
-      hasStoredToken()
-        ? getJson<User>("/api/v1/auth/me").catch(() => null)
-        : Promise.resolve(null),
-    ]).then(([nextHealth, nextSummary, restoredUser]) => {
+    ]);
+    setHealth(nextHealth);
+    setPublicSummary(nextSummary);
+    setPublicError(!nextSummary);
+    setServiceChecks({
+      frontend: frontendReady,
+      backend: nextHealth?.status === "ok",
+      api: Boolean(nextSummary),
+    });
+    setServiceChecksComplete(true);
+  }, []);
+
+  React.useEffect(() => {
+    void checkPlatformServices();
+    const interval = window.setInterval(() => {
+      void checkPlatformServices();
+    }, 30000);
+    return () => window.clearInterval(interval);
+  }, [checkPlatformServices]);
+
+  React.useEffect(() => {
+    let active = true;
+    const restoredSession = hasStoredToken()
+      ? getJson<User>("/api/v1/auth/me").catch(() => null)
+      : Promise.resolve(null);
+    restoredSession.then((restoredUser) => {
       if (!active) return;
-      setHealth(nextHealth);
-      setPublicSummary(nextSummary);
-      if (!nextSummary) setPublicError(true);
       if (restoredUser) {
         setUser(restoredUser);
         void loadWorkspace(restoredUser);
@@ -584,6 +618,14 @@ export function App() {
     }
   }
 
+  const serviceStatus: PlatformAvailability = !serviceChecksComplete
+    ? "checking"
+    : serviceChecks.frontend && serviceChecks.backend && serviceChecks.api
+      ? "available"
+      : serviceChecks.frontend || serviceChecks.backend || serviceChecks.api
+        ? "partial"
+        : "unavailable";
+
   if (!sessionReady) {
     return (
       <main className="centerState">
@@ -631,9 +673,12 @@ export function App() {
               <option value="es">{translations.es.languageName}</option>
             </select>
           </label>
-          <span className={`connectionStatus ${health ? "connected" : "disconnected"}`}>
-            {health ? t.apiStatus : t.apiError}
-          </span>
+          <PlatformServiceStatus
+            locale={locale}
+            status={serviceStatus}
+            checks={serviceChecks}
+            compact
+          />
           {user && (
             <>
               <div className="userIdentity">
@@ -659,23 +704,13 @@ export function App() {
       {!user && entrySurface === "portal" ? (
         <CentralPortal
           locale={locale}
-          apiConnected={Boolean(health)}
+          serviceStatus={serviceStatus}
+          serviceChecks={serviceChecks}
           onOpenPublic={() => navigateEntrySurface("public")}
           onOpenInstitutional={() => navigateEntrySurface("institutional")}
         />
       ) : !user && entrySurface === "public" ? (
-        <main className="surfaceView publicEntry">
-          <div className="surfaceContext">
-            <BarChart3 size={18} />
-            <span>{t.portal.publicLocation}</span>
-            <small>{t.portal.publicBoundary}</small>
-          </div>
-          <Dashboard
-            locale={locale}
-            user={null}
-            apiConnected={Boolean(health)}
-          />
-        </main>
+        <PublicDashboardBridge locale={locale} onLocaleChange={setLocale} />
       ) : !user ? (
         <main className="surfaceView institutionalEntry">
           <div className="surfaceContext">
@@ -757,6 +792,10 @@ export function App() {
             onChange={selectAdminView}
             locale={locale}
           />
+
+          {user.role.name === "admin" && (
+            <PublicReleaseStatusPanel locale={locale} />
+          )}
 
           {view === "dashboard" && (
             <Dashboard
@@ -849,6 +888,29 @@ export function App() {
   );
 }
 
+function PublicReleaseStatusPanel({ locale }: { locale: Locale }) {
+  const t = translations[locale].publicRelease;
+  return (
+    <section
+      className="publicReleaseStatus"
+      aria-labelledby="public-release-status-title"
+    >
+      <div className="publicReleaseHeading">
+        <LockKeyhole size={20} aria-hidden="true" />
+        <div>
+          <h2 id="public-release-status-title">{t.title}</h2>
+          <strong>{t.status}</strong>
+        </div>
+      </div>
+      <div className="publicReleaseDetails">
+        {t.details.map((detail) => (
+          <p key={detail}>{detail}</p>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function RoleNavigation({
   user,
   view,
@@ -864,7 +926,7 @@ function RoleNavigation({
   const roleOptions: Array<[WorkspaceView, React.ReactNode, string]> =
     user.role.name === "admin"
       ? [
-          ["review", <ClipboardCheck size={17} />, t.nav.review],
+          ["review", <ClipboardCheck size={17} />, t.nav.adminReview],
           ["observations", <FileSearch size={17} />, t.nav.observations],
           ["users", <Users size={17} />, t.nav.users],
           ["audit", <FileClock size={17} />, t.nav.audit],

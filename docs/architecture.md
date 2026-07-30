@@ -189,12 +189,34 @@ selection is stored in browser session storage and does not alter the authentica
 Sprint 1D-A changes presentation and local navigation only. It does not change JWT contents, backend
 permissions, database schemas, public projections, evidence access or validation transitions.
 
+Sprint 1D-B reuses the frozen Sprint 1C public application directly under `#public`. The portal does
+not duplicate or recalculate public metrics. In local UAT, the approved `public-demo` process runs on
+port `4173` with its own local D1 state and is displayed inside the portal through a restricted iframe.
+The institutional application continues to use FastAPI and `backend/local.db`; neither database is
+joined or copied into the other.
+
+The primary demonstration path is:
+
+```mermaid
+flowchart LR
+    Monitor["Monitor / Technician"] --> Create["Create pending observation"]
+    Create --> Admin["Administrator review"]
+    Admin --> Decision["Observe, validate, or reject"]
+    Decision --> Audit["Append-only audit trail"]
+    Decision --> FuturePublication["Future authorized public publication"]
+```
+
+The Validator role, routes and permission tests remain intact for optional separation of duties.
+`demo-validator` is inactive by default and the login endpoint also enforces
+`DEMO_VALIDATOR_ENABLED=false`. Re-enabling it requires an explicit local configuration change and
+credential reset.
+
 ### Deployment boundary
 
 - The stable Cloudflare public Worker remains read-only and unchanged.
 - The institutional React frontend, FastAPI backend and internal SQLite database remain local.
 - No internal login, write route, demo credential or internal database is published during Sprint
-  1D-A.
+  1D-A or Sprint 1D-B local UAT.
 - Publishing institutional access requires a separate deployment design and explicit approval,
   including hardened secret storage, protected session transport, rate limiting, CORS review,
   durable database hosting and backup operations.

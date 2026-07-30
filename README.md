@@ -210,14 +210,20 @@ cd backend
 .\.venv\Scripts\python.exe -m app.demo_users
 ```
 
-`app.demo_users` is blocked outside local/development/test. It creates the usernames `demo-admin`,
-`demo-monitor` and `demo-validator`. Passwords come from local `DEMO_*_PASSWORD` environment values or
-are generated securely and displayed once in the local console. No functional password is published.
+`app.demo_users` is blocked outside local/development/test. The primary demonstration enables only
+`demo-admin` and `demo-monitor`. The `demo-validator` identity, role and permissions remain available
+for projects that require separation of duties, but its account is inactive and login is blocked while
+`DEMO_VALIDATOR_ENABLED=false`. Passwords come from local `DEMO_*_PASSWORD` environment values or are
+generated securely and displayed once in the local console. No functional password is published.
 To replace existing local demo passwords explicitly:
 
 ```powershell
 .\.venv\Scripts\python.exe -m app.demo_users --reset-passwords
 ```
+
+To reactivate the optional Validator path later, an authorized local operator must set
+`DEMO_VALIDATOR_ENABLED=true`, configure a local `DEMO_VALIDATOR_PASSWORD`, and rerun the explicit
+password-reset command. The account remains hidden from the primary two-role demonstration.
 
 The unauthenticated public view exposes aggregate counts only. Demo user creation is never performed by
 a migration, Docker startup or production startup.
@@ -250,13 +256,14 @@ confidential UNICEF material.
 
 ### Start and stop locally
 
-After the one-time backend/frontend installation and local `.env` setup:
+After the one-time backend, frontend and `public-demo` installation and local `.env` setup:
 
 ```powershell
 .\start-local.ps1
 ```
 
-Open `http://127.0.0.1:5173`. Stop both services safely with:
+The command starts the Central Portal, institutional API and the isolated read-only public dashboard.
+Open `http://127.0.0.1:5173`. Stop all three services safely with:
 
 ```powershell
 .\stop-local.ps1
@@ -278,6 +285,10 @@ Sprint 1C technical documents:
 - `docs/sprint-1c-a-dashboard.md`
 - `docs/sprint-1c-b-map-geoprivacy.md`
 - `docs/demo/README.md`
+
+Sprint 1D integration document:
+
+- `docs/sprint-1d-b-unified-demo-flow.md`
 
 ## 12-Month Roadmap
 

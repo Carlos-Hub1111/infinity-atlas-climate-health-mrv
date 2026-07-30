@@ -312,6 +312,7 @@ h3 {
 }
 
 .portalAvailability {
+  position: relative;
   display: inline-flex;
   min-height: 40px;
   align-items: center;
@@ -322,6 +323,15 @@ h3 {
   font-size: 0.76rem;
   font-weight: 800;
   white-space: nowrap;
+}
+
+.portalAvailability.compact {
+  min-height: 34px;
+  padding: 6px 9px;
+  border-color: #b7c9cd;
+  background: #f3f8f9;
+  color: #214752;
+  font-size: 0.7rem;
 }
 
 .availabilityDot {
@@ -335,8 +345,73 @@ h3 {
   background: #52c78b;
 }
 
+.availabilityDot.checking {
+  background: #8fa2a8;
+  animation: statusPulse 1.4s ease-in-out infinite;
+}
+
+.availabilityDot.partial {
+  background: #d6af42;
+}
+
 .availabilityDot.unavailable {
   background: #d26b62;
+}
+
+.portalAvailability.compact .availabilityDot {
+  border-color: #fff;
+  box-shadow: 0 0 0 1px rgba(8, 42, 58, 0.12);
+}
+
+.serviceInfoButton {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+}
+
+.serviceInfoButton:hover,
+.serviceInfoButton:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  outline: 2px solid #35b7c5;
+  outline-offset: 1px;
+}
+
+.portalAvailability.compact .serviceInfoButton:hover,
+.portalAvailability.compact .serviceInfoButton:focus-visible {
+  background: #e0eff1;
+}
+
+.serviceTooltipFloating {
+  position: fixed;
+  z-index: 10000;
+  display: grid;
+  width: min(330px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid #78a4ad;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(8, 42, 58, 0.2);
+  color: #183944;
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.45;
+  overflow-y: auto;
+  white-space: normal;
+}
+
+.serviceTooltipFloating > span:first-child {
+  margin-bottom: 3px;
+  color: #3f5e68;
+  font-weight: 500;
 }
 
 .accessChoiceGrid {
@@ -554,6 +629,35 @@ h3 {
   gap: 18px;
 }
 
+.publicDashboardBridge {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.publicFrameLoading {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1px solid #b7c9cd;
+  background: rgba(255, 255, 255, 0.9);
+  color: #35515c;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.publicDashboardFrame {
+  display: block;
+  width: 100%;
+  min-height: max(720px, calc(100vh - 230px));
+  border: 1px solid #9db7bd;
+  border-radius: 5px;
+  background: #eaf2f5;
+  box-shadow: 0 16px 36px rgba(8, 42, 58, 0.11);
+}
+
 .publicEntry .loginPanel {
   width: min(100%, 460px);
   justify-self: end;
@@ -719,6 +823,61 @@ textarea:focus {
 .workspaceNav button.active {
   background: #e5f1f0;
   color: #005f5a;
+}
+
+.publicReleaseStatus {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.28fr);
+  gap: 22px;
+  margin: 14px 0;
+  padding: 16px 18px;
+  border: 1px solid #9eb9bf;
+  border-left: 4px solid #d6af42;
+  background: #f7fafb;
+  box-shadow: 0 7px 18px rgba(8, 42, 58, 0.07);
+}
+
+.publicReleaseHeading {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.publicReleaseHeading svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #856b21;
+}
+
+.publicReleaseHeading h2 {
+  margin: 0 0 6px;
+  color: #123d4b;
+  font-size: 1rem;
+}
+
+.publicReleaseHeading strong {
+  display: inline-block;
+  color: #73591b;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.publicReleaseDetails {
+  display: grid;
+  gap: 5px;
+  color: #3f5861;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.publicReleaseDetails p {
+  margin: 0;
+}
+
+.publicReleaseDetails p::before {
+  margin-right: 7px;
+  color: #087e83;
+  content: "•";
 }
 
 .climateSection {
@@ -1740,6 +1899,16 @@ fieldset legend {
   }
 }
 
+@keyframes statusPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 1220px) {
   .appHeader {
     align-items: flex-start;
@@ -1819,6 +1988,11 @@ fieldset legend {
     width: 100%;
   }
 
+  .publicReleaseStatus {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
   .portalIntroduction {
     min-height: 0;
     grid-template-columns: 1fr;
@@ -1829,6 +2003,10 @@ fieldset legend {
   .portalAvailability {
     justify-self: start;
     white-space: normal;
+  }
+
+  .portalAvailability.compact {
+    width: 100%;
   }
 
   .accessChoiceGrid {
@@ -1951,6 +2129,10 @@ fieldset legend {
 
   .secondaryButton {
     width: 100%;
+  }
+
+  .publicDashboardFrame {
+    min-height: calc(100vh - 210px);
   }
 
   .auditSelectedHeader {

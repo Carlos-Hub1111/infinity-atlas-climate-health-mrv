@@ -25,6 +25,22 @@ export const en = {
     description:
       "Enter the authorized public information surface or continue to the secure institutional workspace.",
     availability: "Platform services available",
+    serviceStatus: {
+      checking: "Checking platform services",
+      available: "Platform services available",
+      partial: "Services partially available",
+      unavailable: "Platform unavailable",
+    },
+    serviceHelpLabel: "What the platform service status checks",
+    serviceHelp:
+      "InfinityAtlas checks the Central Portal response, the backend health endpoint and public API availability.",
+    serviceChecks: {
+      frontend: "Central Portal",
+      backend: "Backend /health",
+      api: "Public API",
+    },
+    serviceReady: "available",
+    serviceUnavailable: "unavailable",
     publicTitle: "Explore Public Dashboard",
     publicDescription:
       "View authorized aggregate indicators, climate, maps, risk levels and public reports without signing in.",
@@ -38,6 +54,8 @@ export const en = {
     publicLocation: "Public information",
     institutionalLocation: "Institutional access",
     backToPortal: "Back to Central Access Portal",
+    publicFrameTitle: "InfinityAtlas approved public dashboard",
+    publicFrameLoading: "Loading the approved public dashboard",
     securityNote:
       "Public and institutional data boundaries remain separated. Permissions are enforced by the InfinityAtlas API.",
   },
@@ -126,8 +144,19 @@ export const en = {
     dashboard: "Dashboard",
     observations: "Observations",
     review: "Validation queue",
+    adminReview: "Review queue",
     users: "Demo users",
     audit: "Audit",
+  },
+  publicRelease: {
+    title: "Public release status",
+    status: "Internal use — Not authorized for public release",
+    details: [
+      "The record remains in the institutional environment.",
+      "Methodological validation does not produce automatic publication.",
+      "External publication is disabled in this controlled prototype.",
+      "A funded phase will incorporate authorization, sanitization, audit, publication and safe withdrawal.",
+    ],
   },
   climate: {
     title: "Current climate conditions",

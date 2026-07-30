@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     demo_admin_password: str | None = None
     demo_monitor_password: str | None = None
     demo_validator_password: str | None = None
+    demo_validator_enabled: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env",
