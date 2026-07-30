@@ -1,0 +1,6 @@
+wrangler@4.92.0
+├─┬ @cloudflare/vite-plugin@1.37.1
+│ └── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+└── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+
+Found 1 version of wrangler

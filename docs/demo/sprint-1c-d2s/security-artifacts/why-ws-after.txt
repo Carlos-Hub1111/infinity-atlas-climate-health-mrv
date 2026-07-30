@@ -1,0 +1,10 @@
+ws@8.21.0
+├─┬ @cloudflare/vite-plugin@1.48.0
+│ └── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+└─┬ miniflare@4.20260722.1
+  ├── @cloudflare/vite-plugin@1.48.0 [deduped]
+  └─┬ wrangler@4.115.0
+    ├── @cloudflare/vite-plugin@1.48.0 [deduped]
+    └── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+
+Found 1 version of ws

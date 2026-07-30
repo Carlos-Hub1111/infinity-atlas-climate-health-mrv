@@ -1,0 +1,8 @@
+miniflare@4.20260515.0
+├─┬ @cloudflare/vite-plugin@1.37.1
+│ └── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+└─┬ wrangler@4.92.0
+  ├── @cloudflare/vite-plugin@1.37.1 [deduped]
+  └── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+
+Found 1 version of miniflare

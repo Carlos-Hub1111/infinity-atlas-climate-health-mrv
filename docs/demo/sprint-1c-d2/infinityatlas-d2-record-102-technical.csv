@@ -1,0 +1,2 @@
+﻿"observation_id","record_title","category","review_status","risk_score","risk_level","data_provenance","observed_at_utc","public_latitude","public_longitude","public_location_mode","methodology_version","public_record_number","record_title_en","record_title_es"
+"102","Controlled heat exposure review","heat","validated","11","critical","controlled_test","2026-07-22T17:15:00Z","-0.906","-89.609","approximate","climate-health-risk-v0.1","2","Controlled heat exposure review","Revisión controlada de exposición al calor"

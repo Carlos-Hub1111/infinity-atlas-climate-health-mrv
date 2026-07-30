@@ -1,0 +1,2 @@
+﻿"N.º público";"ID técnico";"Nombre corto del registro";"Categoría";"Estado de revisión";"Puntaje de riesgo";"Nivel de riesgo";"Procedencia del dato";"Fecha observada UTC";"Latitud pública";"Longitud pública";"Modo de ubicación pública";"Versión metodológica"
+"2";"102";"Revisión controlada de exposición al calor";"Calor";"Validado";"11";"Crítico";"Prueba controlada";"2026-07-22T17:15:00Z";"-0.906";"-89.609";"Ubicación pública aproximada";"climate-health-risk-v0.1"

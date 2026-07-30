@@ -1,0 +1,7 @@
+﻿"observation_id","record_title","category","review_status","risk_score","risk_level","data_provenance","observed_at_utc","public_latitude","public_longitude","public_location_mode","methodology_version"
+"101","Controlled water route observation","water","pending","7","moderate","controlled_test","2026-07-21T15:00:00Z","-0.9","-89.613","approximate","climate-health-risk-v0.1"
+"102","Controlled heat exposure review","heat","validated","11","critical","controlled_test","2026-07-22T17:15:00Z","-0.906","-89.609","approximate","climate-health-risk-v0.1"
+"103","Controlled waste handling observation","waste","observed","8","moderate","controlled_test","2026-07-23T14:30:00Z","-0.895","-89.617","approximate","climate-health-risk-v0.1"
+"104","Synthetic environmental marker","environmental_pollution","rejected","5","low","synthetic_demo","2026-07-24T19:00:00Z","","","hidden","climate-health-risk-v0.1"
+"105","Public climate context reference","heat","validated","6","moderate","public_real","2026-07-25T16:45:00Z","-0.901","-89.612","aggregate","climate-health-risk-v0.1"
+"106","Controlled heat route follow-up","heat","pending","9","high","controlled_test","2026-07-26T18:20:00Z","-0.897","-89.606","approximate","climate-health-risk-v0.1"

@@ -1,0 +1,11 @@
+InfinityAtlas Sprint 1C-D2S environment
+Recorded UTC: 2026-07-30T01:27:08.0409016Z
+Node: v24.14.0
+pnpm: 11.9.0
+OS: Microsoft Windows 11 Home 10.0.26200 build 26200
+Architecture: AMD64
+Branch: feature/sprint-1c-dashboard-map-reporting
+HEAD: a27fde531f7aac50755f3e30fbd2d921731624e3
+package.json SHA-256: 12613f18ea09c14178971f3cd0e2cb41b208738f4506b9803f7d69b83926f059
+pnpm-lock.yaml SHA-256: 7daadf79f48a3386f227143d287d38caa11abf004195fbc1313c58f685e6611b
+Install: pnpm install --frozen-lockfile --force (completed; lockfile unchanged)

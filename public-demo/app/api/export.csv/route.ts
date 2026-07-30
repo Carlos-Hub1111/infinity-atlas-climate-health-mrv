@@ -2,6 +2,10 @@ import {
   filteredPublicRows,
   PublicFilterError,
 } from "../../../lib/public-filters";
+import {
+  localizedRecordTitle,
+  publicRecordNumber,
+} from "../../../lib/public-content";
 
 function cell(value: string | number | null) {
   const text = value === null ? "" : String(value);
@@ -31,6 +35,9 @@ export async function GET(request: Request) {
     "public_longitude",
     "public_location_mode",
     "methodology_version",
+    "public_record_number",
+    "record_title_en",
+    "record_title_es",
   ];
   const lines = [
     header.map(cell).join(","),
@@ -48,14 +55,19 @@ export async function GET(request: Request) {
         row.longitude,
         row.publicLocationMode,
         "climate-health-risk-v0.1",
+        publicRecordNumber(row.id),
+        localizedRecordTitle(row.id, row.recordTitle, "en"),
+        localizedRecordTitle(row.id, row.recordTitle, "es"),
       ].map(cell).join(","),
     ),
   ];
   return new Response(`\uFEFF${lines.join("\r\n")}\r\n`, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="infinityatlas-public-demo.csv"',
+      "Content-Disposition": 'attachment; filename="infinityatlas-public-technical.csv"',
       "Cache-Control": "no-store",
+      "X-InfinityAtlas-CSV-Schema": "public-v1",
+      "Link": '</data/infinityatlas-public-data-dictionary.csv>; rel="describedby"',
     },
   });
 }

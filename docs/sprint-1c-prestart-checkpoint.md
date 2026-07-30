@@ -10,7 +10,7 @@ Target branch: `feature/sprint-1c-dashboard-map-reporting`
 
 Local backup directory:
 
-`C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_Backups\2026-07-28_155242_Sprint1C_PreStart`
+`<local-backup-root>\2026-07-28_155242_Sprint1C_PreStart`
 
 Contents:
 

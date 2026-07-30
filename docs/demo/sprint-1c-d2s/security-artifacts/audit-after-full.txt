@@ -1,0 +1,39 @@
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ high                │ brace-expansion: DoS via unbounded expansion length    │
+│                     │ causing an out-of-memory process crash                 │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ brace-expansion                                        │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ <=5.0.7                                                │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ >=5.0.8                                                │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ .>eslint>@eslint/config-array>minimatch>brace-         │
+│                     │ expansion                                              │
+│                     │                                                        │
+│                     │ .>eslint>@eslint/eslintrc>minimatch>brace-expansion    │
+│                     │                                                        │
+│                     │ .>eslint>minimatch>brace-expansion                     │
+│                     │                                                        │
+│                     │ ... Found 82 paths, run `pnpm why brace-expansion` for │
+│                     │ more information                                       │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-mh99-v99m-4gvg      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│ moderate            │ esbuild enables any website to send any requests to    │
+│                     │ the development server and read the response           │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Package             │ esbuild                                                │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Vulnerable versions │ <=0.24.2                                               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Patched versions    │ >=0.24.3                                               │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ Paths               │ .>drizzle-kit>@esbuild-kit/esm-loader>@esbuild-kit/    │
+│                     │ core-utils>esbuild                                     │
+├─────────────────────┼────────────────────────────────────────────────────────┤
+│ More info           │ https://github.com/advisories/GHSA-67mh-4wv8-2f99      │
+└─────────────────────┴────────────────────────────────────────────────────────┘
+2 vulnerabilities found
+Severity: 1 moderate | 1 high

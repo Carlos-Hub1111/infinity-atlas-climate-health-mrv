@@ -1,5 +1,6 @@
 import { getDb } from "../db";
 import { observations } from "../db/schema";
+import { searchableRecordTitles } from "./public-content";
 
 export const filterOptions = {
   category: ["water", "waste", "heat", "environmental_pollution"],
@@ -68,9 +69,11 @@ export async function filteredPublicRows(request: Request) {
     if (
       search &&
       String(row.id) !== search &&
-      !row.recordTitle.toLowerCase().includes(search)
+      !searchableRecordTitles(row.id, row.recordTitle).some((title) =>
+        title.toLowerCase().includes(search)
+      )
     ) return false;
     return true;
   });
-  return { filters, rows: filtered };
+  return { filters, rows: filtered, totalRows: rows.length };
 }

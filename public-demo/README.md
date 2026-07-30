@@ -8,7 +8,7 @@ Read-only public Sprint 1C surface for InfinityAtlas Climate & Health MRV Toolki
 - global filter state in the URL;
 - real Open-Meteo climate context;
 - Leaflet and OpenStreetMap map with safe public coordinates;
-- bilingual public PDF and UTF-8 CSV downloads;
+- bilingual public PDF, canonical interoperable CSV and Excel-friendly Spanish CSV downloads;
 - managed D1 controlled demonstration records;
 - `/api/health` database health check.
 
@@ -49,6 +49,25 @@ must never be stored in Git, scripts, screenshots or documentation.
 The production Worker exposes only `GET` routes for the dashboard, climate, health, PDF and CSV.
 There is no authentication, session, write, seed, audit or administrative route. The public D1
 database is independent from `backend/local.db`.
+
+The canonical `/api/export.csv` contract uses comma delimiters and stable machine field names.
+The separate `/api/export.excel.csv` download uses semicolons, a UTF-8 BOM and readable Spanish
+headers so regional Excel installations open columns correctly. Both follow the same active
+filters, geoprivacy rules and public data dictionary.
+
+## Internal application boundary
+
+Monitor, Validator and Administrator roles belong exclusively to the separate internal
+InfinityAtlas application. They are intentionally absent from this public Worker. The controlled
+publication workflow is:
+
+1. creation by an authorized Monitor;
+2. methodological review by an authorized Validator;
+3. validation and append-only traceability inside the internal application;
+4. future publication authorization under an approved governance process.
+
+Validation does not automatically publish a record. A future authorization step must apply
+privacy, evidence and geoprivacy rules before any record can enter the public database.
 
 ## Attribution
 
