@@ -46,6 +46,20 @@ function counts(rows: DemoRow[], field: keyof DemoRow, values: readonly string[]
   );
 }
 
+function dominantEntry(
+  values: Record<string, number>,
+  labels: Record<string, string>,
+) {
+  const [key, value] = Object.entries(values).sort(
+    (left, right) => right[1] - left[1],
+  )[0] ?? ["", 0];
+  return {
+    key,
+    value,
+    label: value > 0 ? labels[key] ?? key.replaceAll("_", " ") : "—",
+  };
+}
+
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number) {
   const words = text.split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -82,6 +96,54 @@ function drawParagraph(
       font,
       size,
       color,
+    });
+  });
+  return y - lines.length * lineHeight;
+}
+
+function drawJustifiedParagraph(
+  page: PDFPage,
+  text: string,
+  x: number,
+  y: number,
+  font: PDFFont,
+  size = 9,
+  maxWidth = CONTENT_WIDTH,
+  lineHeight = size * 1.35,
+  color = ink,
+) {
+  const lines = wrapText(text, font, size, maxWidth);
+  lines.forEach((line, index) => {
+    const words = line.split(/\s+/).filter(Boolean);
+    const isLastLine = index === lines.length - 1;
+    const wordsWidth = words.reduce(
+      (total, word) => total + font.widthOfTextAtSize(word, size),
+      0,
+    );
+    const gap = words.length > 1
+      ? (maxWidth - wordsWidth) / (words.length - 1)
+      : 0;
+    if (isLastLine || words.length < 3 || gap > size * 0.75) {
+      page.drawText(line, {
+        x,
+        y: y - index * lineHeight,
+        font,
+        size,
+        color,
+      });
+      return;
+    }
+    let wordX = x;
+    words.forEach((word, wordIndex) => {
+      page.drawText(word, {
+        x: wordX,
+        y: y - index * lineHeight,
+        font,
+        size,
+        color,
+      });
+      wordX += font.widthOfTextAtSize(word, size);
+      if (wordIndex < words.length - 1) wordX += gap;
     });
   });
   return y - lines.length * lineHeight;
@@ -246,65 +308,156 @@ function drawTerritorialRepresentation(
   hiddenText: string,
   regular: PDFFont,
   bold: PDFFont,
+  mapBase: PDFImage | null,
+  layout: {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+  } = {},
 ) {
-  const x = MARGIN;
-  const y = 70;
-  const width = CONTENT_WIDTH;
-  const height = 140;
+  const x = layout.x ?? MARGIN;
+  const y = layout.y ?? 70;
+  const width = layout.width ?? CONTENT_WIDTH;
+  const height = layout.height ?? 140;
   const visible = rows.filter(
     (row) => row.latitude !== null && row.longitude !== null,
   );
-  page.drawText(title, { x, y: y + height + 17, font: bold, size: 9, color: teal });
-  page.drawText(subtitle, {
+  page.drawText(title, {
     x,
-    y: y + height + 5,
-    font: regular,
-    size: 6.8,
-    color: muted,
+    y: y + height + 35,
+    font: bold,
+    size: 9,
+    color: teal,
   });
-  page.drawRectangle({
+  drawParagraph(
+    page,
+    subtitle,
     x,
-    y,
+    y + height + 22,
+    regular,
+    6.4,
     width,
-    height,
-    color: rgb(0.93, 0.96, 0.96),
-    borderColor: rgb(0.65, 0.73, 0.75),
-    borderWidth: 0.7,
+    8.5,
+    muted,
+  );
+  let mapX = x;
+  let mapY = y;
+  let mapWidth = width;
+  let mapHeight = height;
+  if (mapBase) {
+    const scale = Math.min(width / mapBase.width, height / mapBase.height);
+    mapWidth = mapBase.width * scale;
+    mapHeight = mapBase.height * scale;
+    mapX = x + (width - mapWidth) / 2;
+    mapY = y + (height - mapHeight) / 2;
+    page.drawRectangle({
+      x,
+      y,
+      width,
+      height,
+      color: rgb(0.87, 0.93, 0.95),
+      borderColor: rgb(0.5, 0.64, 0.68),
+      borderWidth: 0.8,
+    });
+    page.drawImage(mapBase, {
+      x: mapX,
+      y: mapY,
+      width: mapWidth,
+      height: mapHeight,
+    });
+  } else {
+    page.drawRectangle({
+      x,
+      y,
+      width,
+      height,
+      color: rgb(0.87, 0.93, 0.95),
+      borderColor: rgb(0.5, 0.64, 0.68),
+      borderWidth: 0.8,
+    });
+  }
+  page.drawRectangle({
+    x: mapX + 8,
+    y: mapY + mapHeight - 29,
+    width: 132,
+    height: 20,
+    color: rgb(1, 1, 1),
+    opacity: 0.88,
   });
   page.drawText("San Cristóbal · Galápagos", {
-    x: x + 12,
-    y: y + height - 20,
+    x: mapX + 14,
+    y: mapY + mapHeight - 22,
     font: bold,
     size: 8,
     color: teal,
   });
   if (!visible.length) {
+    page.drawRectangle({
+      x: mapX + 20,
+      y: mapY + mapHeight / 2 - 18,
+      width: mapWidth - 40,
+      height: 36,
+      color: rgb(1, 1, 1),
+      opacity: 0.9,
+    });
     page.drawText(hiddenText, {
-      x: x + 12,
-      y: y + height / 2,
+      x: mapX + 30,
+      y: mapY + mapHeight / 2 - 3,
       font: regular,
       size: 8,
       color: muted,
     });
     return;
   }
-  const latitudes = visible.map((row) => row.latitude as number);
-  const longitudes = visible.map((row) => row.longitude as number);
-  const minLat = Math.min(...latitudes);
-  const maxLat = Math.max(...latitudes);
-  const minLon = Math.min(...longitudes);
-  const maxLon = Math.max(...longitudes);
+  page.drawText("N", {
+    x: mapX + mapWidth - 28,
+    y: mapY + mapHeight - 21,
+    font: bold,
+    size: 8,
+    color: teal,
+  });
+  page.drawLine({
+    start: { x: mapX + mapWidth - 24, y: mapY + mapHeight - 31 },
+    end: { x: mapX + mapWidth - 24, y: mapY + mapHeight - 46 },
+    thickness: 1.2,
+    color: teal,
+  });
+  const mapBounds = {
+    west: -89.9642625,
+    east: -89.2611375,
+    north: -0.636552067584237,
+    south: -1.163828871399395,
+  };
+  const projected: Array<{ x: number; y: number }> = [];
   visible.forEach((row) => {
-    const px =
-      x +
-      48 +
-      (((row.longitude as number) - minLon) / Math.max(0.001, maxLon - minLon)) *
-        (width - 96);
-    const py =
-      y +
-      30 +
-      (((row.latitude as number) - minLat) / Math.max(0.001, maxLat - minLat)) *
-        (height - 62);
+    const rawX =
+      mapX +
+      (((row.longitude as number) - mapBounds.west) /
+        (mapBounds.east - mapBounds.west)) *
+        mapWidth;
+    const rawY =
+      mapY +
+      (((row.latitude as number) - mapBounds.south) /
+        (mapBounds.north - mapBounds.south)) *
+        mapHeight;
+    const nearby = projected.filter(
+      (point) => Math.hypot(point.x - rawX, point.y - rawY) < 25,
+    ).length;
+    const angle = nearby * (Math.PI * 2 / 6);
+    const radius = nearby ? 22 + Math.floor((nearby - 1) / 6) * 12 : 0;
+    const px = rawX + Math.cos(angle) * radius;
+    const py = rawY + Math.sin(angle) * radius;
+    if (radius) {
+      page.drawLine({
+        start: { x: rawX, y: rawY },
+        end: { x: px, y: py },
+        thickness: 0.8,
+        color: teal,
+        opacity: 0.75,
+      });
+    }
+    projected.push({ x: rawX, y: rawY });
     page.drawCircle({
       x: px,
       y: py,
@@ -370,6 +523,20 @@ async function embedOfficialLogo(pdf: PDFDocument, request: Request) {
     const response = await env.ASSETS.fetch(
       new Request(
         new URL("/brand/infinityatlas-logo-official.png", request.url),
+      ),
+    );
+    if (!response.ok) return null;
+    return await pdf.embedPng(await response.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+async function embedTerritorialMapBase(pdf: PDFDocument, request: Request) {
+  try {
+    const response = await env.ASSETS.fetch(
+      new Request(
+        new URL("/maps/san-cristobal-osm-z11.png", request.url),
       ),
     );
     if (!response.ok) return null;
@@ -455,11 +622,21 @@ export async function GET(request: Request) {
         territory: "San Cristóbal · Galápagos · Ecuador",
         period: "Periodo consultado",
         generated: "Generado en UTC",
+        issued: "Fecha de emisión UTC",
+        included: "Registros incluidos",
         id: "Identificador del reporte",
         source: "Fuente pública controlada: Cloudflare D1",
+        contents: "Índice",
+        prologue: "Prólogo",
+        prologuePurpose: "Finalidad del informe",
         summary: "Resumen ejecutivo",
         summaryText: `Esta ${isFilteredReport ? "selección filtrada" : "lectura agregada"} contiene ${recordCountText} ${rows.length === 1 ? "controlado autorizado" : "controlados autorizados"} para la superficie pública de InfinityAtlas. Resume revisión metodológica, procedencia y prioridad demostrativa sin exponer evidencia, actores, comentarios ni coordenadas restringidas.`,
         selectionReading: "Lectura ejecutiva de la selección",
+        predominantCategory: "Categoría predominante",
+        predominantRisk: "Nivel de riesgo predominante",
+        predominantProvenance: "Procedencia predominante",
+        interpretationNote: "Nota interpretativa",
+        interpretationNoteText: "La predominancia indica el grupo con mayor cantidad de registros dentro de esta selección controlada. No demuestra causalidad, gravedad clínica ni representatividad territorial.",
         climate: "Contexto climático complementario",
         climateText: "La observación del proveedor y el momento de generación del informe se conservan por separado. Este contexto no constituye un reporte meteorológico oficial.",
         unavailable: "La fuente climática no estuvo disponible durante la generación.",
@@ -479,6 +656,14 @@ export async function GET(request: Request) {
         risk: "Nivel de riesgo",
         category: "Categoría",
         records: "Registros públicos controlados",
+        recordSection: "Sección por registro",
+        territorialInterpretation: "Interpretación territorial del registro",
+        publicTraceability: "Trazabilidad pública",
+        components: "Componentes metodológicos",
+        hazard: "Peligro",
+        exposure: "Exposición",
+        vulnerability: "Vulnerabilidad",
+        locationMode: "Modo de ubicación pública",
         publicNumber: "N.º",
         record: "ID técnico",
         title: "Nombre corto",
@@ -486,12 +671,13 @@ export async function GET(request: Request) {
         date: "Fecha",
         distributions: "Distribuciones de la selección",
         territoryView: "Representación territorial con geoprivacidad",
-        territoryViewHelp: "Representación pública no navegacional. Solo utiliza coordenadas autorizadas; omite las ubicaciones ocultas.",
+        territorialMap: "Mapa territorial de ubicaciones públicas permitidas",
+        territoryViewHelp: "Representación pública no navegacional. Solo utiliza coordenadas autorizadas; omite las ubicaciones ocultas. Los símbolos cercanos pueden desplazarse ligeramente y conservan una línea guía hacia la ubicación autorizada.",
         noLocations: "La selección no contiene ubicaciones públicas visibles.",
         method: "Metodología y trazabilidad",
         methodText: "Puntaje de riesgo = Peligro + Exposición + Vulnerabilidad. Cada componente utiliza una escala de 1 a 4. Versión climate-health-risk-v0.1. El resultado es metodológico, no clínico.",
         geo: "Geoprivacidad",
-        geoText: "Cada registro aplica un modo de ubicación exacta pública, aproximada, agregada u oculta. El reporte no reconstruye coordenadas restringidas.",
+        geoText: "Cada registro aplica un modo de ubicación pública: exacta, aproximada, agregada u oculta. El reporte no reconstruye coordenadas restringidas.",
         licenses: "Licencias y atribuciones",
         licenseText: "Clima: Open-Meteo, CC BY 4.0. Base pública: Cloudflare D1. Software del prototipo: repositorio público bajo MIT, con exclusión expresa de la marca y logo InfinityAtlas. InfinityAtlas y su logo pertenecen a INFINITYGAIA S.A.S. B.I.C.",
         limitations: "Limitaciones y lectura responsable",
@@ -513,11 +699,21 @@ export async function GET(request: Request) {
         territory: "San Cristobal · Galapagos · Ecuador",
         period: "Consulted period",
         generated: "Generated at UTC",
+        issued: "Issue date UTC",
+        included: "Records included",
         id: "Report identifier",
         source: "Controlled public source: Cloudflare D1",
+        contents: "Contents",
+        prologue: "Prologue",
+        prologuePurpose: "Report purpose",
         summary: "Executive summary",
         summaryText: `This ${isFilteredReport ? "filtered selection" : "aggregate reading"} contains ${recordCountText} authorized for the InfinityAtlas public surface. It summarizes methodological review, provenance and demonstration priority without exposing evidence, actors, comments or restricted coordinates.`,
         selectionReading: "Executive reading of the selection",
+        predominantCategory: "Predominant category",
+        predominantRisk: "Predominant risk level",
+        predominantProvenance: "Predominant data provenance",
+        interpretationNote: "Interpretive note",
+        interpretationNoteText: "Predominance means the group with the largest record count inside this controlled selection. It does not demonstrate causality, clinical severity or territorial representativeness.",
         climate: "Complementary climate context",
         climateText: "The provider observation time and report generation time are preserved separately. This context is not an official meteorological report.",
         unavailable: "The climate source was unavailable during report generation.",
@@ -537,6 +733,14 @@ export async function GET(request: Request) {
         risk: "Risk level",
         category: "Category",
         records: "Controlled public records",
+        recordSection: "Record section",
+        territorialInterpretation: "Territorial interpretation of the record",
+        publicTraceability: "Public traceability",
+        components: "Methodological components",
+        hazard: "Hazard",
+        exposure: "Exposure",
+        vulnerability: "Vulnerability",
+        locationMode: "Public location mode",
         publicNumber: "No.",
         record: "Technical ID",
         title: "Record title",
@@ -544,12 +748,13 @@ export async function GET(request: Request) {
         date: "Date",
         distributions: "Selection distributions",
         territoryView: "Territorial representation with geoprivacy",
-        territoryViewHelp: "Non-navigational public representation. It uses only authorized coordinates and omits hidden locations.",
+        territorialMap: "Territorial map of permitted public locations",
+        territoryViewHelp: "Non-navigational public representation. It uses only authorized coordinates and omits hidden locations. Nearby symbols may be displaced slightly and retain a leader line to the authorized location.",
         noLocations: "The selection has no visible public locations.",
         method: "Methodology and traceability",
         methodText: "Risk Score = Hazard + Exposure + Vulnerability. Each component uses a 1 to 4 scale. Version climate-health-risk-v0.1. The result is methodological, not clinical.",
         geo: "Geographic privacy",
-        geoText: "Each record applies an exact public, approximate, aggregate or hidden location mode. The report does not reconstruct restricted coordinates.",
+        geoText: "Each record applies a public location mode: exact, approximate, aggregate or hidden. The report does not reconstruct restricted coordinates.",
         licenses: "Licenses and attribution",
         licenseText: "Climate: Open-Meteo, CC BY 4.0. Public database: Cloudflare D1. Prototype software: public repository under MIT, with an express exclusion for the InfinityAtlas brand and logo. InfinityAtlas and its logo belong to INFINITYGAIA S.A.S. B.I.C.",
         limitations: "Limitations and responsible reading",
@@ -617,6 +822,731 @@ export async function GET(request: Request) {
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const logo = await embedOfficialLogo(pdf, request);
+  const territorialMapBase = await embedTerritorialMapBase(pdf, request);
+
+  if (rows.length > 1) {
+    const categoryDominant = dominantEntry(categories, copy.categoryLabels);
+    const riskDominant = dominantEntry(risks, copy.riskLabels);
+    const provenanceDominant = dominantEntry(
+      provenance,
+      copy.provenanceLabels,
+    );
+    const multiPageCount = rows.length + 5;
+    const mapPageNumber = rows.length + 4;
+    const methodPageNumber = rows.length + 5;
+    const locationLabels = locale === "es"
+      ? {
+          exact_public: "Exacta pública",
+          approximate: "Aproximada",
+          aggregate: "Agregada",
+          hidden: "Oculta",
+        }
+      : {
+          exact_public: "Exact public",
+          approximate: "Approximate",
+          aggregate: "Aggregate",
+          hidden: "Hidden",
+        };
+    const prologueText = locale === "es"
+      ? `Este informe contiene ${recordCountText}, observados entre ${periodStart} y ${periodEnd}. Su finalidad es presentar una lectura pública, reproducible y metodológicamente trazable de datos controlados de InfinityAtlas para San Cristóbal. Es una demostración pública controlada: no constituye un diagnóstico clínico, no verifica por sí sola un evento territorial y no presenta los puntajes como emergencias reales.`
+      : `This report contains ${recordCountText}, observed from ${periodStart} to ${periodEnd}. Its purpose is to provide a public, reproducible and methodologically traceable reading of controlled InfinityAtlas data for San Cristobal. It is a controlled public demonstration: it is not a clinical diagnosis, does not independently verify a territorial event and does not present scores as real emergencies.`;
+    const purposeText = locale === "es"
+      ? "Organizar cada registro autorizado, su trazabilidad pública, sus componentes metodológicos y su ubicación permitida para revisión y demostración del prototipo."
+      : "Organize each authorized record, its public traceability, methodological components and permitted location for prototype review and demonstration.";
+    const recordInterpretation = (row: DemoRow) => {
+      const statusReading = locale === "es"
+        ? {
+            pending: "El registro permanece pendiente de revisión metodológica por una persona autorizada.",
+            validated: "El registro fue considerado metodológicamente completo; esta condición no confirma por sí sola que el evento ocurrió.",
+            observed: "El registro requiere aclaraciones, correcciones o evidencia adicional antes de una decisión metodológica posterior.",
+            rejected: "El registro no cumplió los requisitos mínimos de calidad o evidencia para ser validado.",
+          }[row.reviewStatus] ?? "El estado conserva el resultado de la revisión metodológica registrada."
+        : {
+            pending: "The record remains pending methodological review by an authorized person.",
+            validated: "The record was considered methodologically complete; this status does not independently confirm that the event occurred.",
+            observed: "The record requires clarification, correction or additional evidence before a later methodological decision.",
+            rejected: "The record did not meet the minimum quality or evidence requirements for validation.",
+          }[row.reviewStatus] ?? "The status preserves the recorded methodological review outcome.";
+      const locationReading = row.publicLocationMode === "hidden"
+        ? locale === "es"
+          ? "La ubicación pública está oculta y el informe no reconstruye sus coordenadas."
+          : "The public location is hidden and the report does not reconstruct its coordinates."
+        : locale === "es"
+          ? `El modo de ubicación pública es ${locationLabels[row.publicLocationMode as keyof typeof locationLabels] ?? row.publicLocationMode} y solo representa la precisión autorizada.`
+          : `The public location mode is ${locationLabels[row.publicLocationMode as keyof typeof locationLabels] ?? row.publicLocationMode} and represents only the authorized precision.`;
+      return locale === "es"
+        ? `Este registro documenta una observación demostrativa de ${copy.categoryLabels[row.category] ?? row.category} en ${copy.territory}, con fecha ${row.observedAt.slice(0, 10)}. El puntaje ${row.riskScore} (${copy.riskLabels[row.riskLevel] ?? row.riskLevel}) se obtiene de Peligro ${row.hazard} + Exposición ${row.exposure} + Vulnerabilidad ${row.vulnerability}. Su procedencia es ${copy.provenanceLabels[row.dataProvenance] ?? row.dataProvenance}. ${statusReading} ${locationReading} Esta lectura orienta la revisión del registro y no expresa causalidad, diagnóstico ni emergencia territorial.`
+        : `This record documents a demonstrative ${copy.categoryLabels[row.category] ?? row.category} observation in ${copy.territory}, dated ${row.observedAt.slice(0, 10)}. The score of ${row.riskScore} (${copy.riskLabels[row.riskLevel] ?? row.riskLevel}) is obtained from Hazard ${row.hazard} + Exposure ${row.exposure} + Vulnerability ${row.vulnerability}. Its provenance is ${copy.provenanceLabels[row.dataProvenance] ?? row.dataProvenance}. ${statusReading} ${locationReading} This reading supports record review and does not express causality, diagnosis or territorial emergency.`;
+    };
+
+    const multiCover = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    multiCover.drawRectangle({
+      x: 0,
+      y: 0,
+      width: PAGE_WIDTH,
+      height: PAGE_HEIGHT,
+      color: rgb(0.97, 0.98, 0.98),
+    });
+    multiCover.drawRectangle({
+      x: 0,
+      y: 0,
+      width: 18,
+      height: PAGE_HEIGHT,
+      color: teal,
+    });
+    drawCoverLogo(multiCover, logo, bold, regular);
+    drawParagraph(
+      multiCover,
+      copy.report,
+      MARGIN,
+      570,
+      bold,
+      20,
+      CONTENT_WIDTH,
+      24,
+      teal,
+    );
+    multiCover.drawText(copy.territory, {
+      x: MARGIN,
+      y: 516,
+      font: bold,
+      size: 13,
+      color: ink,
+    });
+    multiCover.drawText(copy.scope, {
+      x: MARGIN,
+      y: 494,
+      font: bold,
+      size: 8.5,
+      color: green,
+    });
+    drawMetric(
+      multiCover,
+      MARGIN,
+      414,
+      158,
+      copy.issued,
+      generatedAt.slice(0, 16).replace("T", " "),
+      regular,
+      bold,
+    );
+    drawMetric(
+      multiCover,
+      MARGIN + 172,
+      414,
+      158,
+      copy.included,
+      String(rows.length),
+      regular,
+      bold,
+    );
+    drawMetric(
+      multiCover,
+      MARGIN + 344,
+      414,
+      167,
+      copy.id,
+      reportId,
+      regular,
+      bold,
+    );
+    multiCover.drawText(copy.source, {
+      x: MARGIN,
+      y: 380,
+      font: bold,
+      size: 8,
+      color: green,
+    });
+    drawParagraph(
+      multiCover,
+      `${copy.period}: ${periodStart} / ${periodEnd}`,
+      MARGIN,
+      350,
+      regular,
+      10,
+      CONTENT_WIDTH,
+      14,
+    );
+    multiCover.drawRectangle({
+      x: MARGIN,
+      y: 145,
+      width: CONTENT_WIDTH,
+      height: 82,
+      color: rgb(1, 0.97, 0.88),
+      borderColor: rgb(0.84, 0.7, 0.31),
+      borderWidth: 0.8,
+    });
+    drawParagraph(
+      multiCover,
+      copy.notice,
+      MARGIN + 16,
+      194,
+      bold,
+      11,
+      CONTENT_WIDTH - 32,
+      14,
+      amber,
+    );
+    drawJustifiedParagraph(
+      multiCover,
+      copy.signalsText,
+      MARGIN + 16,
+      170,
+      regular,
+      8,
+      CONTENT_WIDTH - 32,
+      11,
+      amber,
+    );
+    multiCover.drawText("INFINITYGAIA S.A.S. B.I.C.", {
+      x: MARGIN,
+      y: 72,
+      font: bold,
+      size: 9,
+      color: teal,
+    });
+    multiCover.drawText(PUBLIC_URL, {
+      x: MARGIN,
+      y: 56,
+      font: regular,
+      size: 7,
+      color: muted,
+    });
+
+    const contentsPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    drawPageHeader(contentsPage, copy.contents, 2, bold);
+    contentsPage.drawText(copy.contents, {
+      x: MARGIN,
+      y: 758,
+      font: bold,
+      size: 15,
+      color: teal,
+    });
+    const contentsEntries = [
+      [copy.prologue, "2"],
+      [copy.summary, "3"],
+      ...rows.map((row, index) => [
+        `${locale === "es" ? "Registro" : "Record"} ${index + 1} · #${row.id}`,
+        String(index + 4),
+      ]),
+      [copy.territorialMap, String(mapPageNumber)],
+      [copy.method, String(methodPageNumber)],
+    ];
+    let contentsY = 724;
+    for (const [labelText, pageText] of contentsEntries) {
+      contentsPage.drawText(labelText, {
+        x: MARGIN,
+        y: contentsY,
+        font: regular,
+        size: 8.5,
+        color: ink,
+        maxWidth: 420,
+      });
+      contentsPage.drawLine({
+        start: { x: 390, y: contentsY + 2 },
+        end: { x: 505, y: contentsY + 2 },
+        thickness: 0.4,
+        color: rgb(0.75, 0.8, 0.81),
+      });
+      contentsPage.drawText(pageText, {
+        x: 515,
+        y: contentsY,
+        font: bold,
+        size: 8.5,
+        color: teal,
+      });
+      contentsY -= 22;
+    }
+    const prologueY = Math.min(470, contentsY - 12);
+    contentsPage.drawText(copy.prologue, {
+      x: MARGIN,
+      y: prologueY,
+      font: bold,
+      size: 13,
+      color: teal,
+    });
+    let prologueBottom = drawJustifiedParagraph(
+      contentsPage,
+      prologueText,
+      MARGIN,
+      prologueY - 24,
+      regular,
+      9,
+      CONTENT_WIDTH,
+      13,
+    ) - 20;
+    contentsPage.drawText(copy.prologuePurpose, {
+      x: MARGIN,
+      y: prologueBottom,
+      font: bold,
+      size: 10,
+      color: teal,
+    });
+    prologueBottom = drawJustifiedParagraph(
+      contentsPage,
+      purposeText,
+      MARGIN,
+      prologueBottom - 19,
+      regular,
+      8.5,
+      CONTENT_WIDTH,
+      12,
+    );
+    drawFooter(contentsPage, reportId, copy.notice, regular, bold);
+
+    const summaryPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    drawPageHeader(summaryPage, copy.summary, 3, bold);
+    summaryPage.drawText(copy.summary, {
+      x: MARGIN,
+      y: 758,
+      font: bold,
+      size: 15,
+      color: teal,
+    });
+    drawJustifiedParagraph(
+      summaryPage,
+      copy.summaryText,
+      MARGIN,
+      730,
+      regular,
+      9,
+      CONTENT_WIDTH,
+      13,
+    );
+    drawMetric(
+      summaryPage,
+      MARGIN,
+      625,
+      115,
+      copy.included,
+      String(rows.length),
+      regular,
+      bold,
+    );
+    drawMetric(
+      summaryPage,
+      MARGIN + 127,
+      625,
+      120,
+      copy.predominantCategory,
+      categoryDominant.label,
+      regular,
+      bold,
+    );
+    drawMetric(
+      summaryPage,
+      MARGIN + 259,
+      625,
+      120,
+      copy.predominantRisk,
+      riskDominant.label,
+      regular,
+      bold,
+    );
+    drawMetric(
+      summaryPage,
+      MARGIN + 391,
+      625,
+      120,
+      copy.predominantProvenance,
+      provenanceDominant.label,
+      regular,
+      bold,
+    );
+    summaryPage.drawText(copy.interpretationNote, {
+      x: MARGIN,
+      y: 590,
+      font: bold,
+      size: 10,
+      color: teal,
+    });
+    drawJustifiedParagraph(
+      summaryPage,
+      copy.interpretationNoteText,
+      MARGIN,
+      572,
+      regular,
+      8,
+      CONTENT_WIDTH,
+      11,
+    );
+    summaryPage.drawText(copy.distributions, {
+      x: MARGIN,
+      y: 520,
+      font: bold,
+      size: 11,
+      color: teal,
+    });
+    drawBars(
+      summaryPage,
+      MARGIN,
+      494,
+      238,
+      copy.status,
+      status,
+      copy.statusLabels,
+      rows.length,
+      regular,
+      bold,
+    );
+    drawBars(
+      summaryPage,
+      MARGIN + 273,
+      494,
+      238,
+      copy.risk,
+      risks,
+      copy.riskLabels,
+      rows.length,
+      regular,
+      bold,
+    );
+    drawBars(
+      summaryPage,
+      MARGIN,
+      390,
+      238,
+      copy.category,
+      categories,
+      copy.categoryLabels,
+      rows.length,
+      regular,
+      bold,
+    );
+    drawBars(
+      summaryPage,
+      MARGIN + 273,
+      390,
+      238,
+      copy.provenance,
+      provenance,
+      copy.provenanceLabels,
+      rows.length,
+      regular,
+      bold,
+    );
+    summaryPage.drawText(copy.climate, {
+      x: MARGIN,
+      y: 260,
+      font: bold,
+      size: 11,
+      color: teal,
+    });
+    drawJustifiedParagraph(
+      summaryPage,
+      copy.climateText,
+      MARGIN,
+      242,
+      regular,
+      7.5,
+      CONTENT_WIDTH,
+      10,
+      muted,
+    );
+    if (climate) {
+      drawMetric(summaryPage, MARGIN, 150, 118, copy.temperature, `${climate.temperature_2m} °C`, regular, bold);
+      drawMetric(summaryPage, MARGIN + 130, 150, 118, copy.humidity, `${climate.relative_humidity_2m}%`, regular, bold);
+      drawMetric(summaryPage, MARGIN + 260, 150, 118, copy.apparent, `${climate.apparent_temperature} °C`, regular, bold);
+      drawMetric(summaryPage, MARGIN + 390, 150, 121, copy.precipitation, `${climate.precipitation} mm`, regular, bold);
+      drawParagraph(
+        summaryPage,
+        `${copy.observed}: ${climate.time}${climate.is_stale ? ` · ${copy.fallback}` : ""}`,
+        MARGIN,
+        132,
+        regular,
+        7.2,
+        CONTENT_WIDTH,
+        10,
+        climate.is_stale ? amber : muted,
+      );
+    } else {
+      drawParagraph(
+        summaryPage,
+        copy.unavailable,
+        MARGIN,
+        200,
+        regular,
+        8,
+        CONTENT_WIDTH,
+        11,
+        amber,
+      );
+    }
+    drawFooter(summaryPage, reportId, copy.notice, regular, bold);
+
+    rows.forEach((row, index) => {
+      const pageNumber = index + 4;
+      const recordPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+      const recordLabel = locale === "es"
+        ? `Registro ${index + 1}`
+        : `Record ${index + 1}`;
+      drawPageHeader(recordPage, `${recordLabel} · #${row.id}`, pageNumber, bold);
+      recordPage.drawText(recordLabel, {
+        x: MARGIN,
+        y: 758,
+        font: bold,
+        size: 15,
+        color: teal,
+      });
+      const recordTitle = localizedRecordTitle(
+        row.id,
+        row.recordTitle,
+        locale,
+      );
+      drawParagraph(
+        recordPage,
+        recordTitle,
+        MARGIN,
+        730,
+        bold,
+        13,
+        CONTENT_WIDTH,
+        17,
+        ink,
+      );
+      drawParagraph(
+        recordPage,
+        locale === "es"
+          ? `${copy.publicTraceability}: ID #${row.id} · N.º público InfinityAtlas ${publicRecordNumber(row.id)}`
+          : `${copy.publicTraceability}: ID #${row.id} · InfinityAtlas public No. ${publicRecordNumber(row.id)}`,
+        MARGIN,
+        694,
+        regular,
+        8,
+        CONTENT_WIDTH,
+        11,
+        muted,
+      );
+      drawMetric(
+        recordPage,
+        MARGIN,
+        610,
+        118,
+        copy.category,
+        copy.categoryLabels[row.category] ?? row.category,
+        regular,
+        bold,
+      );
+      drawMetric(
+        recordPage,
+        MARGIN + 130,
+        610,
+        118,
+        copy.status,
+        copy.statusLabels[row.reviewStatus] ?? row.reviewStatus,
+        regular,
+        bold,
+      );
+      drawMetric(
+        recordPage,
+        MARGIN + 260,
+        610,
+        118,
+        copy.score,
+        `${row.riskScore} · ${copy.riskLabels[row.riskLevel] ?? row.riskLevel}`,
+        regular,
+        bold,
+      );
+      drawMetric(
+        recordPage,
+        MARGIN + 390,
+        610,
+        121,
+        copy.provenance,
+        copy.provenanceLabels[row.dataProvenance] ?? row.dataProvenance,
+        regular,
+        bold,
+      );
+      recordPage.drawText(copy.components, {
+        x: MARGIN,
+        y: 576,
+        font: bold,
+        size: 11,
+        color: teal,
+      });
+      drawMetric(recordPage, MARGIN, 494, 158, copy.hazard, String(row.hazard), regular, bold);
+      drawMetric(recordPage, MARGIN + 172, 494, 158, copy.exposure, String(row.exposure), regular, bold);
+      drawMetric(recordPage, MARGIN + 344, 494, 167, copy.vulnerability, String(row.vulnerability), regular, bold);
+      drawParagraph(
+        recordPage,
+        `${copy.date}: ${row.observedAt.slice(0, 10)} · ${copy.locationMode}: ${locationLabels[row.publicLocationMode as keyof typeof locationLabels] ?? row.publicLocationMode}`,
+        MARGIN,
+        468,
+        regular,
+        8,
+        CONTENT_WIDTH,
+        11,
+        muted,
+      );
+      recordPage.drawRectangle({
+        x: MARGIN,
+        y: 230,
+        width: CONTENT_WIDTH,
+        height: 190,
+        color: pale,
+        borderColor: rgb(0.55, 0.68, 0.7),
+        borderWidth: 0.8,
+      });
+      recordPage.drawText(copy.territorialInterpretation, {
+        x: MARGIN + 16,
+        y: 390,
+        font: bold,
+        size: 12,
+        color: teal,
+      });
+      drawJustifiedParagraph(
+        recordPage,
+        recordInterpretation(row),
+        MARGIN + 16,
+        365,
+        regular,
+        9,
+        CONTENT_WIDTH - 32,
+        13,
+      );
+      recordPage.drawRectangle({
+        x: MARGIN,
+        y: 112,
+        width: CONTENT_WIDTH,
+        height: 82,
+        color: rgb(1, 0.97, 0.88),
+        borderColor: rgb(0.84, 0.7, 0.31),
+        borderWidth: 0.8,
+      });
+      drawJustifiedParagraph(
+        recordPage,
+        copy.signalsText,
+        MARGIN + 16,
+        165,
+        bold,
+        8.5,
+        CONTENT_WIDTH - 32,
+        12,
+        amber,
+      );
+      drawFooter(recordPage, reportId, copy.notice, regular, bold);
+    });
+
+    const mapPage = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    drawPageHeader(mapPage, copy.territorialMap, mapPageNumber, bold);
+    mapPage.drawText(copy.territorialMap, {
+      x: MARGIN,
+      y: 758,
+      font: bold,
+      size: 15,
+      color: teal,
+    });
+    drawJustifiedParagraph(
+      mapPage,
+      copy.territoryViewHelp,
+      MARGIN,
+      730,
+      regular,
+      8.5,
+      CONTENT_WIDTH,
+      12,
+      muted,
+    );
+    drawTerritorialRepresentation(
+      mapPage,
+      rows,
+      copy.territoryView,
+      copy.territoryViewHelp,
+      copy.noLocations,
+      regular,
+      bold,
+      territorialMapBase,
+      { y: 250, height: 383 },
+    );
+    drawFooter(mapPage, reportId, copy.notice, regular, bold);
+
+    const multiMethodology = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    drawPageHeader(
+      multiMethodology,
+      copy.method,
+      methodPageNumber,
+      bold,
+    );
+    let multiSectionY = 758;
+    for (const section of [
+      [copy.method, copy.methodText],
+      [copy.geo, copy.geoText],
+      [copy.nextSteps, copy.nextStepsText],
+      [copy.licenses, copy.licenseText],
+      [copy.limitations, copy.limitText],
+      [copy.publicLink, PUBLIC_URL],
+    ]) {
+      multiMethodology.drawText(section[0], {
+        x: MARGIN,
+        y: multiSectionY,
+        font: bold,
+        size: 12,
+        color: teal,
+      });
+      const drawSection = section[0] === copy.publicLink
+        ? drawParagraph
+        : drawJustifiedParagraph;
+      multiSectionY = drawSection(
+        multiMethodology,
+        section[1],
+        MARGIN,
+        multiSectionY - 22,
+        regular,
+        9,
+        CONTENT_WIDTH,
+        13,
+      ) - 30;
+    }
+    multiMethodology.drawRectangle({
+      x: MARGIN,
+      y: 118,
+      width: CONTENT_WIDTH,
+      height: 90,
+      color: rgb(1, 0.97, 0.88),
+      borderColor: rgb(0.84, 0.7, 0.31),
+      borderWidth: 0.8,
+    });
+    drawParagraph(
+      multiMethodology,
+      copy.notice,
+      MARGIN + 16,
+      172,
+      bold,
+      10,
+      CONTENT_WIDTH - 32,
+      13,
+      amber,
+    );
+    drawJustifiedParagraph(
+      multiMethodology,
+      copy.signalsText,
+      MARGIN + 16,
+      146,
+      regular,
+      8,
+      CONTENT_WIDTH - 32,
+      11,
+      amber,
+    );
+    drawFooter(
+      multiMethodology,
+      reportId,
+      copy.notice,
+      regular,
+      bold,
+    );
+
+    const multiBytes = await pdf.save();
+    return new Response(multiBytes, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="infinityatlas-territorial-intelligence-${locale}.pdf"`,
+        "Cache-Control": "no-store",
+        "X-InfinityAtlas-Report-Id": reportId,
+        "X-InfinityAtlas-Report-Pages": String(multiPageCount),
+      },
+    });
+  }
 
   const cover = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   cover.drawRectangle({
@@ -653,7 +1583,7 @@ export async function GET(request: Request) {
   drawMetric(cover, MARGIN + 172, 414, 158, copy.generated, generatedAt.slice(0, 16).replace("T", " "), regular, bold);
   drawMetric(cover, MARGIN + 344, 414, 167, copy.id, reportId, regular, bold);
   cover.drawText(copy.source, { x: MARGIN, y: 380, font: bold, size: 8, color: green });
-  drawParagraph(cover, copy.summaryText, MARGIN, 344, regular, 10, CONTENT_WIDTH, 14);
+  drawJustifiedParagraph(cover, copy.summaryText, MARGIN, 344, regular, 10, CONTENT_WIDTH, 14);
   cover.drawRectangle({
     x: MARGIN,
     y: 145,
@@ -664,7 +1594,7 @@ export async function GET(request: Request) {
     borderWidth: 0.8,
   });
   drawParagraph(cover, copy.notice, MARGIN + 16, 194, bold, 11, CONTENT_WIDTH - 32, 14, amber);
-  drawParagraph(cover, copy.signalsText, MARGIN + 16, 170, regular, 8, CONTENT_WIDTH - 32, 11, amber);
+  drawJustifiedParagraph(cover, copy.signalsText, MARGIN + 16, 170, regular, 8, CONTENT_WIDTH - 32, 11, amber);
   cover.drawText("INFINITYGAIA S.A.S. B.I.C.", {
     x: MARGIN,
     y: 72,
@@ -684,7 +1614,7 @@ export async function GET(request: Request) {
   drawPageHeader(overview, copy.summary, 2, bold);
   let y = 758;
   overview.drawText(copy.summary, { x: MARGIN, y, font: bold, size: 15, color: teal });
-  y = drawParagraph(overview, copy.summaryText, MARGIN, y - 24, regular, 9, CONTENT_WIDTH, 13) - 16;
+  y = drawJustifiedParagraph(overview, copy.summaryText, MARGIN, y - 24, regular, 9, CONTENT_WIDTH, 13) - 16;
   overview.drawText(copy.selectionReading, {
     x: MARGIN,
     y,
@@ -692,7 +1622,7 @@ export async function GET(request: Request) {
     size: 11,
     color: teal,
   });
-  y = drawParagraph(
+  y = drawJustifiedParagraph(
     overview,
     selectionNarrative,
     MARGIN,
@@ -703,7 +1633,7 @@ export async function GET(request: Request) {
     10.5,
   ) - 14;
   overview.drawText(copy.climate, { x: MARGIN, y, font: bold, size: 11, color: teal });
-  drawParagraph(overview, copy.climateText, MARGIN, y - 17, regular, 7.5, CONTENT_WIDTH, 10, muted);
+  drawJustifiedParagraph(overview, copy.climateText, MARGIN, y - 17, regular, 7.5, CONTENT_WIDTH, 10, muted);
   if (climate) {
     drawMetric(overview, MARGIN, y - 92, 118, copy.temperature, `${climate.temperature_2m} °C`, regular, bold);
     drawMetric(overview, MARGIN + 130, y - 92, 118, copy.humidity, `${climate.relative_humidity_2m}%`, regular, bold);
@@ -725,7 +1655,7 @@ export async function GET(request: Request) {
   }
   y -= 150;
   overview.drawText(copy.signals, { x: MARGIN, y, font: bold, size: 11, color: teal });
-  drawParagraph(overview, copy.signalsText, MARGIN, y - 18, regular, 7.5, CONTENT_WIDTH, 10, muted);
+  drawJustifiedParagraph(overview, copy.signalsText, MARGIN, y - 18, regular, 7.5, CONTENT_WIDTH, 10, muted);
   const attention = (status.pending ?? 0) + (status.observed ?? 0);
   const elevated = (risks.high ?? 0) + (risks.critical ?? 0);
   const controlled =
@@ -821,6 +1751,7 @@ export async function GET(request: Request) {
     copy.noLocations,
     regular,
     bold,
+    territorialMapBase,
   );
   drawFooter(records, reportId, copy.notice, regular, bold);
 
@@ -842,7 +1773,10 @@ export async function GET(request: Request) {
       size: 12,
       color: teal,
     });
-    sectionY = drawParagraph(
+    const drawSection = section[0] === copy.publicLink
+      ? drawParagraph
+      : drawJustifiedParagraph;
+    sectionY = drawSection(
       methodology,
       section[1],
       MARGIN,
@@ -863,7 +1797,7 @@ export async function GET(request: Request) {
     borderWidth: 0.8,
   });
   drawParagraph(methodology, copy.notice, MARGIN + 16, 172, bold, 10, CONTENT_WIDTH - 32, 13, amber);
-  drawParagraph(methodology, copy.signalsText, MARGIN + 16, 146, regular, 8, CONTENT_WIDTH - 32, 11, amber);
+  drawJustifiedParagraph(methodology, copy.signalsText, MARGIN + 16, 146, regular, 8, CONTENT_WIDTH - 32, 11, amber);
   drawFooter(methodology, reportId, copy.notice, regular, bold);
 
   const bytes = await pdf.save();

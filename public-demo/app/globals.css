@@ -13,7 +13,13 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: linear-gradient(180deg, #e7eef1 0%, #f4f7f8 42%, #eaf0f2 100%);
+  background:
+    linear-gradient(rgba(0, 59, 73, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 59, 73, .035) 1px, transparent 1px),
+    linear-gradient(115deg, rgba(0, 59, 73, .105) 0%, rgba(0, 109, 119, .035) 42%, transparent 68%),
+    linear-gradient(180deg, #d9e5e9 0%, #f2f6f7 38%, #e2ecef 100%);
+  background-size: 32px 32px, 32px 32px, auto, auto;
+  background-attachment: fixed;
 }
 button, input, select { font: inherit; letter-spacing: 0; }
 button, select { cursor: pointer; }
@@ -64,6 +70,7 @@ main { width: min(100% - 36px, 1360px); margin: 0 auto; padding: 18px 0 42px; }
 .filterGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .filterGrid label { display: grid; min-width: 0; gap: 5px; }
 input, select { width: 100%; min-height: 40px; padding: 8px 9px; border: 1px solid #adbbbf; background: #fff; color: #172126; }
+input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; padding: 0; accent-color: #006d77; cursor: pointer; }
 input:focus, select:focus, button:focus-visible, a:focus-visible { outline: 3px solid rgba(0,127,120,.25); outline-offset: 1px; }
 .searchLabel > div { position: relative; }
 .searchLabel svg { position: absolute; top: 12px; left: 9px; color: #64747a; }
@@ -81,15 +88,24 @@ button.primary { border-color: #006d77; background: #006d77; color: #fff; }
 .inlineError { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding: 10px 12px; border: 1px solid #c98a84; background: #fff4f3; color: #873c37; font-size: .74rem; font-weight: 800; }
 .resultsSection > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .resultsSection > header p { max-width: 760px; margin: 5px 0 0; color: #68777c; font-size: .72rem; line-height: 1.45; }
-.resultsSection > header > strong { flex: 0 0 auto; padding: 6px 8px; border: 1px solid #83aaa5; background: #eef7f6; color: #1f5d57; font-size: .72rem; }
+.resultsCountGroup { display: flex; flex: 0 0 auto; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.resultsCountGroup > strong { padding: 6px 8px; border: 1px solid #83aaa5; background: #eef7f6; color: #1f5d57; font-size: .72rem; }
+.resultsCountGroup .selectedCount { border-color: #b8c5c8; background: #f5f7f7; color: #64747a; }
+.resultsCountGroup .selectedCount.active { border-color: #006d77; background: #e8f5f4; color: #005b62; }
 .resultsTableWrap { margin-top: 14px; overflow-x: auto; border: 1px solid #c0cbcd; }
-.resultsSection table { width: 100%; min-width: 1120px; border-collapse: collapse; font-size: .7rem; }
+.resultsSection table { width: 100%; min-width: 1160px; border-collapse: collapse; font-size: .7rem; }
 .resultsSection th { padding: 9px 8px; background: #eef3f3; color: #41545a; text-align: left; white-space: nowrap; }
 .resultsSection td { padding: 9px 8px; border-top: 1px solid #d4dcde; vertical-align: top; }
 .resultsSection tbody tr:hover { background: #f7f9f9; }
+.resultsSection tbody tr.selectedRow { background: #e8f4f3; box-shadow: inset 3px 0 0 #007f78; }
+.selectionColumn { width: 42px; text-align: center !important; }
+.selectionColumn input { display: block; margin: 0 auto; }
 .mapAction { min-height: 32px; padding: 5px 7px; font-size: .68rem; white-space: nowrap; }
 .mapAction:disabled { cursor: not-allowed; }
 .emptyResults { margin: 14px 0 0; padding: 20px; background: #f5f8f8; color: #65757a; text-align: center; }
+.manualSelectionNotice { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 14px; padding: 10px 12px; border-left: 4px solid #006d77; background: #edf7f6; color: #40575d; font-size: .72rem; }
+.manualSelectionNotice strong { color: #005b62; }
+.manualSelectionNotice button { min-height: 32px; margin-left: auto; padding: 5px 8px; font-size: .68rem; }
 .resultDownloads { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #d3dcde; }
 .downloadWithHelp { display: inline-flex; align-items: center; gap: 2px; }
 .resultDownloads > a:last-child { margin-left: auto; border-color: transparent; color: #006d77; }
@@ -160,6 +176,15 @@ button.primary { border-color: #006d77; background: #006d77; color: #fff; }
 .selectionReading h4 { margin: 0 0 6px; color: #174d56; font-size: .78rem; }
 .selectionReading p { margin: 0; color: #43575d; font-size: .72rem; line-height: 1.45; }
 .selectionReading strong { display: block; margin-top: 8px; color: #795b16; font-size: .68rem; line-height: 1.4; }
+.territorialReading { grid-column: 2; grid-row: 3; min-height: 330px; border-top: 4px solid #315f68; background: linear-gradient(145deg, #fff 0%, #f4f8f9 100%); }
+.territorialReading > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.territorialReading > header > svg { flex: 0 0 auto; color: #315f68; }
+.territorialReading dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 18px 0 14px; }
+.territorialReading dl > div { display: grid; gap: 5px; min-height: 76px; padding: 10px; border: 1px solid #b8c9cd; background: #fff; }
+.territorialReading dt { color: #617176; font-size: .66rem; font-weight: 800; text-transform: uppercase; }
+.territorialReading dd { margin: 0; color: #173f47; font-size: .82rem; font-weight: 850; line-height: 1.35; overflow-wrap: anywhere; }
+.territorialReading > strong { display: block; padding: 9px 10px; border-left: 3px solid #6e858a; background: #edf3f4; color: #43575d; font-size: .68rem; line-height: 1.4; }
+.territorialReadingEmpty { margin: 18px 0; padding: 18px; border: 1px dashed #9fb2b7; background: #f7f9fa; }
 .riskDemoNotice { display: flex; align-items: flex-start; gap: 8px; margin-top: 11px; padding: 10px 12px; border: 1px solid #d5b75d; background: #fff9e8; color: #6e5518; font-size: .72rem; font-weight: 750; line-height: 1.4; }
 .riskDemoNotice svg { flex: 0 0 auto; }
 .mapLayout { display: grid; grid-template-columns: minmax(0,1fr) 190px; min-height: 470px; border: 1px solid #aebcc0; }
@@ -195,6 +220,7 @@ button.primary { border-color: #006d77; background: #006d77; color: #fff; }
 @media (max-width: 760px) {
   main { width: min(100% - 20px, 1360px); }
   .topbar, .territoryHeader, .climate > header, .mapSection > header, .resultsSection > header { align-items: flex-start; flex-direction: column; }
+  .resultsCountGroup { justify-content: flex-start; }
   .systemStatus { justify-items: start; }
   .territoryMeta, .climateGrid, .climateTimes { grid-template-columns: 1fr; }
   .territoryMeta > div { border-right: 0; border-bottom: 1px solid #d1dadc; }
@@ -202,6 +228,7 @@ button.primary { border-color: #006d77; background: #006d77; color: #fff; }
   .metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .charts { grid-template-columns: 1fr; }
   .trendChart { grid-column: auto; }
+  .territorialReading { grid-column: auto; grid-row: auto; }
   .donutLayout { grid-template-columns: 1fr; }
   .mapLayout { grid-template-columns: 1fr; }
   .mapLayout aside { grid-template-columns: repeat(2,minmax(0,1fr)); border-top: 1px solid #aebcc0; border-left: 0; }
@@ -224,6 +251,10 @@ button.primary { border-color: #006d77; background: #006d77; color: #fff; }
   .resultsSection td { display: grid; grid-template-columns: minmax(95px, .75fr) minmax(0, 1.25fr); gap: 8px; padding: 6px 0; border-top: 1px solid #e0e6e7; overflow-wrap: anywhere; }
   .resultsSection td:first-child { border-top: 0; }
   .resultsSection td::before { content: attr(data-label); color: #617176; font-weight: 800; }
+  .resultsSection td.selectionColumn { grid-template-columns: minmax(95px, .75fr) minmax(0, 1.25fr); width: 100%; text-align: left !important; }
+  .resultsSection td.selectionColumn input { margin: 0; }
+  .manualSelectionNotice { align-items: stretch; flex-direction: column; }
+  .manualSelectionNotice button { width: 100%; margin-left: 0; }
   .mapAction { width: 100%; white-space: normal; }
   .mapCanvas, .mapCanvas.leaflet-container { min-height: 390px; }
   .mapLayout aside { grid-template-columns: 1fr; }

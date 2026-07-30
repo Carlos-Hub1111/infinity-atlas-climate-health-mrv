@@ -195,6 +195,14 @@ const copy = {
     selectionSingle: "{reference}: {category}; {status}; risk {score} · {risk}; {provenance}.",
     controlledSelectionNotice: "This selection includes controlled or synthetic records. It must not be interpreted as a verified territorial event.",
     riskDemoNotice: "Risk levels belong to a controlled demonstration. High or critical values do not represent a real territorial emergency.",
+    territorialReading: "Complementary territorial reading",
+    territorialReadingHelp: "A factual summary of the active public selection. Predominance means the group with the largest record count and does not imply causality, severity or territorial representativeness.",
+    territorialReadingCount: "Records in selection",
+    territorialReadingCategory: "Predominant category",
+    territorialReadingRisk: "Predominant risk level",
+    territorialReadingProvenance: "Predominant data provenance",
+    territorialReadingEmpty: "No predominant group can be identified because the current selection contains no records.",
+    territorialReadingNotice: "Methodological reading of controlled public data. It is not a clinical diagnosis and does not independently verify a territorial event.",
     map: "Territorial map",
     mapHelp: "Only safe controlled, approximate or aggregate locations are shown.",
     zoomIn: "Zoom in",
@@ -210,6 +218,13 @@ const copy = {
     results: "Filtered results",
     resultsHelp: "Only safe public fields are included. Internal evidence, actors, comments and restricted coordinates are excluded.",
     showingRecords: "{shown} of {total} records",
+    select: "Select",
+    selectAll: "Select all visible records",
+    selectRecord: "Select record {id}",
+    selectedCount: "{count} selected",
+    selectedCountSingular: "1 selected",
+    selectedDownloadHelp: "PDF and CSV downloads will contain only the manually selected records.",
+    clearSelection: "Clear selection",
     record: "Record",
     publicNumber: "Public No.",
     technicalId: "Technical ID",
@@ -365,6 +380,14 @@ const copy = {
     selectionSingle: "{reference}: {category}; {status}; riesgo {score} · {risk}; {provenance}.",
     controlledSelectionNotice: "Esta selección incluye registros controlados o sintéticos. No debe interpretarse como un evento territorial verificado.",
     riskDemoNotice: "Los niveles de riesgo pertenecen a una demostración controlada. Los valores altos o críticos no representan una emergencia territorial real.",
+    territorialReading: "Lectura territorial complementaria",
+    territorialReadingHelp: "Resumen factual de la selección pública activa. La predominancia indica el grupo con mayor cantidad de registros y no implica causalidad, gravedad ni representatividad territorial.",
+    territorialReadingCount: "Registros en la selección",
+    territorialReadingCategory: "Categoría predominante",
+    territorialReadingRisk: "Nivel de riesgo predominante",
+    territorialReadingProvenance: "Procedencia predominante",
+    territorialReadingEmpty: "No es posible identificar un grupo predominante porque la selección actual no contiene registros.",
+    territorialReadingNotice: "Lectura metodológica de datos públicos controlados. No constituye un diagnóstico clínico ni verifica por sí sola un evento territorial.",
     map: "Mapa territorial",
     mapHelp: "Solo se muestran ubicaciones seguras controladas, aproximadas o agregadas.",
     zoomIn: "Acercar",
@@ -380,6 +403,13 @@ const copy = {
     results: "Resultados filtrados",
     resultsHelp: "Solo se incluyen campos públicos seguros. Se excluyen evidencia interna, actores, comentarios y coordenadas restringidas.",
     showingRecords: "{shown} de {total} registros",
+    select: "Seleccionar",
+    selectAll: "Seleccionar todos los registros visibles",
+    selectRecord: "Seleccionar el registro {id}",
+    selectedCount: "{count} seleccionados",
+    selectedCountSingular: "1 seleccionado",
+    selectedDownloadHelp: "Las descargas PDF y CSV contendrán únicamente los registros seleccionados manualmente.",
+    clearSelection: "Limpiar selección",
     record: "Registro",
     publicNumber: "N.º público",
     technicalId: "ID técnico",
@@ -911,6 +941,9 @@ export function PublicDashboard() {
   const [climateAnnouncement, setClimateAnnouncement] = React.useState("");
   const [climateUpdateNotice, setClimateUpdateNotice] = React.useState("");
   const [mapAnnouncement, setMapAnnouncement] = React.useState("");
+  const [selectedIds, setSelectedIds] = React.useState<Set<number>>(
+    () => new Set(),
+  );
   const [donutDimension, setDonutDimension] =
     React.useState<DonutDimension>("status");
   const [error, setError] = React.useState(false);
@@ -920,6 +953,7 @@ export function PublicDashboard() {
   const layer = React.useRef<LayerGroup | null>(null);
   const markers = React.useRef<Map<number, Marker>>(new Map());
   const requestSequence = React.useRef(0);
+  const selectAllRef = React.useRef<HTMLInputElement | null>(null);
   const t = copy[locale];
   const filterQuery = query(filters);
 
@@ -939,6 +973,14 @@ export function PublicDashboard() {
   React.useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
+
+  React.useEffect(() => {
+    if (!selectAllRef.current || !data) return;
+    const visibleIds = data.observations.map((item) => item.id);
+    const selectedVisible = visibleIds.filter((id) => selectedIds.has(id)).length;
+    selectAllRef.current.indeterminate =
+      selectedVisible > 0 && selectedVisible < visibleIds.length;
+  }, [data, selectedIds]);
 
   const loadClimate = React.useCallback(async (announcement?: {
     start: string;
@@ -1126,6 +1168,7 @@ export function PublicDashboard() {
     event.preventDefault();
     const value = pageQuery(draft, locale);
     window.history.replaceState({}, "", value ? `?${value}` : window.location.pathname);
+    setSelectedIds(new Set());
     setFilters({ ...draft });
   }
 
@@ -1133,7 +1176,32 @@ export function PublicDashboard() {
     const value = pageQuery(emptyFilters, locale);
     window.history.replaceState({}, "", value ? `?${value}` : window.location.pathname);
     setDraft(emptyFilters);
+    setSelectedIds(new Set());
     setFilters(emptyFilters);
+  }
+
+  function toggleRecordSelection(id: number) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAllVisible() {
+    if (!data) return;
+    const visibleIds = data.observations.map((item) => item.id);
+    const allSelected =
+      visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      visibleIds.forEach((id) => {
+        if (allSelected) next.delete(id);
+        else next.add(id);
+      });
+      return next;
+    });
   }
 
   function changeLocale(nextLocale: Locale) {
@@ -1146,7 +1214,13 @@ export function PublicDashboard() {
     );
   }
 
-  const downloadQuery = filterQuery ? `?${filterQuery}` : "";
+  const selectedIdsValue = [...selectedIds]
+    .sort((left, right) => left - right)
+    .join(",");
+  const downloadParams = new URLSearchParams(filterQuery);
+  if (selectedIdsValue) downloadParams.set("ids", selectedIdsValue);
+  const downloadParamsValue = downloadParams.toString();
+  const downloadQuery = downloadParamsValue ? `?${downloadParamsValue}` : "";
   const pdfQuery = `${downloadQuery}${downloadQuery ? "&" : "?"}locale=${locale}`;
   const visibleRecords = data?.observations.filter((item) => item.latitude !== null) ?? [];
   const activeFilterChips = [
@@ -1212,7 +1286,35 @@ export function PublicDashboard() {
   )
     ? t.controlledSelectionNotice
     : "";
-  const singleResult = data?.total === 1;
+  const dominantLabel = (
+    values: Record<string, number> | undefined,
+    labels: Record<string, string>,
+  ) => {
+    const [key, value] = Object.entries(values ?? {}).sort(
+      (left, right) => right[1] - left[1],
+    )[0] ?? ["", 0];
+    return value > 0
+      ? `${label(labels, key)} · ${value} (${data?.total ? ((value / data.total) * 100).toFixed(1) : "0.0"}%)`
+      : "—";
+  };
+  const territorialReading = data
+    ? {
+        category: dominantLabel(data.categories, t.categories),
+        risk: dominantLabel(data.risk, t.risks),
+        provenance: dominantLabel(data.provenance, t.provenances),
+      }
+    : { category: "—", risk: "—", provenance: "—" };
+  const selectedCount = selectedIds.size;
+  const selectedCountText = selectedCount === 1
+    ? t.selectedCountSingular
+    : interpolate(t.selectedCount, "count", String(selectedCount));
+  const allVisibleSelected = Boolean(
+    data?.observations.length &&
+      data.observations.every((item) => selectedIds.has(item.id)),
+  );
+  const singleResult = selectedCount > 0
+    ? selectedCount === 1
+    : data?.total === 1;
   const pdfDownloadLabel = singleResult ? t.pdfRecord : t.pdfSelection;
   const excelDownloadLabel = singleResult
     ? t.excelRecord
@@ -1353,19 +1455,34 @@ export function PublicDashboard() {
                 <h2 id="filtered-results-title">{t.results}</h2>
                 <p>{t.resultsHelp}</p>
               </div>
-              <strong>
-                {interpolate(
-                  interpolate(t.showingRecords, "shown", String(data.total)),
-                  "total",
-                  String(data.total_available),
-                )}
-              </strong>
+              <div className="resultsCountGroup">
+                <strong>
+                  {interpolate(
+                    interpolate(t.showingRecords, "shown", String(data.total)),
+                    "total",
+                    String(data.total_available),
+                  )}
+                </strong>
+                <strong className={selectedCount > 0 ? "selectedCount active" : "selectedCount"}>
+                  {selectedCountText}
+                </strong>
+              </div>
             </header>
             {data.observations.length > 0 ? (
               <div className="resultsTableWrap">
                 <table>
                   <thead>
                     <tr>
+                      <th className="selectionColumn">
+                        <input
+                          ref={selectAllRef}
+                          type="checkbox"
+                          checked={allVisibleSelected}
+                          onChange={toggleAllVisible}
+                          aria-label={t.selectAll}
+                          title={t.selectAll}
+                        />
+                      </th>
                       <th>{t.record}</th>
                       <th>{t.recordTitle}</th>
                       <th>{t.category}</th>
@@ -1379,7 +1496,22 @@ export function PublicDashboard() {
                   </thead>
                   <tbody>
                     {data.observations.map((item) => (
-                      <tr key={item.id}>
+                      <tr
+                        key={item.id}
+                        className={selectedIds.has(item.id) ? "selectedRow" : ""}
+                      >
+                        <td className="selectionColumn" data-label={t.select}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(item.id)}
+                            onChange={() => toggleRecordSelection(item.id)}
+                            aria-label={interpolate(
+                              t.selectRecord,
+                              "id",
+                              String(item.id),
+                            )}
+                          />
+                        </td>
                         <td data-label={t.record}>
                           {publicRecordReference(item.id, locale)}
                         </td>
@@ -1409,6 +1541,16 @@ export function PublicDashboard() {
               </div>
             ) : (
               <p className="emptyResults">{t.noData}</p>
+            )}
+            {selectedCount > 0 && (
+              <div className="manualSelectionNotice" role="status" aria-live="polite">
+                <strong>{selectedCountText}</strong>
+                <span>{t.selectedDownloadHelp}</span>
+                <button type="button" onClick={() => setSelectedIds(new Set())}>
+                  <Eraser size={15} />
+                  {t.clearSelection}
+                </button>
+              </div>
             )}
             <div className="resultDownloads">
               <a href={`/api/report.pdf${pdfQuery}`}><Download size={16} />{pdfDownloadLabel}</a>
@@ -1559,6 +1701,44 @@ export function PublicDashboard() {
               quantitySingular={t.quantitySingular}
               quantity={t.quantity}
             />
+            <section className="chart territorialReading" aria-labelledby="territorial-reading-title">
+              <header>
+                <div>
+                  <h3 id="territorial-reading-title">
+                    {t.territorialReading}
+                    <InfoTooltip
+                      labelText={t.territorialReading}
+                      text={t.territorialReadingHelp}
+                    />
+                  </h3>
+                  <p>{t.territorialReadingHelp}</p>
+                </div>
+                <MapPin size={22} aria-hidden="true" />
+              </header>
+              {data.total > 0 ? (
+                <dl>
+                  <div>
+                    <dt>{t.territorialReadingCount}</dt>
+                    <dd>{data.total}</dd>
+                  </div>
+                  <div>
+                    <dt>{t.territorialReadingCategory}</dt>
+                    <dd>{territorialReading.category}</dd>
+                  </div>
+                  <div>
+                    <dt>{t.territorialReadingRisk}</dt>
+                    <dd>{territorialReading.risk}</dd>
+                  </div>
+                  <div>
+                    <dt>{t.territorialReadingProvenance}</dt>
+                    <dd>{territorialReading.provenance}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <p className="territorialReadingEmpty">{t.territorialReadingEmpty}</p>
+              )}
+              <strong>{t.territorialReadingNotice}</strong>
+            </section>
           </section>
           <div className="riskDemoNotice">
             <AlertTriangle size={17} />

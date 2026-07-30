@@ -57,10 +57,11 @@ test("localizes D1, controlled record titles and safe location modes", async () 
 });
 
 test("provides reproducible filters, safe results and filtered downloads", async () => {
-  const [dashboard, dashboardRoute, css] = await Promise.all([
+  const [dashboard, dashboardRoute, css, publicFilters] = await Promise.all([
     file("../app/PublicDashboard.tsx"),
     file("../app/api/dashboard/route.ts"),
     file("../app/globals.css"),
+    file("../lib/public-filters.ts"),
   ]);
 
   assert.match(dashboard, /window\.history\.replaceState/);
@@ -81,6 +82,15 @@ test("provides reproducible filters, safe results and filtered downloads", async
   assert.match(dashboardRoute, /public_number: publicRecordNumber\(row\.id\)/);
   assert.match(dashboard, /publicRecordReference\(item\.id, locale\)/);
   assert.match(dashboard, /requestSequence/);
+  assert.match(dashboard, /selectedIds/);
+  assert.match(dashboard, /toggleRecordSelection/);
+  assert.match(dashboard, /toggleAllVisible/);
+  assert.match(dashboard, /downloadParams\.set\("ids", selectedIdsValue\)/);
+  assert.match(dashboard, /ref=\{selectAllRef\}/);
+  assert.match(dashboard, /className=\{selectedIds\.has\(item\.id\) \? "selectedRow"/);
+  assert.match(publicFilters, /Invalid ids/);
+  assert.match(publicFilters, /selectedIds\.length > 50/);
+  assert.match(publicFilters, /!selectedIds\.includes\(row\.id\)/);
   assert.doesNotMatch(dashboard, /function clear\(\)[\s\S]{0,180}setLoading\(true\)/);
   assert.match(css, /\.resultsSection td::before/);
   assert.match(css, /\.resultsTableWrap/);
@@ -135,6 +145,12 @@ test("keeps each chart dimension separate and keyboard accessible", async () => 
   assert.match(dashboardRoute, /categories: \[\.\.\.item\.categories\]/);
   assert.match(dashboardRoute, /risk_levels: \[\.\.\.item\.riskLevels\]/);
   assert.match(dashboard, /no representan una emergencia territorial real/);
+  assert.match(dashboard, /Complementary territorial reading/);
+  assert.match(dashboard, /Lectura territorial complementaria/);
+  assert.match(dashboard, /dominantLabel\(data\.categories/);
+  assert.match(dashboard, /dominantLabel\(data\.risk/);
+  assert.match(dashboard, /dominantLabel\(data\.provenance/);
+  assert.match(dashboard, /className="chart territorialReading"/);
 });
 
 test("keeps the map mounted and applies geoprivacy-aware selection behavior", async () => {
@@ -151,10 +167,11 @@ test("keeps the map mounted and applies geoprivacy-aware selection behavior", as
   assert.match(dashboard, /aria-busy=\{loading\}/);
 });
 
-test("generates a four-page bilingual territorial report with the official logo", async () => {
+test("generates bilingual single-record and structured multi-record reports", async () => {
   const report = await file("../app/api/report.pdf/route.ts");
 
   assert.match(report, /\/brand\/infinityatlas-logo-official\.png/);
+  assert.match(report, /\/maps\/san-cristobal-osm-z11\.png/);
   assert.match(report, /Interpretive territorial climate and health report/);
   assert.match(report, /Informe territorial interpretativo de clima y salud/);
   assert.match(report, /FILTERED REPORT/);
@@ -175,6 +192,21 @@ test("generates a four-page bilingual territorial report with the official logo"
   assert.match(report, /publicRecordNumber\(row\.id\)/);
   assert.match(report, /pdf\.addPage/g);
   assert.match(report, /"X-InfinityAtlas-Report-Pages": "4"/);
+  assert.match(report, /if \(rows\.length > 1\)/);
+  assert.match(report, /const multiPageCount = rows\.length \+ 5/);
+  assert.match(report, /Índice/);
+  assert.match(report, /Prólogo/);
+  assert.match(report, /Interpretación territorial del registro/);
+  assert.match(report, /Territorial interpretation of the record/);
+  assert.match(report, /Mapa territorial de ubicaciones públicas permitidas/);
+  assert.match(report, /rows\.forEach\(\(row, index\) =>/);
+  assert.match(report, /ID #\$\{row\.id\}/);
+  assert.match(report, /recordInterpretation\(row\)/);
+  assert.match(report, /function drawJustifiedParagraph/);
+  assert.match(report, /Cada registro aplica un modo de ubicación pública: exacta, aproximada, agregada u oculta\./);
+  assert.match(report, /west: -89\.9642625/);
+  assert.match(report, /territorialMapBase/);
+  assert.match(report, /"X-InfinityAtlas-Report-Pages": String\(multiPageCount\)/);
   assert.match(report, /no constituyen emergencias reales/i);
   assert.match(report, /no demuestra selección, financiamiento, asociación ni respaldo de UNICEF/);
 });
@@ -225,10 +257,15 @@ test("applies a restrained cool visual treatment without changing the official l
     file("../app/PublicDashboard.tsx"),
   ]);
 
-  assert.match(css, /linear-gradient\(180deg, #e7eef1/);
+  assert.match(css, /linear-gradient\(rgba\(0, 59, 73, \.035\) 1px/);
+  assert.match(css, /background-size: 32px 32px/);
+  assert.match(css, /background-attachment: fixed/);
   assert.match(css, /box-shadow: 0 5px 16px/);
   assert.match(css, /@media print/);
   assert.match(css, /\.selectionReading/);
   assert.match(css, /\.mapAnnouncement/);
+  assert.match(css, /\.territorialReading/);
+  assert.match(css, /\.manualSelectionNotice/);
+  assert.match(css, /\.selectedRow/);
   assert.match(dashboard, /src="\/brand\/infinityatlas-logo-official\.png"/);
 });

@@ -17,6 +17,7 @@ export type PublicFilters = {
   date_from: string;
   date_to: string;
   search: string;
+  ids: string;
 };
 
 export class PublicFilterError extends Error {}
@@ -32,6 +33,22 @@ export async function filteredPublicRows(request: Request) {
     .toLowerCase()
     .replace(/^#/, "")
     .slice(0, 80);
+  const rawIds = (url.searchParams.get("ids") ?? "").trim();
+  if (
+    rawIds.length > 240 ||
+    (rawIds && !/^\d+(,\d+)*$/.test(rawIds))
+  ) {
+    throw new PublicFilterError("Invalid ids");
+  }
+  const selectedIds = [...new Set(
+    rawIds
+      .split(",")
+      .filter(Boolean)
+      .map((value) => Number.parseInt(value, 10)),
+  )];
+  if (selectedIds.length > 50) {
+    throw new PublicFilterError("Too many ids");
+  }
   const filters: PublicFilters = {
     category: url.searchParams.get("category") ?? "",
     status: url.searchParams.get("status") ?? "",
@@ -40,6 +57,7 @@ export async function filteredPublicRows(request: Request) {
     date_from: url.searchParams.get("date_from") ?? "",
     date_to: url.searchParams.get("date_to") ?? "",
     search,
+    ids: selectedIds.join(","),
   };
 
   for (const key of ["category", "status", "provenance", "risk_level"] as const) {
@@ -59,6 +77,7 @@ export async function filteredPublicRows(request: Request) {
 
   const rows = await getDb().select().from(observations);
   const filtered = rows.filter((row) => {
+    if (selectedIds.length && !selectedIds.includes(row.id)) return false;
     if (filters.category && row.category !== filters.category) return false;
     if (filters.status && row.reviewStatus !== filters.status) return false;
     if (filters.provenance && row.dataProvenance !== filters.provenance) return false;
