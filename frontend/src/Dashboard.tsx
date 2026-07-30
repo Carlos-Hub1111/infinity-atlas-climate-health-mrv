@@ -408,13 +408,17 @@ export function Dashboard({
 
   function applyFilters(event: React.FormEvent) {
     event.preventDefault();
-    const nextUrl = `${window.location.pathname}${queryString(draft)}`;
+    const nextUrl = `${window.location.pathname}${queryString(draft)}${window.location.hash}`;
     window.history.replaceState({}, "", nextUrl);
     setApplied({ ...draft });
   }
 
   function clearFilters() {
-    window.history.replaceState({}, "", window.location.pathname);
+    window.history.replaceState(
+      {},
+      "",
+      `${window.location.pathname}${window.location.hash}`,
+    );
     setDraft(emptyFilters);
     setApplied(emptyFilters);
   }

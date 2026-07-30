@@ -31,6 +31,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { CentralPortal } from "./CentralPortal";
 import { Dashboard } from "./Dashboard";
 import {
   AuditEvent,
@@ -60,6 +61,7 @@ import {
 } from "./i18n";
 
 type WorkspaceView = "dashboard" | "observations" | "review" | "users" | "audit";
+type EntrySurface = "portal" | "public" | "institutional";
 type FormState = {
   projectId: string;
   territoryId: string;
@@ -125,6 +127,11 @@ function emptyForm(): FormState {
   };
 }
 
+function entrySurfaceFromHash(): EntrySurface {
+  const value = window.location.hash.replace(/^#/, "");
+  return value === "public" || value === "institutional" ? value : "portal";
+}
+
 export function suggestedRecordTitle(
   locale: Locale,
   category: Observation["category"],
@@ -180,7 +187,13 @@ function weatherKey(code: number): keyof (typeof translations)["en"]["weather"] 
 }
 
 export function App() {
-  const [locale, setLocale] = React.useState<Locale>(defaultLocale);
+  const [locale, setLocale] = React.useState<Locale>(() => {
+    const stored = sessionStorage.getItem("infinityatlas.locale");
+    return stored === "es" || stored === "en" ? stored : defaultLocale;
+  });
+  const [entrySurface, setEntrySurface] = React.useState<EntrySurface>(() =>
+    hasStoredToken() ? "institutional" : entrySurfaceFromHash(),
+  );
   const [health, setHealth] = React.useState<Health | null>(null);
   const [publicSummary, setPublicSummary] = React.useState<PublicSummary | null>(null);
   const [publicError, setPublicError] = React.useState(false);
@@ -220,15 +233,37 @@ export function App() {
   const [userStatusError, setUserStatusError] = React.useState(false);
   const t = translations[locale];
 
+  const navigateEntrySurface = React.useCallback((nextSurface: EntrySurface) => {
+    setEntrySurface(nextSurface);
+    const hash = nextSurface === "portal" ? "" : `#${nextSurface}`;
+    window.history.replaceState(
+      {},
+      "",
+      `${window.location.pathname}${window.location.search}${hash}`,
+    );
+  }, []);
+
   const selectedTerritory =
     territories.find((territory) => territory.id === Number(form.territoryId)) ??
     territories[0];
   const selectedObservation = observations.find((item) => item.id === selectedId) ?? null;
 
   React.useEffect(() => {
-    document.title = t.documentTitle;
+    document.title =
+      entrySurface === "portal" && !user
+        ? `${t.portal.platformName} | ${t.portal.eyebrow}`
+        : t.documentTitle;
     document.documentElement.lang = locale;
-  }, [locale, t.documentTitle]);
+    sessionStorage.setItem("infinityatlas.locale", locale);
+  }, [entrySurface, locale, t.documentTitle, t.portal.eyebrow, t.portal.platformName, user]);
+
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      if (!user) setEntrySurface(entrySurfaceFromHash());
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, [user]);
 
   React.useEffect(() => {
     if (!selectedTerritory || recordTitleEdited) return;
@@ -432,6 +467,7 @@ export function App() {
     setSelectedId(null);
     setView("dashboard");
     setRecordTitleEdited(false);
+    navigateEntrySurface("portal");
     await loadPublicSummary();
   }
 
@@ -561,14 +597,29 @@ export function App() {
     <div className="appShell">
       <header className="appHeader">
         <div className="brandBlock">
-          <div className="brandMark">InfinityAtlas</div>
+          <img
+            className="brandLogo"
+            src="/brand/infinityatlas-logo-official.png"
+            alt="InfinityAtlas"
+          />
           <div>
             <p>{t.sprintLabel}</p>
-            <h1>{t.headline}</h1>
-            <span>{t.subtitle}</span>
+            <h1>{t.portal.platformName}</h1>
+            <span>{t.portal.productName}</span>
+            <small>{t.portal.ownership}</small>
           </div>
         </div>
         <div className="headerControls">
+          {!user && entrySurface !== "portal" && (
+            <button
+              className="portalReturn"
+              type="button"
+              onClick={() => navigateEntrySurface("portal")}
+            >
+              <ArrowLeft size={17} />
+              {t.portal.backToPortal}
+            </button>
+          )}
           <label className="languageControl">
             <Languages size={16} />
             <span>{t.languageLabel}</span>
@@ -605,54 +656,85 @@ export function App() {
         <span>{t.prototypeNotice}</span>
       </div>
 
-      {!user ? (
-        <main className="publicEntry">
+      {!user && entrySurface === "portal" ? (
+        <CentralPortal
+          locale={locale}
+          apiConnected={Boolean(health)}
+          onOpenPublic={() => navigateEntrySurface("public")}
+          onOpenInstitutional={() => navigateEntrySurface("institutional")}
+        />
+      ) : !user && entrySurface === "public" ? (
+        <main className="surfaceView publicEntry">
+          <div className="surfaceContext">
+            <BarChart3 size={18} />
+            <span>{t.portal.publicLocation}</span>
+            <small>{t.portal.publicBoundary}</small>
+          </div>
           <Dashboard
             locale={locale}
             user={null}
             apiConnected={Boolean(health)}
           />
-          <section className="loginPanel">
-            <div className="sectionHeading">
-              <LockKeyhole size={21} />
-              <h2>{t.auth.title}</h2>
-            </div>
-            <form onSubmit={submitLogin}>
-              <label>
-                <span>{t.auth.identifier}</span>
-                <input
-                  autoComplete="username"
-                  value={loginIdentifier}
-                  onChange={(event) => setLoginIdentifier(event.target.value)}
-                  required
-                />
-              </label>
-              <label>
-                <span>{t.auth.password}</span>
-                <input
-                  autoComplete="current-password"
-                  type="password"
-                  value={loginPassword}
-                  onChange={(event) => setLoginPassword(event.target.value)}
-                  required
-                />
-              </label>
-              <button className="primaryButton" type="submit" disabled={loginState === "loading"}>
-                {loginState === "loading" ? (
-                  <LoaderCircle className="spin" size={17} />
-                ) : (
-                  <LockKeyhole size={17} />
+        </main>
+      ) : !user ? (
+        <main className="surfaceView institutionalEntry">
+          <div className="surfaceContext">
+            <LockKeyhole size={18} />
+            <span>{t.portal.institutionalLocation}</span>
+            <small>{t.portal.institutionalBoundary}</small>
+          </div>
+          <div className="institutionalLayout">
+            <section className="institutionalContext" aria-labelledby="institutional-title">
+              <p className="portalEyebrow">{t.portal.eyebrow}</p>
+              <h2 id="institutional-title">{t.portal.institutionalTitle}</h2>
+              <p>{t.portal.institutionalDescription}</p>
+              <div className="institutionalSecurity">
+                <ShieldCheck size={19} />
+                <span>{t.portal.securityNote}</span>
+              </div>
+            </section>
+            <section className="loginPanel">
+              <div className="sectionHeading">
+                <LockKeyhole size={21} />
+                <h2>{t.auth.title}</h2>
+              </div>
+              <form onSubmit={submitLogin}>
+                <label>
+                  <span>{t.auth.identifier}</span>
+                  <input
+                    autoComplete="username"
+                    value={loginIdentifier}
+                    onChange={(event) => setLoginIdentifier(event.target.value)}
+                    required
+                  />
+                </label>
+                <label>
+                  <span>{t.auth.password}</span>
+                  <input
+                    autoComplete="current-password"
+                    type="password"
+                    value={loginPassword}
+                    onChange={(event) => setLoginPassword(event.target.value)}
+                    required
+                  />
+                </label>
+                <button className="primaryButton" type="submit" disabled={loginState === "loading"}>
+                  {loginState === "loading" ? (
+                    <LoaderCircle className="spin" size={17} />
+                  ) : (
+                    <LockKeyhole size={17} />
+                  )}
+                  {loginState === "loading" ? t.auth.signingIn : t.auth.submit}
+                </button>
+                {(loginState === "error" || loginState === "expired") && (
+                  <p className="inlineFeedback errorFeedback" role="alert">
+                    <AlertTriangle size={16} />
+                    {loginState === "expired" ? t.auth.expired : t.auth.error}
+                  </p>
                 )}
-                {loginState === "loading" ? t.auth.signingIn : t.auth.submit}
-              </button>
-              {(loginState === "error" || loginState === "expired") && (
-                <p className="inlineFeedback errorFeedback" role="alert">
-                  <AlertTriangle size={16} />
-                  {loginState === "expired" ? t.auth.expired : t.auth.error}
-                </p>
-              )}
-            </form>
-          </section>
+              </form>
+            </section>
+          </div>
         </main>
       ) : user.role.name === "public" ? (
         <main>

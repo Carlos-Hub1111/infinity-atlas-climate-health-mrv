@@ -454,6 +454,14 @@ function installFetchMock(options?: {
 }
 
 async function loginAs(role: keyof typeof users) {
+  if (!screen.queryByLabelText("Username or email")) {
+    const returnToPortal = screen.queryByRole("button", {
+      name: "Back to Central Access Portal",
+    });
+    if (returnToPortal) fireEvent.click(returnToPortal);
+    fireEvent.click(await screen.findByRole("button", { name: "Sign in" }));
+    await screen.findByLabelText("Username or email");
+  }
   fireEvent.change(screen.getByLabelText("Username or email"), {
     target: { value: `demo-${role}` },
   });
@@ -464,9 +472,35 @@ async function loginAs(role: keyof typeof users) {
   await screen.findByText(users[role].full_name);
 }
 
+async function openPublicSurface() {
+  const returnToPortal = screen.queryByRole("button", {
+    name: "Back to Central Access Portal",
+  });
+  if (returnToPortal) fireEvent.click(returnToPortal);
+  if (!screen.queryByRole("heading", { name: "San Cristobal climate and health dashboard" })) {
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Open public information" }),
+    );
+  }
+  await screen.findByRole("heading", {
+    name: "San Cristobal climate and health dashboard",
+  });
+}
+
+async function openInstitutionalSurface() {
+  if (screen.queryByLabelText("Username or email")) return;
+  const returnToPortal = screen.queryByRole("button", {
+    name: "Back to Central Access Portal",
+  });
+  if (returnToPortal) fireEvent.click(returnToPortal);
+  fireEvent.click(await screen.findByRole("button", { name: "Sign in" }));
+  await screen.findByLabelText("Username or email");
+}
+
 describe("Sprint 1B application", () => {
   beforeEach(() => {
     sessionStorage.clear();
+    window.history.replaceState({}, "", "/");
     installFetchMock();
   });
 
@@ -482,20 +516,47 @@ describe("Sprint 1B application", () => {
     );
   });
 
-  it("shows secure login and an aggregate-only public view before authentication", async () => {
+  it("opens the bilingual Central Access Portal and keeps public and institutional entry separate", async () => {
     render(<App />);
-    expect(await screen.findByRole("heading", { name: "Secure prototype access" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", {
+        name: "One platform for territorial intelligence and trusted action",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Owned and operated by INFINITYGAIA S.A.S. B.I.C."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open public information" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Username or email")).not.toBeInTheDocument();
+
+    await openPublicSurface();
     expect(screen.getByRole("heading", { name: "San Cristobal climate and health dashboard" })).toBeInTheDocument();
     expect((await screen.findAllByText("San Cristobal")).length).toBeGreaterThan(0);
     expect(
       screen.getAllByText("Territorial intelligence, traceability and trusted impact data.").length,
     ).toBeGreaterThan(0);
     expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Back to Central Access Portal" }));
+    fireEvent.change(screen.getByLabelText("Language"), { target: { value: "es" } });
+    expect(
+      screen.getByRole("heading", {
+        name: "Una plataforma para inteligencia territorial y acción confiable",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Propiedad y operación de INFINITYGAIA S.A.S. B.I.C."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
+    expect(
+      await screen.findByRole("heading", { name: "Acceso seguro al prototipo" }),
+    ).toBeInTheDocument();
   });
 
   it("explains every public review status with accessible bilingual tooltips", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "San Cristobal climate and health dashboard" });
+    await openPublicSurface();
 
     const pendingHelp = await screen.findByRole("button", {
       name: "More information about Pending",
@@ -552,7 +613,7 @@ describe("Sprint 1B application", () => {
     vi.unstubAllGlobals();
     installFetchMock({ invalidLogin: true });
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
+    await openInstitutionalSurface();
     fireEvent.change(screen.getByLabelText("Username or email"), { target: { value: "demo-monitor" } });
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong" } });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
@@ -568,14 +629,13 @@ describe("Sprint 1B application", () => {
       "Your session ended. Sign in again.",
     );
     expect(
-      screen.getByRole("heading", { name: "San Cristobal climate and health dashboard" }),
+      screen.getByRole("heading", { name: "Secure prototype access" }),
     ).toBeInTheDocument();
     expect(sessionStorage.getItem("infinityatlas.prototype.session")).toBeNull();
   });
 
   it("gives a monitor climate, observation creation, visible risk and bilingual feedback", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
     await loginAs("monitor");
 
     expect(await screen.findByRole("heading", { name: "New territorial observation" })).toBeInTheDocument();
@@ -624,7 +684,6 @@ describe("Sprint 1B application", () => {
 
   it("searches observations by number and title and lets a monitor rename an allowed record", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
     await loginAs("monitor");
     await screen.findByRole("heading", { name: "My observations" });
 
@@ -658,7 +717,6 @@ describe("Sprint 1B application", () => {
     vi.unstubAllGlobals();
     installFetchMock({ monitorObservationStatus: "validated" });
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
     await loginAs("monitor");
     expect(
       await screen.findByText(
@@ -677,15 +735,13 @@ describe("Sprint 1B application", () => {
     installFetchMock({
       climateHandler: () => {
         climateCalls += 1;
-        if (climateCalls <= 2) return response(climate);
+        if (climateCalls <= 1) return response(climate);
         return new Promise<Response>((resolve) => {
           resolveRefresh = resolve;
         });
       },
     });
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
-    await screen.findByText("26.6 °C");
     await loginAs("monitor");
     await screen.findByText("26.6 °C");
     fireEvent.click(screen.getByRole("button", { name: "Refresh climate" }));
@@ -712,15 +768,13 @@ describe("Sprint 1B application", () => {
     installFetchMock({
       climateHandler: () => {
         climateCalls += 1;
-        if (climateCalls <= 2) return response(climate);
+        if (climateCalls <= 1) return response(climate);
         return new Promise<Response>((resolve) => {
           resolveRefresh = resolve;
         });
       },
     });
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
-    await screen.findByText("26.6 °C");
     await loginAs("monitor");
     await screen.findByText("26.6 °C");
 
@@ -739,7 +793,6 @@ describe("Sprint 1B application", () => {
 
   it("gives validators decisions, evidence, transparent risk and append-only history", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
     await loginAs("validator");
 
     expect(await screen.findByRole("heading", { name: "Methodological validation" })).toBeInTheDocument();
@@ -760,7 +813,6 @@ describe("Sprint 1B application", () => {
 
   it("keeps a public-role session read-only", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
     await loginAs("public");
     expect(screen.getByText("Public user")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "San Cristobal climate and health dashboard" })).toBeInTheDocument();
@@ -770,6 +822,7 @@ describe("Sprint 1B application", () => {
 
   it("applies reproducible dashboard filters and renders a clear empty state", async () => {
     render(<App />);
+    await openPublicSurface();
     await screen.findByRole("button", { name: "More information about Pending" });
     fireEvent.change(screen.getByLabelText("From date"), {
       target: { value: "2027-01-01" },
@@ -786,6 +839,7 @@ describe("Sprint 1B application", () => {
 
   it("renders a filter-consistent map with safe popup content and attribution", async () => {
     render(<App />);
+    await openPublicSurface();
     expect(
       await screen.findByRole("heading", { name: "Territorial map" }),
     ).toBeInTheDocument();
@@ -800,7 +854,6 @@ describe("Sprint 1B application", () => {
 
   it("shows a backend-calculated role overview without replacing role workflows", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
     await loginAs("monitor");
     fireEvent.click(screen.getByRole("button", { name: "Dashboard" }));
     expect(await screen.findByRole("heading", { name: "Role overview" })).toBeInTheDocument();
@@ -811,6 +864,7 @@ describe("Sprint 1B application", () => {
 
   it("shows only public downloads publicly and authorized downloads internally", async () => {
     render(<App />);
+    await openPublicSurface();
     expect(await screen.findByRole("button", { name: "Public PDF" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Public CSV" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Internal PDF" })).not.toBeInTheDocument();
@@ -824,7 +878,6 @@ describe("Sprint 1B application", () => {
 
   it("lets an administrator rename a validated record", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
     await loginAs("admin");
     fireEvent.click(await screen.findByRole("button", { name: "Observations" }));
     fireEvent.click(
@@ -844,7 +897,6 @@ describe("Sprint 1B application", () => {
 
   it("lets administrators search, filter and open an observation audit, then return globally", async () => {
     render(<App />);
-    await screen.findByRole("heading", { name: "Secure prototype access" });
     await loginAs("admin");
 
     fireEvent.click(await screen.findByRole("button", { name: "Demo users" }));

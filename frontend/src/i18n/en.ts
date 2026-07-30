@@ -2,7 +2,7 @@ export const en = {
   languageName: "English",
   languageLabel: "Language",
   documentTitle: "InfinityAtlas Climate & Health MRV Toolkit",
-  sprintLabel: "Sprint 1C · San Cristobal",
+  sprintLabel: "Central Access Portal",
   headline: "InfinityAtlas Climate & Health MRV Toolkit",
   subtitle: "Territorial intelligence, traceability and trusted impact data.",
   prototypeNotice: "Prototype / controlled test — Not a validated field pilot",
@@ -15,6 +15,31 @@ export const en = {
     refresh: "Refresh",
     logout: "Log out",
     back: "Back",
+  },
+  portal: {
+    platformName: "InfinityAtlas",
+    productName: "Climate & Health MRV Toolkit",
+    ownership: "Owned and operated by INFINITYGAIA S.A.S. B.I.C.",
+    eyebrow: "Central access portal",
+    title: "One platform for territorial intelligence and trusted action",
+    description:
+      "Enter the authorized public information surface or continue to the secure institutional workspace.",
+    availability: "Platform services available",
+    publicTitle: "Explore Public Dashboard",
+    publicDescription:
+      "View authorized aggregate indicators, climate, maps, risk levels and public reports without signing in.",
+    publicAction: "Open public information",
+    publicBoundary: "Read-only public surface",
+    institutionalTitle: "Institutional Access",
+    institutionalDescription:
+      "Secure access for authorized personnel responsible for recording, reviewing, validating and administering territorial information.",
+    institutionalAction: "Sign in",
+    institutionalBoundary: "Authentication and role-based permissions required",
+    publicLocation: "Public information",
+    institutionalLocation: "Institutional access",
+    backToPortal: "Back to Central Access Portal",
+    securityNote:
+      "Public and institutional data boundaries remain separated. Permissions are enforced by the InfinityAtlas API.",
   },
   dashboard: {
     eyebrow: "Public territorial intelligence",

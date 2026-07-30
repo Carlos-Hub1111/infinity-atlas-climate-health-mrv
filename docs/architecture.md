@@ -164,3 +164,37 @@ flowchart LR
 
 The deployed demonstration and local application share product terminology, methodology and safe
 public contracts, but not credentials or operational records.
+
+## Sprint 1D central access architecture
+
+Sprint 1D introduces one conceptual entry point without merging security domains:
+
+```mermaid
+flowchart TD
+    Portal["InfinityAtlas Central Access Portal"]
+    Portal --> Public["Public information · read only"]
+    Portal --> Institutional["Institutional access · authentication required"]
+    Public --> PublicProjection["Authorized aggregate dashboard and geoprivacy projection"]
+    Institutional --> Auth["FastAPI authentication and session validation"]
+    Auth --> RBAC["Backend role and ownership enforcement"]
+    RBAC --> Monitor["Monitor / Technician workspace"]
+    RBAC --> Validator["Validator workspace"]
+    RBAC --> Admin["Administrator workspace"]
+```
+
+The local React application uses URL fragments `#public` and `#institutional` to preserve a
+reproducible entry context without interfering with dashboard filter query parameters. The language
+selection is stored in browser session storage and does not alter the authentication token.
+
+Sprint 1D-A changes presentation and local navigation only. It does not change JWT contents, backend
+permissions, database schemas, public projections, evidence access or validation transitions.
+
+### Deployment boundary
+
+- The stable Cloudflare public Worker remains read-only and unchanged.
+- The institutional React frontend, FastAPI backend and internal SQLite database remain local.
+- No internal login, write route, demo credential or internal database is published during Sprint
+  1D-A.
+- Publishing institutional access requires a separate deployment design and explicit approval,
+  including hardened secret storage, protected session transport, rate limiting, CORS review,
+  durable database hosting and backup operations.

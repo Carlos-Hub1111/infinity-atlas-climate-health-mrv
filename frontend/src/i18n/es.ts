@@ -2,7 +2,7 @@ export const es = {
   languageName: "Español",
   languageLabel: "Idioma",
   documentTitle: "InfinityAtlas Climate & Health MRV Toolkit",
-  sprintLabel: "Sprint 1C · San Cristóbal",
+  sprintLabel: "Portal Central de Acceso",
   headline: "InfinityAtlas Climate & Health MRV Toolkit",
   subtitle: "Inteligencia territorial, trazabilidad y datos de impacto confiables.",
   prototypeNotice: "Prototipo / prueba controlada — No constituye un piloto territorial validado",
@@ -15,6 +15,31 @@ export const es = {
     refresh: "Actualizar",
     logout: "Cerrar sesión",
     back: "Volver",
+  },
+  portal: {
+    platformName: "InfinityAtlas",
+    productName: "Climate & Health MRV Toolkit",
+    ownership: "Propiedad y operación de INFINITYGAIA S.A.S. B.I.C.",
+    eyebrow: "Portal central de acceso",
+    title: "Una plataforma para inteligencia territorial y acción confiable",
+    description:
+      "Ingrese a la información pública autorizada o continúe al espacio institucional seguro.",
+    availability: "Servicios de la plataforma disponibles",
+    publicTitle: "Explorar Dashboard Público",
+    publicDescription:
+      "Consulte indicadores agregados, clima, mapas, niveles de riesgo y reportes públicos autorizados sin iniciar sesión.",
+    publicAction: "Abrir información pública",
+    publicBoundary: "Superficie pública de solo lectura",
+    institutionalTitle: "Acceso Institucional",
+    institutionalDescription:
+      "Ingreso seguro para personal autorizado responsable de registrar, revisar, validar y administrar información territorial.",
+    institutionalAction: "Iniciar sesión",
+    institutionalBoundary: "Requiere autenticación y permisos según el rol",
+    publicLocation: "Información pública",
+    institutionalLocation: "Acceso institucional",
+    backToPortal: "Volver al Portal Central de Acceso",
+    securityNote:
+      "Las fronteras de datos públicos e institucionales permanecen separadas. La API de InfinityAtlas aplica los permisos.",
   },
   dashboard: {
     eyebrow: "Inteligencia territorial pública",
