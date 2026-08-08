@@ -57,6 +57,17 @@ It also stores `public_location_mode`, which defaults to `approximate` and contr
 public-safe coordinate projection. The exact submitted coordinate remains available to authorized
 internal workflows.
 
+Auditable soft deletion adds:
+
+- `is_deleted`: excludes the record from ordinary operational queries;
+- `deleted_at`: UTC deletion timestamp;
+- `deleted_by_id`: Administrator actor reference; and
+- `deletion_reason`: required short governance reason.
+
+The observation row, evidence, validation decisions, risk-score snapshots and audit history remain in
+the institutional database. A soft-deleted record is absent from lists, details, dashboards, maps,
+filters, reports and CSV exports. This does not mutate the separate public D1 demonstration dataset.
+
 Every new API record starts as `pending`. A monitor can update the content of only their own pending
 record and can edit its title while it is `pending` or `observed`. An administrator can edit the title
 in any state; a validator cannot. Updating a risk component appends a new `RiskScore`.
@@ -96,7 +107,8 @@ critical.
 Append-only event fields are actor, actor role, UTC timestamp, event type, entity type/identifier,
 previous state, next state, comment and optional methodology version. Tracked events include
 observation creation/update, `record_title_changed`, risk calculation, validation, status changes,
-successful/failed login, logout and user active-state changes.
+successful/failed login, logout, user active-state changes and `observation_deleted`. Normal APIs do
+not edit or delete audit events.
 
 ## Public dashboard projection
 

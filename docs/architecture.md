@@ -74,6 +74,7 @@ external identity review.
 | Create observation | Yes | Yes | No | No |
 | Update observation content | Yes | Own pending | No | No |
 | Edit record title | Any state | Own pending or observed | No | No |
+| Soft-delete observation | Yes, reason required | No | No | No |
 | Validate / observe / reject | Yes | No | Yes | No |
 | Read observation audit | Yes | Own | Yes | No |
 | Manage demo-user active state | Yes | No | No | No |
@@ -115,6 +116,12 @@ does not claim cryptographic immutability; privileged database operators can sti
 Every record-title change creates a `record_title_changed` event with the previous title, new title,
 actor, role, UTC timestamp and observation identifier. The same backend authorization rules apply
 regardless of whether the client displays an edit control.
+
+Administrator-only deletion is soft and auditable. It sets `is_deleted`, `deleted_at`,
+`deleted_by_id` and `deletion_reason`, then appends `observation_deleted`. The shared active-record
+filter excludes the record from operational lists, dashboards, maps, reports and exports. Related
+evidence, validation decisions, risk scores and audit events are not physically deleted. The operation
+has no Cloudflare D1 write path; future public withdrawal requires a separate authorized workflow.
 
 ## Time handling
 

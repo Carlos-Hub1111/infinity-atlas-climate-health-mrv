@@ -33,6 +33,7 @@ from app.schemas import (
     LoginRequest,
     MessageResponse,
     ObservationCreate,
+    ObservationDeletion,
     ObservationRead,
     ObservationUpdate,
     ProjectRead,
@@ -118,13 +119,33 @@ def _territory_datetime_to_utc(value: datetime, territory: Territory) -> datetim
     return value.replace(tzinfo=territory_zone).astimezone(timezone.utc)
 
 
-def _observation_statement():
-    return select(Observation).options(selectinload(Observation.evidence_items))
+def _observation_statement(*, include_deleted: bool = False):
+    statement = select(Observation).options(selectinload(Observation.evidence_items))
+    if not include_deleted:
+        statement = statement.where(Observation.is_deleted.is_(False))
+    return statement
 
 
 def _get_observation_or_404(db: Session, observation_id: int) -> Observation:
     observation = db.scalar(
         _observation_statement().where(Observation.id == observation_id)
+    )
+    if observation is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Observation not found.",
+        )
+    return observation
+
+
+def _get_observation_including_deleted_or_404(
+    db: Session,
+    observation_id: int,
+) -> Observation:
+    observation = db.scalar(
+        _observation_statement(include_deleted=True).where(
+            Observation.id == observation_id
+        )
     )
     if observation is None:
         raise HTTPException(
@@ -507,6 +528,47 @@ def update_observation(
     return db.scalar(_observation_statement().where(Observation.id == observation.id))
 
 
+@app.delete(
+    "/api/v1/observations/{observation_id}",
+    response_model=MessageResponse,
+    summary="Soft-delete an institutional observation",
+    description=(
+        "Administrator-only soft deletion. Evidence, validation decisions, risk scores, "
+        "and append-only audit history are preserved. This does not mutate the separate "
+        "Cloudflare D1 public demonstration dataset."
+    ),
+)
+def delete_observation(
+    observation_id: int,
+    payload: ObservationDeletion,
+    current_user: Annotated[User, Depends(require_roles("admin"))],
+    db: Annotated[Session, Depends(get_db)],
+):
+    observation = _get_observation_including_deleted_or_404(db, observation_id)
+    if observation.is_deleted:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Observation is already deleted.",
+        )
+
+    observation.is_deleted = True
+    observation.deleted_at = _utc_now()
+    observation.deleted_by_id = current_user.id
+    observation.deletion_reason = payload.reason
+    record_audit_event(
+        db,
+        event_type="observation_deleted",
+        entity_type="observation",
+        entity_id=observation.id,
+        actor=current_user,
+        previous_state=observation.status,
+        new_state="deleted",
+        comment=payload.reason,
+    )
+    db.commit()
+    return MessageResponse(message="Observation deleted and audit history preserved.")
+
+
 @app.post(
     "/api/v1/observations/{observation_id}/validation",
     response_model=ValidationRead,
@@ -578,8 +640,12 @@ def observation_audit(
     current_user: CurrentUser,
     db: Annotated[Session, Depends(get_db)],
 ):
-    observation = _get_observation_or_404(db, observation_id)
-    _assert_observation_read_access(current_user, observation)
+    observation = _get_observation_including_deleted_or_404(db, observation_id)
+    if observation.is_deleted:
+        if current_user.role.name != "admin":
+            raise HTTPException(status_code=404, detail="Observation not found.")
+    else:
+        _assert_observation_read_access(current_user, observation)
     return list(
         db.scalars(
             select(AuditEvent)
@@ -617,7 +683,12 @@ def public_summary(db: Annotated[Session, Depends(get_db)]) -> PublicSummary:
     if territory is None:
         raise HTTPException(status_code=404, detail="Public reference territory is unavailable.")
     observations = list(
-        db.scalars(select(Observation).where(Observation.territory_id == territory.id))
+        db.scalars(
+            select(Observation).where(
+                Observation.territory_id == territory.id,
+                Observation.is_deleted.is_(False),
+            )
+        )
     )
     status_counts = {name: 0 for name in ("pending", "validated", "observed", "rejected")}
     provenance_counts = {

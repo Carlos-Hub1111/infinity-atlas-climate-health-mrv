@@ -1,132 +1,152 @@
 # InfinityAtlas Climate & Health MRV Toolkit
 
-**Open-source climate-health MRV toolkit for municipalities and vulnerable communities.**
+InfinityAtlas is a functioning, independently deployable open-source prototype for climate and
+health measurement, reporting and verification (MRV). It connects public climate context,
+territorial observations, transparent non-clinical risk scoring, methodological review,
+geoprivacy-aware mapping, reporting and append-only traceability.
 
-InfinityAtlas Climate & Health MRV Toolkit is an open-source solution designed to help local governments, communities, schools and implementing partners collect, structure, visualize and report climate-related environmental risks affecting children’s health.
+- **Owner and operator:** INFINITYGAIA S.A.S. B.I.C.
+- **Status:** functioning controlled prototype under structured UAT
+- **Reference territory:** San Cristóbal, Galápagos, Ecuador
+- **License:** MIT for software; see [BRAND.md](BRAND.md) for trademark and logo terms
+- **Public demonstration:** https://infinityatlas-public-demo.infinitygaia.workers.dev
 
-## Brand identity
+This repository does not claim UNICEF selection, funding, endorsement or partnership. The prototype
+is not a validated territorial pilot, a clinical system, or evidence of health efficacy.
 
-- Platform: **InfinityAtlas**
-- UNICEF solution: **InfinityAtlas Climate & Health MRV Toolkit**
-- Reference project: **InfinityAtlas Climate & Health MRV Prototype**
-- Owner: **INFINITYGAIA S.A.S. B.I.C.**
+## What works today
 
-The toolkit focuses on strategic planning and local decision-making by connecting environmental exposure data with child-centered climate resilience. It supports risk mapping, vulnerability scoring, MRV indicators, community reporting and basic dashboard structures.
+### Central Access Portal
 
-## Problem
+The bilingual Portal provides one entry point for:
 
-Many vulnerable territories face climate-related environmental risks such as waste pollution, water contamination, heat exposure, air quality concerns, hazardous waste exposure and ecosystem degradation. These risks can directly or indirectly affect children’s health, but local actors often lack accessible, interoperable and decision-ready tools to monitor and respond to them.
+- the unauthenticated, read-only Public Dashboard; and
+- the authenticated institutional workspace.
 
-## Solution
+The Portal checks frontend health, backend `/health` and public API availability. English is ready
+for external evaluation and Spanish is available throughout the implemented workflow.
 
-This toolkit provides a practical open-source foundation for climate-health MRV, including:
+### Public Dashboard
 
-- climate-health risk taxonomy;
-- data collection templates;
-- MRV indicator framework;
-- community and municipal reporting templates;
-- dashboard wireframes;
-- implementation guidance;
-- roadmap for MVP development.
+The public surface provides only authorized, controlled data:
 
-## Intended Users
+- aggregate indicators and reproducible global filters;
+- current Open-Meteo climate context with source and timestamps;
+- status, risk, category, provenance and time visualizations;
+- a Leaflet/OpenStreetMap map with exact, approximate, aggregate and hidden location modes;
+- safe filtered record summaries;
+- bilingual PDF reports;
+- technical UTF-8 CSV and an Excel-friendly CSV;
+- a public data dictionary.
 
-- Municipal governments
-- Community organizations
-- Schools
-- Health and environmental authorities
-- NGOs and implementing partners
-- Climate and public health practitioners
+It contains no institutional users, sessions, actors, private comments, audit history, restricted
+evidence, credentials or write endpoint. Its Cloudflare D1 dataset is separate from the
+institutional database and remains read-only from the deployed public application.
 
-## Initial Use Case
+### Monitor / Technician
 
-The initial use case is connected to INFINITYGAIA S.A.S. B.I.C.’s work in Ecuador, including San Cristóbal, Galápagos, where circular waste management, environmental risk reduction, public health protection and marine pollution prevention are connected to climate resilience and community wellbeing.
+An authenticated Monitor can:
 
-## Open-Source Boundary
+- view climate context;
+- create a territorial observation with an evidence URL reference;
+- assign provenance and a public geolocation mode;
+- view their permitted observations and backend-calculated risk scores; and
+- edit a permitted record title while the workflow state allows it.
 
-This repository represents the public-good open-source module of the broader InfinityAtlas vision.
+A Monitor cannot validate, reject, administer users, edit audit history or delete observations.
 
-Open-source components may include data templates, basic indicators, documentation, dashboard wireframes and community MRV tools.
+### Administrator
 
-INFINITYGAIA S.A.S. B.I.C. retains ownership of its brands, advanced architecture, commercial configurations, implementation services, know-how, client-specific deployments and MRV-as-a-Service model.
+An authenticated Administrator can:
 
-## License
+- review observations and authorized evidence references;
+- apply the existing `pending`, `observed`, `validated` and `rejected` workflow;
+- inspect per-record and global audit history;
+- manage local demonstration account status;
+- view the explicit internal/public release boundary; and
+- soft-delete an institutional observation with a required reason.
 
-Software components are intended to be released under the MIT License.
+Soft deletion removes a record from ordinary institutional queries, dashboards, maps, queues,
+filters, reports and exports while preserving evidence, validation decisions, risk scores and the
+append-only deletion event. It does not automatically withdraw a record from the separate public D1
+demonstration. A future authorized release workflow must implement explicit sanitization,
+publication, withdrawal and audit controls.
 
-Documentation and content may be released under a Creative Commons Attribution license where applicable.
+The optional Validator architecture and permission tests remain preserved, but `demo-validator` is
+inactive and hidden in the primary two-role demonstration.
 
-## Status
+## Risk methodology
 
-This project is an executable controlled prototype. Sprint 1C adds public and role-based dashboards,
-geoprivacy-aware mapping, reproducible PDF/CSV outputs and a safe internet demonstration. It is not a
-validated territorial pilot or production health system.
+The backend calculates:
 
-## Sprint 0 Foundation
+```text
+Risk Score = Hazard + Exposure + Vulnerability
+```
 
-Sprint 0 adds an executable technical foundation for the Climate & Health MRV Toolkit:
+Each component uses a 1–4 scale. Version `climate-health-risk-v0.1` classifies totals as:
 
-- React/Vite frontend with English default and Spanish selectable;
-- FastAPI backend/API;
-- SQLAlchemy data model and Alembic migration;
-- synthetic demo seed data marked with `is_synthetic=true`;
-- local SQLite execution path;
-- Docker Compose configuration for PostgreSQL/PostGIS, pending validation;
-- documentation for architecture, backlog, risks, decisions, data model, dependencies and checkpoint publication.
+| Score | Level |
+| ---: | --- |
+| 3–5 | Low |
+| 6–8 | Moderate |
+| 9–10 | High |
+| 11–12 | Critical |
 
-The development seed endpoint `POST /api/v1/admin/seed` is available only in local/development/test environments. It is hidden and disabled outside those environments.
+This score supports methodological prioritization only. It is not a medical diagnosis and does not
+independently verify that a territorial event occurred.
 
-Sprint 0 technical documents:
+## Climate source
 
-- `docs/sprint-0-delivery.md`
-- `docs/checkpoint-publication-report.md`
-- `docs/dependencies-and-licenses.md`
+The initial provider adapter uses the Open-Meteo Weather Forecast API. The application stores source,
+source URL, provider observation time and InfinityAtlas retrieval time. If the provider is
+temporarily unavailable, the backend may return the last stored public observation marked as stale.
+Open-Meteo data are model-based conditions, not local station measurements. See the
+[Open-Meteo license](https://open-meteo.com/en/license) and
+[terms](https://open-meteo.com/en/terms) before operational deployment.
 
-## Sprint 1A Climate and Observation Flow
+## Security and data boundaries
 
-Sprint 1A adds the first persistent functional workflow:
+- Passwords are hashed with Argon2.
+- Institutional access uses expiring JWTs plus revocable server-side sessions.
+- RBAC is enforced by the API, not only by hidden controls.
+- Functional credentials, JWT signing secrets, `.env` files and Cloudflare secrets are not
+  published.
+- Public access is unauthenticated and read-only.
+- Institutional and public databases are not automatically synchronized.
+- Child-identifying, clinical, personal and confidential information is prohibited.
 
-- San Cristobal, Galapagos as a public reference territory;
-- current public weather conditions from the Open-Meteo Weather Forecast API;
-- a 15-minute database-backed climate cache;
-- fallback to the last stored public record with a visible stale status;
-- bilingual territorial observation form;
-- server-side provenance rules for `public_real`, `controlled_test` and `synthetic_demo`;
-- external URL evidence references without uploading files to this repository;
-- persistent observation list with initial status `pending`;
-- manual, idempotent bootstrap for the reference prototype and San Cristobal;
-- mocked backend provider tests and frontend component tests.
+Temporary evaluation credentials can be supplied separately for a scheduled demonstration. Local
+demo users and local-only passwords are created with the documented setup command; they are never
+embedded in this README, source code, HTML or public deployment.
 
-Open-Meteo data are model-based weather conditions, not a local station measurement. API data are
-licensed under [CC BY 4.0](https://open-meteo.com/en/license). The free endpoint is used only for
-evaluation and prototyping and is currently restricted to non-commercial use with documented request
-limits. A funded deployment must use an appropriate commercial plan, self-host Open-Meteo, or select
-another reviewed source. The provider adapter is isolated under `backend/app/services/climate/` so it
-can be replaced without rewriting the observation workflow. Review the
-[Open-Meteo Terms](https://open-meteo.com/en/terms) before deployment.
+## Local installation
 
-### Run locally
+### Prerequisites
 
-Backend:
+- Python 3.12+
+- Node.js 22+
+- pnpm
+- PowerShell on Windows for the convenience scripts
+
+### Backend
 
 ```powershell
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
+Copy-Item .env.example .env
 python -m alembic upgrade head
 python -m app.bootstrap
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+python -m app.demo_users
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-`python -m app.bootstrap` is manual and idempotent. It creates or updates:
+Replace all marker values in the local `.env` before starting. Demo passwords must be distinct,
+temporary and stored only in local environment values. `app.demo_users` is blocked outside local,
+development and test environments.
 
-- project: `InfinityAtlas Climate & Health MRV Prototype`;
-- status: `prototype_reference`;
-- territory: San Cristobal, Galapagos;
-- prototype notice: this is a controlled test, not a validated field pilot.
-
-Frontend, in a second terminal:
+### Frontend
 
 ```powershell
 cd frontend
@@ -134,176 +154,81 @@ pnpm install --frozen-lockfile
 pnpm dev --host 127.0.0.1 --port 5173
 ```
 
+### Public demo locally
+
+```powershell
+cd public-demo
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+The repository also provides safe convenience scripts after one-time setup:
+
+```powershell
+.\start-local.ps1
+.\stop-local.ps1
+```
+
 Open:
 
-- application: `http://127.0.0.1:5173`
-- API documentation: `http://127.0.0.1:8000/docs`
+- Central Portal: http://127.0.0.1:5173/
+- Public Dashboard: http://127.0.0.1:5173/#public
+- Institutional access: http://127.0.0.1:5173/#institutional
+- API health: http://127.0.0.1:8000/health
+- OpenAPI: http://127.0.0.1:8000/docs
 
-Run checks:
+## Tests
 
 ```powershell
 cd backend
+.\.venv\Scripts\python.exe -m compileall app
 .\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v
 
 cd ..\frontend
 pnpm test
 pnpm build
+
+cd ..\public-demo
+pnpm lint
+pnpm test
+pnpm build
+pnpm audit --prod
+pnpm run deploy:dry-run
 ```
 
-The synthetic seed remains optional and local-development only:
+The development seed endpoint is hidden and disabled outside explicitly allowed local environments.
+Normal startup never seeds or resets a database automatically.
 
-```powershell
-cd backend
-.\.venv\Scripts\python.exe -m app.seed
-```
+## Documentation
 
-It is never executed by the normal Docker startup command.
+- [Architecture](docs/architecture.md)
+- [Data dictionary](docs/data-dictionary.md)
+- [Open-source boundary](docs/open-source-boundary.md)
+- [Dependencies and licenses](docs/dependencies-and-licenses.md)
+- [Public demo package](docs/demo/README.md)
+- [Spanish manuals](docs/manuals/es/README.md)
+- [English manuals](docs/manuals/en/README.md)
 
-### Prepare a clean local demonstration database
+## Open-source commitment and brand ownership
 
-Back up `backend/local.db` first. The following explicit command preserves the reference project and
-San Cristobal, removes legacy/demo observations, and creates one `controlled_test` record with
-`pending` status:
+The open-source commitment for the proposed workplan is:
 
-```powershell
-cd backend
-.\.venv\Scripts\python.exe -m app.bootstrap --clean-demo --confirm-clean-demo
-```
+> The UNICEF-funded InfinityAtlas Climate & Health MRV Toolkit is a complete and independently
+> deployable open-source solution.
 
-This command is blocked outside local/development/test environments. It is never executed by normal
-application or Docker startup. Do not run it against a database containing acceptance or field records
-that must be retained.
+This statement defines the licensing commitment if the proposed workplan is funded; it is not a
+claim of current selection, funding, endorsement or partnership. All software code, deployment
+scripts, data schemas, APIs, technical documentation and user documentation developed through that
+workplan are intended to remain openly available under the applicable open licenses.
 
-## Sprint 1B Access, Validation, Risk and Traceability
-
-Sprint 1B adds the protected methodological workflow without introducing microservices or future
-modules:
-
-- Argon2 password hashing and time-limited JWT access tokens;
-- revocable server-side sessions and functional logout;
-- server-enforced `admin`, `monitor`, `validator` and `public` roles;
-- owner-scoped monitor records and aggregate-only public access;
-- required 80-character record titles with category/territory suggestions and number/title search;
-- role-protected record-title correction with append-only change history;
-- append-only validation decisions and audit events;
-- backend risk calculation using hazard + exposure + vulnerability;
-- methodology version `climate-health-risk-v0.1`;
-- territory-configured `Pacific/Galapagos` display time with UTC database storage;
-- English default and Spanish selectable across all role views.
-- accessible bilingual public guidance for review states, data provenance and risk levels.
-
-Validation confirms record completeness and methodological review. It is not a medical diagnosis and
-does not independently verify a territorial event. The risk score is also non-clinical and records its
-inputs, formula version, actor and calculation time.
-
-### Configure local authentication
-
-Create `backend/.env` from `.env.example` and replace the JWT marker with a locally generated value of
-at least 32 characters. Do not commit `.env`.
-
-Then run the schema and manual bootstraps:
-
-```powershell
-cd backend
-.\.venv\Scripts\python.exe -m alembic upgrade head
-.\.venv\Scripts\python.exe -m app.bootstrap
-.\.venv\Scripts\python.exe -m app.demo_users
-```
-
-`app.demo_users` is blocked outside local/development/test. The primary demonstration enables only
-`demo-admin` and `demo-monitor`. The `demo-validator` identity, role and permissions remain available
-for projects that require separation of duties, but its account is inactive and login is blocked while
-`DEMO_VALIDATOR_ENABLED=false`. Passwords come from local `DEMO_*_PASSWORD` environment values or are
-generated securely and displayed once in the local console. No functional password is published.
-To replace existing local demo passwords explicitly:
-
-```powershell
-.\.venv\Scripts\python.exe -m app.demo_users --reset-passwords
-```
-
-To reactivate the optional Validator path later, an authorized local operator must set
-`DEMO_VALIDATOR_ENABLED=true`, configure a local `DEMO_VALIDATOR_PASSWORD`, and rerun the explicit
-password-reset command. The account remains hidden from the primary two-role demonstration.
-
-The unauthenticated public view exposes aggregate counts only. Demo user creation is never performed by
-a migration, Docker startup or production startup.
-
-Sprint 1B technical documents:
-
-- `docs/sprint-1b-delivery.md`
-- `docs/architecture.md`
-- `docs/data-dictionary.md`
-- `docs/decisions/adr-003-sprint-1b-security-and-risk.md`
-
-## Sprint 1C Dashboard, Map, Reporting and Public Demonstration
-
-Sprint 1C completes the demonstrable prototype surface:
-
-- backend-owned public and role-scoped dashboard metrics;
-- global date, category, status, provenance, risk, territory and record filters;
-- accessible Recharts visualizations with text summaries and empty states;
-- Leaflet and OpenStreetMap territorial mapping;
-- `exact`, `approximate`, `aggregate` and `hidden` public location modes;
-- bilingual public and internal PDF reports;
-- UTF-8 CSV exports with ISO 8601 dates and permission-aware fields;
-- a read-only HTTPS public demonstration backed by controlled D1 data;
-- simple local start, stop and explicit demo-reset scripts;
-- desktop, mobile, role, report and video evidence under `docs/demo/`.
-
-The public deployment is a separate aggregate demonstration surface. It contains no application
-accounts, write endpoint, evidence, validation comments, actors, credentials, personal information or
-confidential UNICEF material.
-
-### Start and stop locally
-
-After the one-time backend, frontend and `public-demo` installation and local `.env` setup:
-
-```powershell
-.\start-local.ps1
-```
-
-The command starts the Central Portal, institutional API and the isolated read-only public dashboard.
-Open `http://127.0.0.1:5173`. Stop all three services safely with:
-
-```powershell
-.\stop-local.ps1
-```
-
-Preparing a clean local demonstration is intentionally explicit and creates a database backup first:
-
-```powershell
-.\prepare-demo.ps1 -ConfirmReset
-```
-
-This reset is blocked outside local/development/test environments and never runs during normal
-startup or production deployment. Demo passwords remain local and are not stored in these scripts.
-
-Sprint 1C technical documents:
-
-- `docs/sprint-1c-delivery.md`
-- `docs/sprint-1c-uat.md`
-- `docs/sprint-1c-a-dashboard.md`
-- `docs/sprint-1c-b-map-geoprivacy.md`
-- `docs/demo/README.md`
-
-Sprint 1D integration document:
-
-- `docs/sprint-1d-b-unified-demo-flow.md`
-
-## 12-Month Roadmap
-
-1. Finalize climate-health risk taxonomy and indicator framework.
-2. Develop data collection templates for municipal and community use.
-3. Build a basic open-source dashboard prototype.
-4. Test the toolkit with local users in Ecuador.
-5. Improve documentation and data workflows.
-6. Publish an updated open-source release.
-7. Prepare replication guidance for other municipalities and vulnerable communities.
+INFINITYGAIA S.A.S. B.I.C. retains the InfinityGaia and InfinityAtlas trademarks, trade names,
+logos, corporate brand assets and general business know-how. Future products or modules developed
+independently outside the proposed funded workplan may use separate ownership or licensing terms,
+provided they are not required for the funded open-source solution to function as a complete,
+independent whole.
 
 ## Contact
 
-INFINITYGAIA S.A.S. B.I.C.
-
-Website: https://www.infinitygaia.org  
-Project Lead: Carlos Cifuentes  
-Email: carlos.cifuentes@infinitygaia.org
+**INFINITYGAIA S.A.S. B.I.C.**<br>
+https://www.infinitygaia.org<br>
+carlos.cifuentes@infinitygaia.org

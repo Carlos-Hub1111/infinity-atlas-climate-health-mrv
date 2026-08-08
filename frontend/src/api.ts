@@ -301,6 +301,13 @@ export function patchJson<T>(path: string, payload: unknown): Promise<T> {
   });
 }
 
+export function deleteJson<T>(path: string, payload: unknown): Promise<T> {
+  return requestJson<T>(path, {
+    method: "DELETE",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function downloadFile(
   path: string,
   authenticated = true,

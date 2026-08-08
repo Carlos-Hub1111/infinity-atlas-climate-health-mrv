@@ -256,6 +256,17 @@ export const es = {
     error: "No se pudo guardar la decisión. Revisa la transición y el comentario obligatorio.",
     notice: "La validación confirma la integridad del registro y su revisión metodológica. No constituye un diagnóstico médico ni verifica por sí sola el evento territorial.",
   },
+  deletion: {
+    title: "Eliminar registro institucional",
+    action: "Eliminar registro",
+    reason: "Motivo de eliminación",
+    reasonPlaceholder: "Ejemplo: registro controlado duplicado",
+    notice: "Eliminación blanda exclusiva del Administrador. Se conservan evidencia, decisiones, puntajes de riesgo y auditoría. Esta acción no retira datos del conjunto público demostrativo separado.",
+    confirm: "¿Eliminar el registro #{id} — {title}? Desaparecerá de las vistas operativas y se conservará su auditoría.",
+    deleting: "Eliminando registro",
+    success: "El registro #{id} fue retirado de las vistas operativas institucionales. Su auditoría se conservó.",
+    error: "No se pudo eliminar el registro. Confirma el acceso de Administrador e inténtalo nuevamente.",
+  },
   risk: {
     title: "Puntaje de riesgo transparente",
     formula: "Peligro {hazard} + Exposición {exposure} + Vulnerabilidad {vulnerability} = {total}",
@@ -394,6 +405,7 @@ export const es = {
     logout: "Cierre de sesión",
     user_status_changed: "Estado de usuario actualizado",
     record_title_changed: "Nombre del registro actualizado",
+    observation_deleted: "Observación eliminada de forma blanda",
   },
   riskLevels: {
     low: "Bajo",

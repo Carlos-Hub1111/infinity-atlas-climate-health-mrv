@@ -208,6 +208,18 @@ class ObservationUpdate(BaseModel):
         return self
 
 
+class ObservationDeletion(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
+
+    @field_validator("reason")
+    @classmethod
+    def normalize_reason(cls, value: str) -> str:
+        normalized = value.strip()
+        if len(normalized) < 3:
+            raise ValueError("A deletion reason of at least 3 characters is required.")
+        return normalized
+
+
 class ValidationCreate(BaseModel):
     status: ValidationStatus
     comment: str | None = Field(default=None, max_length=500)

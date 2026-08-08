@@ -115,6 +115,10 @@ class Observation(Base):
     synthetic_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     status: Mapped[str] = mapped_column(String(40), default="pending", nullable=False)
     is_synthetic: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    deletion_reason: Mapped[str | None] = mapped_column(String(500))
 
     territory: Mapped[Territory] = relationship(back_populates="observations")
     evidence_items: Mapped[list["Evidence"]] = relationship(back_populates="observation")

@@ -1481,6 +1481,48 @@ fieldset legend {
   color: #963933;
 }
 
+.deletionPanel {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #b85c62;
+  border-radius: 6px;
+  background: #fff8f8;
+}
+
+.deletionPanel h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #7c242b;
+}
+
+.deletionPanel p {
+  margin: 5px 0 0;
+}
+
+.deletionPanel label {
+  display: grid;
+  gap: 5px;
+}
+
+.decisionDelete {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #8d3038;
+  background: #8d3038;
+  color: #fff;
+}
+
+.decisionDelete:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .auditTimeline ol {
   margin: 0;
   padding: 0;

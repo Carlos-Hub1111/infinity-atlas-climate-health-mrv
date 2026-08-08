@@ -74,4 +74,4 @@ A simple reporting section for:
 
 ## Current Status
 
-This dashboard is currently a wireframe concept. The next phase is to develop a basic open-source dashboard prototype as part of the MVP software layer.
+This file is retained as historical design context. The repository now includes a functioning open-source dashboard prototype with backend-owned metrics, filters, charts, geoprivacy-aware mapping, PDF/CSV exports and a read-only public demonstration.

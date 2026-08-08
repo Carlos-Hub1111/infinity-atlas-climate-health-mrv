@@ -27,6 +27,7 @@ import {
   Search,
   ShieldCheck,
   Thermometer,
+  Trash2,
   UserRound,
   Users,
   X,
@@ -44,6 +45,7 @@ import {
   AuthResponse,
   ClimateCurrent,
   DataProvenance,
+  deleteJson,
   getJson,
   hasStoredToken,
   Health,
@@ -273,6 +275,10 @@ export function App() {
   const [reviewComment, setReviewComment] = React.useState("");
   const [reviewState, setReviewState] = React.useState<"idle" | "saving" | "success" | "error">("idle");
   const [reviewedStatus, setReviewedStatus] = React.useState<Observation["status"] | null>(null);
+  const [deletionState, setDeletionState] = React.useState<
+    "idle" | "deleting" | "success" | "error"
+  >("idle");
+  const [deletedObservationId, setDeletedObservationId] = React.useState<number | null>(null);
   const [userStatusError, setUserStatusError] = React.useState(false);
   const t = translations[locale];
 
@@ -646,6 +652,25 @@ export function App() {
     }
   }
 
+  async function deleteInstitutionalObservation(
+    observationId: number,
+    reason: string,
+  ) {
+    setDeletionState("deleting");
+    setDeletedObservationId(null);
+    try {
+      await deleteJson(`/api/v1/observations/${observationId}`, { reason });
+      setSelectedId(null);
+      setSelectedAudit([]);
+      setDeletedObservationId(observationId);
+      setDeletionState("success");
+      if (user) await loadWorkspace(user);
+      await loadPublicSummary();
+    } catch {
+      setDeletionState("error");
+    }
+  }
+
   async function toggleUser(account: User) {
     setUserStatusError(false);
     try {
@@ -919,6 +944,10 @@ export function App() {
               onSelect={setSelectedId}
               onComment={setReviewComment}
               onDecision={submitDecision}
+              canDelete={user.role.name === "admin"}
+              deletionState={deletionState}
+              deletedObservationId={deletedObservationId}
+              onDelete={deleteInstitutionalObservation}
             />
           )}
 
@@ -1627,6 +1656,10 @@ function ValidationWorkspace({
   onSelect,
   onComment,
   onDecision,
+  canDelete,
+  deletionState,
+  deletedObservationId,
+  onDelete,
 }: {
   observations: Observation[];
   selected: Observation | null;
@@ -1642,11 +1675,33 @@ function ValidationWorkspace({
   onSelect: (id: number) => void;
   onComment: (comment: string) => void;
   onDecision: (status: "validated" | "observed" | "rejected") => void;
+  canDelete: boolean;
+  deletionState: "idle" | "deleting" | "success" | "error";
+  deletedObservationId: number | null;
+  onDelete: (observationId: number, reason: string) => Promise<void>;
 }) {
   const t = translations[locale];
+  const [deletionReason, setDeletionReason] = React.useState("");
   const actionable = selected && ["pending", "observed"].includes(selected.status);
   const territoryName = (territoryId: number) =>
     territories.find((territory) => territory.id === territoryId)?.name ?? "—";
+
+  React.useEffect(() => {
+    setDeletionReason("");
+  }, [selected?.id]);
+
+  const confirmDeletion = async () => {
+    if (!selected || deletionReason.trim().length < 3) return;
+    const confirmed = window.confirm(
+      replaceParams(t.deletion.confirm, {
+        id: selected.id,
+        title: selected.record_title,
+      }),
+    );
+    if (!confirmed) return;
+    await onDelete(selected.id, deletionReason.trim());
+  };
+
   return (
     <section className="reviewWorkspace">
       <aside className="reviewQueue">
@@ -1673,6 +1728,17 @@ function ValidationWorkspace({
         </div>
       </aside>
       <div className="reviewDetail">
+        {deletionState === "success" && deletedObservationId && (
+          <div className="inlineFeedback successFeedback" role="status">
+            <CheckCircle2 size={16} />
+            {replaceParams(t.deletion.success, { id: deletedObservationId })}
+          </div>
+        )}
+        {deletionState === "error" && (
+          <div className="inlineFeedback errorFeedback" role="alert">
+            <AlertTriangle size={16} /> {t.deletion.error}
+          </div>
+        )}
         {!selected ? (
           <div className="emptyState">{t.review.selectPrompt}</div>
         ) : (
@@ -1733,6 +1799,37 @@ function ValidationWorkspace({
                 </div>
                 {reviewState === "saving" && <span className="inlineFeedback"><LoaderCircle className="spin" size={16} /> {t.review.saving}</span>}
                 {reviewState === "error" && <span className="inlineFeedback errorFeedback" role="alert"><AlertTriangle size={16} /> {t.review.error}</span>}
+              </section>
+            )}
+            {canDelete && (
+              <section className="deletionPanel" aria-labelledby="delete-record-title">
+                <div>
+                  <h3 id="delete-record-title"><Trash2 size={17} /> {t.deletion.title}</h3>
+                  <p>{t.deletion.notice}</p>
+                </div>
+                <label>
+                  <span>{t.deletion.reason}</span>
+                  <input
+                    value={deletionReason}
+                    onChange={(event) => setDeletionReason(event.target.value)}
+                    placeholder={t.deletion.reasonPlaceholder}
+                    minLength={3}
+                    maxLength={500}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="decisionDelete"
+                  disabled={deletionState === "deleting" || deletionReason.trim().length < 3}
+                  onClick={() => void confirmDeletion()}
+                >
+                  {deletionState === "deleting" ? (
+                    <LoaderCircle className="spin" size={17} />
+                  ) : (
+                    <Trash2 size={17} />
+                  )}
+                  {deletionState === "deleting" ? t.deletion.deleting : t.deletion.action}
+                </button>
               </section>
             )}
             <AuditTimeline events={audit} locale={locale} compact />

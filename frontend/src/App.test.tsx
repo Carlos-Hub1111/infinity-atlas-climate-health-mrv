@@ -302,6 +302,7 @@ function installFetchMock(options?: {
     status: options?.monitorObservationStatus ?? observation.status,
   };
   let currentHeatObservation = { ...heatObservation };
+  const deletedObservationIds = new Set<number>();
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
@@ -391,11 +392,15 @@ function installFetchMock(options?: {
         return response(currentObservation, 201);
       }
       if (url.endsWith("/api/v1/observations")) {
-        return response(
-          activeRole === "admin"
-            ? [currentObservation, currentHeatObservation]
-            : [currentObservation],
-        );
+        const records = activeRole === "admin"
+          ? [currentObservation, currentHeatObservation]
+          : [currentObservation];
+        return response(records.filter((item) => !deletedObservationIds.has(item.id)));
+      }
+      if (url.includes("/api/v1/observations/") && method === "DELETE") {
+        const observationId = Number(url.match(/observations\/(\d+)/)?.[1]);
+        deletedObservationIds.add(observationId);
+        return response({ message: "Observation deleted and audit history preserved." });
       }
       if (url.includes("/api/v1/observations/") && method === "PATCH") {
         const body = JSON.parse(String(init?.body)) as { record_title?: string };
@@ -821,6 +826,7 @@ describe("Sprint 1B application", () => {
     expect(screen.getByRole("heading", { name: "San Cristóbal climate and health dashboard" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "New territorial observation" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete record" })).not.toBeInTheDocument();
   });
 
   it("routes #public to the frozen public-demo surface instead of a reduced dashboard", async () => {
@@ -855,6 +861,29 @@ describe("Sprint 1B application", () => {
     expect(screen.getByText("My records")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open my records" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Validate" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete record" })).not.toBeInTheDocument();
+  });
+
+  it("shows soft deletion only to administrators and removes the record after confirmation", async () => {
+    const confirmation = vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<App />);
+    await loginAs("admin");
+
+    const reason = await screen.findByLabelText("Deletion reason");
+    fireEvent.change(reason, {
+      target: { value: "Duplicate controlled record entered during UAT" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Delete record" }));
+
+    expect(confirmation).toHaveBeenCalledWith(
+      expect.stringContaining("Delete record #4"),
+    );
+    expect(
+      await screen.findByText(
+        "Record #4 was removed from institutional operational views. Audit history was preserved.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/#4 — Controlled water observation/)).not.toBeInTheDocument();
   });
 
   it("shows only public downloads publicly and authorized downloads internally", async () => {

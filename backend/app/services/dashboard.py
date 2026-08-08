@@ -71,7 +71,11 @@ def filtered_observations(
     *,
     user: User | None = None,
 ) -> tuple[list[Observation], dict[int, RiskScore]]:
-    statement = select(Observation).options(joinedload(Observation.territory))
+    statement = (
+        select(Observation)
+        .options(joinedload(Observation.territory))
+        .where(Observation.is_deleted.is_(False))
+    )
     if user is not None and user.role.name == "monitor":
         statement = statement.where(Observation.created_by_id == user.id)
     if filters.territory_id is not None:

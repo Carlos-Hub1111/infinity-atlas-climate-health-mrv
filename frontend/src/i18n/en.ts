@@ -256,6 +256,17 @@ export const en = {
     error: "The decision could not be saved. Check the transition and required comment.",
     notice: "Validation confirms record completeness and methodological review. It does not constitute a medical diagnosis or independently verify the territorial event.",
   },
+  deletion: {
+    title: "Delete institutional record",
+    action: "Delete record",
+    reason: "Deletion reason",
+    reasonPlaceholder: "Example: duplicate controlled record",
+    notice: "Administrator-only soft deletion. Evidence, decisions, risk scores and audit history are preserved. This does not withdraw data from the separate public demonstration dataset.",
+    confirm: "Delete record #{id} — {title}? This removes it from operational views while preserving its audit history.",
+    deleting: "Deleting record",
+    success: "Record #{id} was removed from institutional operational views. Audit history was preserved.",
+    error: "The record could not be deleted. Confirm administrator access and try again.",
+  },
   risk: {
     title: "Transparent risk score",
     formula: "Hazard {hazard} + Exposure {exposure} + Vulnerability {vulnerability} = {total}",
@@ -394,6 +405,7 @@ export const en = {
     logout: "Logout",
     user_status_changed: "User status changed",
     record_title_changed: "Record title changed",
+    observation_deleted: "Observation soft-deleted",
   },
   riskLevels: {
     low: "Low",

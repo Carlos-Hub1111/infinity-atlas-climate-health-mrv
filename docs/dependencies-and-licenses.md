@@ -1,6 +1,6 @@
 # Dependencies and licenses
 
-Date: 2026-07-28
+Updated: 2026-08-08
 
 ## Repository license
 
@@ -72,16 +72,18 @@ The `public-demo/` deployment uses the Sites vinext Cloudflare runtime. Direct r
 | drizzle-orm | 0.45.2 | Apache-2.0 |
 | leaflet | 1.9.4 | BSD-2-Clause |
 | lucide-react | 0.545.0 | ISC |
-| next | 16.2.11 | MIT |
+| next | 16.2.12 | MIT |
 | pdf-lib | 1.17.1 | MIT |
-| react | 19.2.6 | MIT |
-| react-dom | 19.2.6 | MIT |
+| react | 19.2.8 | MIT |
+| react-dom | 19.2.8 | MIT |
 
 Cloudflare/Vite/Wrangler packages are development and deployment tooling. The public map retains
 OpenStreetMap attribution, and PDF/CSV outputs retain source and methodology notices.
 
 Next.js declares optional image tooling. The lockfile overrides transitive `sharp` to patched version
-0.35.0 and `postcss` to 8.5.18. The Windows sharp binary reports
+0.35.0, `postcss` to 8.5.23 and `nanoid` to 3.3.17. The frontend lockfile also constrains
+`nanoid` to 3.3.17. These minimum compatible patches resolve the production advisories present during
+the 8 August 2026 closure audit. The Windows sharp binary reports
 `Apache-2.0 AND LGPL-3.0-or-later`; InfinityAtlas does not use `next/image`, does not modify that
 library and the Cloudflare Worker deployment output contains no sharp, libvips or native `.node`
 binary. This remains a funded-stage license-review item if image optimization is introduced.

@@ -26,6 +26,12 @@ or other brand assets.
 Use of the InfinityAtlas brand requires prior written authorization from
 INFINITYGAIA S.A.S. B.I.C.
 
+The brand boundary does not reserve software architecture or core functionality
+required by the funded open-source toolkit. The proposed UNICEF-funded workplan is
+intended to remain a complete and independently deployable open-source solution.
+Future independently developed products may use separate terms only when they are
+not required for that funded solution to operate as a complete independent whole.
+
 ## Institutional Independence
 
 The prototype does not display a UNICEF logo, emblem, or distinctive mark. Nothing

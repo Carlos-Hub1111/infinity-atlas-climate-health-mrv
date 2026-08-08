@@ -14,6 +14,7 @@ from app.models import (
     AuditEvent,
     AuthSession,
     Base,
+    Evidence,
     Observation,
     Project,
     RiskScore,
@@ -243,6 +244,150 @@ class Sprint1BApiTests(unittest.TestCase):
         self.assertEqual(public.status_code, 200)
         self.assertEqual(public.json()["total_observations"], 1)
         self.assertNotIn("created_by_id", public.json())
+
+    def test_admin_soft_deletion_preserves_history_and_excludes_operational_outputs(self) -> None:
+        created, monitor_headers = self.create_as_monitor()
+        observation_id = created["id"]
+        title = created["record_title"]
+        admin_headers = self.login("admin")
+        public_headers = self.login("public")
+
+        validated = self.client.post(
+            f"/api/v1/observations/{observation_id}/validation",
+            json={"status": "validated", "comment": "Methodological review complete."},
+            headers=admin_headers,
+        )
+        self.assertEqual(validated.status_code, 201)
+
+        for headers in (monitor_headers, public_headers):
+            denied = self.client.request(
+                "DELETE",
+                f"/api/v1/observations/{observation_id}",
+                json={"reason": "Controlled closure test"},
+                headers=headers,
+            )
+            self.assertEqual(denied.status_code, 403)
+        self.assertEqual(
+            self.client.request(
+                "DELETE",
+                f"/api/v1/observations/{observation_id}",
+                json={"reason": "Controlled closure test"},
+            ).status_code,
+            401,
+        )
+
+        deleted = self.client.request(
+            "DELETE",
+            f"/api/v1/observations/{observation_id}",
+            json={"reason": "Duplicate controlled record entered during UAT"},
+            headers=admin_headers,
+        )
+        self.assertEqual(deleted.status_code, 200)
+        self.assertEqual(
+            deleted.json()["message"],
+            "Observation deleted and audit history preserved.",
+        )
+        repeated = self.client.request(
+            "DELETE",
+            f"/api/v1/observations/{observation_id}",
+            json={"reason": "Repeated request"},
+            headers=admin_headers,
+        )
+        self.assertEqual(repeated.status_code, 409)
+
+        self.assertEqual(
+            self.client.get("/api/v1/observations", headers=admin_headers).json(),
+            [],
+        )
+        self.assertEqual(
+            self.client.get(
+                f"/api/v1/observations/{observation_id}", headers=admin_headers
+            ).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.get(
+                f"/api/v1/observations/{observation_id}/risk-score",
+                headers=admin_headers,
+            ).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.client.get("/api/v1/dashboard/public").json()["total_observations"],
+            0,
+        )
+        self.assertEqual(
+            self.client.get("/api/v1/map/observations").json()["observations"],
+            [],
+        )
+        self.assertEqual(self.client.get("/api/v1/public/summary").json()["total_observations"], 0)
+
+        public_csv = self.client.get("/api/v1/exports/public.csv")
+        internal_csv = self.client.get(
+            "/api/v1/exports/observations.csv", headers=admin_headers
+        )
+        self.assertEqual(public_csv.status_code, 200)
+        self.assertEqual(internal_csv.status_code, 200)
+        self.assertNotIn(title, public_csv.text)
+        self.assertNotIn(title, internal_csv.text)
+        self.assertEqual(self.client.get("/api/v1/reports/public.pdf").status_code, 200)
+        self.assertEqual(
+            self.client.get("/api/v1/reports/internal.pdf", headers=admin_headers).status_code,
+            200,
+        )
+
+        audit = self.client.get(
+            f"/api/v1/observations/{observation_id}/audit",
+            headers=admin_headers,
+        )
+        self.assertEqual(audit.status_code, 200)
+        deletion_events = [
+            event for event in audit.json() if event["event_type"] == "observation_deleted"
+        ]
+        self.assertEqual(len(deletion_events), 1)
+        self.assertEqual(deletion_events[0]["new_state"], "deleted")
+        self.assertEqual(
+            self.client.get(
+                f"/api/v1/observations/{observation_id}/audit",
+                headers=monitor_headers,
+            ).status_code,
+            404,
+        )
+
+        with self.session_factory() as db:
+            observation = db.get(Observation, observation_id)
+            self.assertIsNotNone(observation)
+            self.assertTrue(observation.is_deleted)
+            self.assertIsNotNone(observation.deleted_at)
+            self.assertIsNotNone(observation.deleted_by_id)
+            self.assertEqual(
+                observation.deletion_reason,
+                "Duplicate controlled record entered during UAT",
+            )
+            self.assertEqual(
+                db.scalar(
+                    select(func.count())
+                    .select_from(Evidence)
+                    .where(Evidence.observation_id == observation_id)
+                ),
+                1,
+            )
+            self.assertEqual(
+                db.scalar(
+                    select(func.count())
+                    .select_from(Validation)
+                    .where(Validation.observation_id == observation_id)
+                ),
+                1,
+            )
+            self.assertEqual(
+                db.scalar(
+                    select(func.count())
+                    .select_from(RiskScore)
+                    .where(RiskScore.observation_id == observation_id)
+                ),
+                1,
+            )
 
     def test_record_title_permissions_and_append_only_history(self) -> None:
         created, monitor_headers = self.create_as_monitor()
