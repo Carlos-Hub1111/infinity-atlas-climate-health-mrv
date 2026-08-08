@@ -134,5 +134,4 @@ replace the legacy loader when Drizzle publishes a compatible chain.
 This recommendation is limited to dependency security and the already approved
 Sprint 1C-D2 behavior. The two residual findings are not in the deployed Worker
 or assets, are not Internet reachable, and have explicit operational
-mitigations. Commit, push and redeploy remain blocked until Carlos and Nova
-approve this report.
+mitigations. Commit, push and redeploy remain blocked until authorized INFINITYGAIA product review approves this report.

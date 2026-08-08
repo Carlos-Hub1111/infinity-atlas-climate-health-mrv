@@ -47,5 +47,4 @@
 3. Confirm Open-Meteo refresh, map tiles, PDF and CSV.
 4. Confirm no login or public write control exists.
 
-Record any finding before Sprint 1C is frozen. Do not modify `main`, merge or open a PR until Nova
-approves the branch.
+Record any finding before Sprint 1C is frozen. Do not modify `main`, merge or open a PR until authorized INFINITYGAIA review approves the branch.

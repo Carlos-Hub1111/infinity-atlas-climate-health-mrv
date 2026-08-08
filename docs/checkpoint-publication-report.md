@@ -187,7 +187,7 @@ Docker is documented as pending validation because Docker is not available on th
 
 ## Pending
 
-- Human review by Carlos/Nova before Sprint 1A.
+- Human review by the INFINITYGAIA product and technical team before Sprint 1A.
 - Docker/PostGIS validation on a machine with Docker.
 - Open a pull request only after branch review is authorized.
 
