@@ -4,6 +4,8 @@
 
 **Product:** InfinityAtlas Climate & Health MRV Toolkit<br>
 **Owner and operator:** INFINITYGAIA S.A.S. B.I.C.<br>
+**Prepared by:** INFINITYGAIA S.A.S. B.I.C. — Product & Technical Team<br>
+**Approved by:** INFINITYGAIA S.A.S. B.I.C.<br>
 **Document version:** 1.0 — Submission closure<br>
 **Date:** 8 August 2026<br>
 **System status:** Functioning controlled prototype under structured UAT
@@ -49,21 +51,15 @@ users or publish directly to the Public Dashboard. These limits are enforced by 
 
 ## 3.1 Start locally
 
-1. Open PowerShell.
-2. Go to the repository folder:
-
-   ```powershell
-   cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
-   ```
-
-3. Start InfinityAtlas:
+1. Open PowerShell in the repository root.
+2. Start InfinityAtlas:
 
    ```powershell
    .\start-local.ps1
    ```
 
-4. Wait until the local service addresses appear.
-5. Open http://127.0.0.1:5173/ in Chrome.
+3. Wait until the local service addresses appear.
+4. Open http://127.0.0.1:5173/ in Chrome.
 
 ## 3.2 Sign in
 
@@ -179,10 +175,9 @@ Never enter:
 Use **Log out**. This revokes the session; closing the browser tab alone does not perform a server-side
 logout.
 
-To stop local services:
+From the repository root, run:
 
 ```powershell
-cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 .\stop-local.ps1
 ```
 

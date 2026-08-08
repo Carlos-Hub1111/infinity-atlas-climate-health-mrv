@@ -4,10 +4,9 @@
 
 **Producto:** InfinityAtlas Climate & Health MRV Toolkit  
 **Propiedad y operación:** INFINITYGAIA S.A.S. B.I.C.  
-**Versión del manual:** 1.0 - Borrador para UAT  
-**Fecha:** 30 de julio de 2026  
-**Commit documentado:** `2543f7b3bd57598f22698f175b9eb50a671c59e0`  
-**Rama:** `feature/sprint-1d-b-unified-demo-flow`
+**Versión del manual:** 1.0 — Cierre de entrega
+**Fecha:** 8 de agosto de 2026
+**Etiqueta de entrega:** `unicef-rfps-503931-submission-2026-08-08-final`
 
 > Prototipo / prueba controlada - No constituye un piloto territorial validado.
 
@@ -15,7 +14,7 @@
 
 | Versión | Fecha | Descripción del cambio | Preparado por | Aprobado por |
 | --- | --- | --- | --- | --- |
-| 1.0 - Borrador para UAT | 30 de julio de 2026 | Segunda edición corregida: ortografía, localización visible, fichas específicas, índice navegable, enlaces internos y marcadores PDF. | Ciro (Codex) para INFINITYGAIA S.A.S. B.I.C. | Pendiente de aprobación final de Carlos y Nova |
+| 1.0 — Cierre de entrega | 8 de agosto de 2026 | Edición institucional final: control documental actualizado, referencias personales eliminadas y comportamiento funcional sincronizado con el cierre de entrega. | INFINITYGAIA S.A.S. B.I.C. — Product & Technical Team | INFINITYGAIA S.A.S. B.I.C. |
 
 <a id="indice"></a>
 
@@ -81,6 +80,7 @@ En este manual el enfoque es observar, documentar y enviar registros para revisi
 - No escribe comentarios metodológicos de decisión.
 - No modifica la auditoría.
 - No administra usuarios.
+- No elimina registros.
 - No publica directamente en el Dashboard Público.
 - Solo consulta los registros permitidos por su rol.
 
@@ -100,13 +100,11 @@ PowerShell es una ventana de Windows donde se escriben instrucciones. No necesit
 
 1. Presiona la tecla Windows.
 2. Escribe PowerShell.
-3. Abre Windows PowerShell.
-4. Copia el primer comando y presiona Enter.
-5. Copia el segundo comando y presiona Enter.
-6. Espera hasta que aparezcan las direcciones de los servicios.
+3. Abre Windows PowerShell en la raíz del repositorio.
+4. Copia el comando y presiona Enter.
+5. Espera hasta que aparezcan las direcciones de los servicios.
 
 ```powershell
-cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 .\start-local.ps1
 ```
 
@@ -130,7 +128,7 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 9. Confirma que el encabezado muestra Demo Monitor y el rol Monitor / Técnico.
 
 > **Protege la contraseña**  
-> No fotografíes, grabes, copies en un chat ni compartas la contraseña. Si Chrome ofrece guardarla, Carlos decide si acepta. Este manual nunca contiene contraseñas.
+> No fotografíes, grabes, copies en un chat ni compartas la contraseña. Si Chrome ofrece guardarla, sigue la política de credenciales de la organización. Este manual nunca contiene contraseñas.
 
 ![Figura 1. Portal Central de InfinityAtlas. 1: marca; 2: idioma; 3: estado de servicios; 4: acceso público; 5: acceso institucional; 6: aviso de prototipo; 7: frontera de datos.](images/fig-01-portal-central-numerado.png)
 
@@ -858,7 +856,7 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 | ¿Para qué sirve? | Identifica el equipo, no una persona. |
 | ¿Qué debe escribir o seleccionar el usuario? | Escribe un rol o unidad. |
 | Ejemplo correcto | Equipo de monitoreo territorial. |
-| Ejemplo incorrecto | Carlos Cifuentes, teléfono... |
+| Ejemplo incorrecto | Nombre personal + teléfono. |
 | ¿Es obligatorio? | Sí |
 | ¿Qué sucede si se deja vacío? | El usuario no lo escribe. Si no aparece, debe comprobar la fuente o el estado del servicio y no suponer un valor. |
 | ¿Quién puede verlo? | Monitor y Administrador |
@@ -1083,11 +1081,10 @@ Este ejercicio crea una prueba controlada. No representa una emergencia ni un ev
 1. Presiona el botón Cerrar sesión del encabezado.
 2. Confirma que regresaste al Portal Central.
 3. No dejes una sesión institucional abierta en un equipo compartido.
-4. Abre PowerShell cuando termine la demostración.
-5. Ejecuta los comandos siguientes.
+4. Abre PowerShell en la raíz del repositorio cuando termine la demostración.
+5. Ejecuta el comando siguiente.
 
 ```powershell
-cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 .\stop-local.ps1
 ```
 
@@ -1122,7 +1119,7 @@ Cerrar la pestaña no siempre revoca la sesión de la misma forma que el botón 
 
 [Volver al índice](#indice)
 
-Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pueden ser leídas por Carlos durante la presentación.
+Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pueden ser utilizadas por la persona presentadora.
 
 | Minuto | Qué mostrar | Frase exacta sugerida |
 | --- | --- | --- |
@@ -1147,7 +1144,7 @@ Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pue
 | Backend no disponible | La API no inició. | Abre <http://127.0.0.1:8000/health>. Reinicia con stop-local.ps1 y start-local.ps1. | Si /health no responde 200. |
 | Frontend no disponible | El Portal Central no inició. | Abre <http://127.0.0.1:5173/>. Reinicia los servicios. | Si la página sigue en blanco. |
 | API desconectada | El Portal no recibe respuesta del backend. | Comprueba /health y espera 20 segundos. | Si el estado sigue rojo. |
-| Contraseña antigua | Chrome guardó una clave anterior. | Borra la entrada antigua del administrador de contraseñas y usa la clave local actual. | Si Carlos no conoce la clave local vigente. |
+| Contraseña antigua | Chrome guardó una clave anterior. | Borra la entrada antigua del administrador de contraseñas y usa la clave local actual. | Si la persona autorizada no dispone de la credencial local vigente. |
 | Usuario inactivo | La cuenta fue desactivada. | Pide al Administrador que compruebe Usuarios demo. | Si la cuenta correcta sigue inactiva. |
 | Token expirado | La sesión terminó. | Vuelve al acceso institucional e inicia sesión otra vez. | Si ocurre inmediatamente después de ingresar. |
 | Error 401 | Falta sesión o la sesión expiró. | Cierra sesión, vuelve a entrar y repite la acción. | Si ocurre con una sesión nueva. |

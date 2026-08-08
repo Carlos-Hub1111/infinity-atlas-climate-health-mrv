@@ -4,10 +4,9 @@
 
 **Producto:** InfinityAtlas Climate & Health MRV Toolkit  
 **Propiedad y operación:** INFINITYGAIA S.A.S. B.I.C.  
-**Versión del manual:** 1.0 - Borrador para UAT  
-**Fecha:** 30 de julio de 2026  
-**Commit documentado:** `2543f7b3bd57598f22698f175b9eb50a671c59e0`  
-**Rama:** `feature/sprint-1d-b-unified-demo-flow`
+**Versión del manual:** 1.0 — Cierre de entrega
+**Fecha:** 8 de agosto de 2026
+**Etiqueta de entrega:** `unicef-rfps-503931-submission-2026-08-08-final`
 
 > Prototipo / prueba controlada - No constituye un piloto territorial validado.
 
@@ -15,7 +14,7 @@
 
 | Versión | Fecha | Descripción del cambio | Preparado por | Aprobado por |
 | --- | --- | --- | --- | --- |
-| 1.0 - Borrador para UAT | 30 de julio de 2026 | Segunda edición corregida: ortografía, localización visible, fichas específicas, índice navegable, enlaces internos y marcadores PDF. | Ciro (Codex) para INFINITYGAIA S.A.S. B.I.C. | Pendiente de aprobación final de Carlos y Nova |
+| 1.0 — Cierre de entrega | 8 de agosto de 2026 | Edición institucional final: control documental actualizado, referencias personales eliminadas y comportamiento funcional sincronizado con el cierre de entrega. | INFINITYGAIA S.A.S. B.I.C. — Product & Technical Team | INFINITYGAIA S.A.S. B.I.C. |
 
 <a id="indice"></a>
 
@@ -65,7 +64,7 @@ En este manual el enfoque es consultar información pública segura sin iniciar 
 > InfinityAtlas no es una herramienta de diagnóstico médico. No ingreses nombres de niños, historias clínicas, documentos de identidad, fotografías identificables ni otros datos personales.
 
 > **Qué contiene esta demostración**  
-> Los seis registros son datos públicos controlados: prueba controlada, dato público real o demo sintética. No contienen nombres personales, comentarios internos ni auditoría privada.
+> Los seis registros son datos públicos controlados: prueba controlada, dato público real o demo sintética. No contienen nombres personales, comentarios internos ni auditoría privada. La superficie pública no puede crear, editar, validar, rechazar ni eliminar observaciones.
 
 <a id="chapter-2"></a>
 
@@ -81,7 +80,7 @@ En este manual el enfoque es consultar información pública segura sin iniciar 
 
 | Versión | Qué significa |
 | --- | --- |
-| Local | Se ejecuta en el equipo de Carlos. Puede documentar cambios aún no publicados. |
+| Local | Se ejecuta en un entorno local autorizado. Puede documentar cambios aún no publicados. |
 | Pública de Internet | Worker HTTPS activo, de solo lectura, conectado a D1 controlada. |
 | Preview | Versión temporal de Cloudflare para UAT; no necesariamente recibe tráfico estable. |
 | Versión activa | Versión que responde en la URL workers.dev estable. |
@@ -1782,7 +1781,7 @@ Un CSV es una tabla de datos que puede abrirse en Excel o utilizarse en análisi
 
 [Volver al índice](#indice)
 
-Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pueden ser leídas por Carlos durante la presentación.
+Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pueden ser utilizadas por la persona presentadora.
 
 | Minuto | Qué mostrar | Frase exacta sugerida |
 | --- | --- | --- |
@@ -1807,7 +1806,7 @@ Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pue
 | Backend no disponible | La API no inició. | Abre <http://127.0.0.1:8000/health>. Reinicia con stop-local.ps1 y start-local.ps1. | Si /health no responde 200. |
 | Frontend no disponible | El Portal Central no inició. | Abre <http://127.0.0.1:5173/>. Reinicia los servicios. | Si la página sigue en blanco. |
 | API desconectada | El Portal no recibe respuesta del backend. | Comprueba /health y espera 20 segundos. | Si el estado sigue rojo. |
-| Contraseña antigua | Chrome guardó una clave anterior. | Borra la entrada antigua del administrador de contraseñas y usa la clave local actual. | Si Carlos no conoce la clave local vigente. |
+| Contraseña antigua | Chrome guardó una clave anterior. | Borra la entrada antigua del administrador de contraseñas y usa la clave local actual. | Si la persona autorizada no dispone de la credencial local vigente. |
 | Usuario inactivo | La cuenta fue desactivada. | Pide al Administrador que compruebe Usuarios demo. | Si la cuenta correcta sigue inactiva. |
 | Token expirado | La sesión terminó. | Vuelve al acceso institucional e inicia sesión otra vez. | Si ocurre inmediatamente después de ingresar. |
 | Error 401 | Falta sesión o la sesión expiró. | Cierra sesión, vuelve a entrar y repite la acción. | Si ocurre con una sesión nueva. |

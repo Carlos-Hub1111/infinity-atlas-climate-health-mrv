@@ -4,10 +4,9 @@
 
 **Producto:** InfinityAtlas Climate & Health MRV Toolkit  
 **Propiedad y operación:** INFINITYGAIA S.A.S. B.I.C.  
-**Versión del manual:** 1.0 - Borrador para UAT  
-**Fecha:** 30 de julio de 2026  
-**Commit documentado:** `2543f7b3bd57598f22698f175b9eb50a671c59e0`  
-**Rama:** `feature/sprint-1d-b-unified-demo-flow`
+**Versión del manual:** 1.0 — Cierre de entrega
+**Fecha:** 8 de agosto de 2026
+**Etiqueta de entrega:** `unicef-rfps-503931-submission-2026-08-08-final`
 
 > Prototipo / prueba controlada - No constituye un piloto territorial validado.
 
@@ -15,7 +14,7 @@
 
 | Versión | Fecha | Descripción del cambio | Preparado por | Aprobado por |
 | --- | --- | --- | --- | --- |
-| 1.0 - Borrador para UAT | 30 de julio de 2026 | Segunda edición corregida: ortografía, localización visible, fichas específicas, índice navegable, enlaces internos y marcadores PDF. | Ciro (Codex) para INFINITYGAIA S.A.S. B.I.C. | Pendiente de aprobación final de Carlos y Nova |
+| 1.0 — Cierre de entrega | 8 de agosto de 2026 | Edición institucional final: control documental actualizado, referencias personales eliminadas y comportamiento funcional sincronizado con el cierre de entrega. | INFINITYGAIA S.A.S. B.I.C. — Product & Technical Team | INFINITYGAIA S.A.S. B.I.C. |
 
 <a id="indice"></a>
 
@@ -31,17 +30,18 @@
 - [6. Cola de revisión: elementos del registro](#chapter-6)
 - [7. Estados de revisión](#chapter-7)
 - [8. Flujo paso a paso de validación](#chapter-8)
-- [9. Historial de trazabilidad](#chapter-9)
-- [10. Auditoría: campo por campo](#chapter-10)
-  - [10.1 Ejemplo: buscar todos los eventos del registro número 6](#section-10-1)
-- [11. Usuarios demo y Validador inactivo](#chapter-11)
-- [12. Panel de publicación pública](#chapter-12)
-- [13. Qué permanece privado](#chapter-13)
-- [14. Ejercicio completo del Administrador](#chapter-14)
-- [15. Cómo cerrar sesión y apagar el sistema](#chapter-15)
-- [16. Errores frecuentes del Administrador](#chapter-16)
-- [17. Apéndice A. Cómo presentar InfinityAtlas en una demostración en vivo](#chapter-17)
-- [18. Apéndice B. Solución de problemas](#chapter-18)
+- [9. Eliminación lógica de una observación](#chapter-9)
+- [10. Historial de trazabilidad](#chapter-10)
+- [11. Auditoría: campo por campo](#chapter-11)
+  - [11.1 Ejemplo: buscar todos los eventos del registro número 6](#section-11-1)
+- [12. Usuarios demo y Validador inactivo](#chapter-12)
+- [13. Panel de publicación pública](#chapter-13)
+- [14. Qué permanece privado](#chapter-14)
+- [15. Ejercicio completo del Administrador](#chapter-15)
+- [16. Cómo cerrar sesión y apagar el sistema](#chapter-16)
+- [17. Errores frecuentes del Administrador](#chapter-17)
+- [18. Apéndice A. Cómo presentar InfinityAtlas en una demostración en vivo](#chapter-18)
+- [19. Apéndice B. Solución de problemas](#chapter-19)
 
 ---
 
@@ -81,6 +81,7 @@ En este manual el enfoque es revisar, decidir, supervisar y conservar trazabilid
 | Observar | Pedir aclaraciones o correcciones antes de validar. |
 | Validar | Confirmar integridad y consistencia metodológica. |
 | Rechazar | Cerrar el flujo porque no cumple requisitos mínimos. |
+| Eliminar de forma lógica | Retirar un registro de las vistas operativas sin borrar evidencia, decisiones, puntajes ni auditoría. |
 | Publicar | Transferir información autorizada a una superficie pública. Esta función no está habilitada. |
 | Auditar | Consultar quién hizo cada acción, cuándo y con qué cambio. |
 
@@ -103,13 +104,11 @@ PowerShell es una ventana de Windows donde se escriben instrucciones. No necesit
 
 1. Presiona la tecla Windows.
 2. Escribe PowerShell.
-3. Abre Windows PowerShell.
-4. Copia el primer comando y presiona Enter.
-5. Copia el segundo comando y presiona Enter.
-6. Espera hasta que aparezcan las direcciones de los servicios.
+3. Abre Windows PowerShell en la raíz del repositorio.
+4. Copia el comando y presiona Enter.
+5. Espera hasta que aparezcan las direcciones de los servicios.
 
 ```powershell
-cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 .\start-local.ps1
 ```
 
@@ -133,7 +132,7 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 9. Confirma que el encabezado muestra Demo Administrador y el rol Administrador.
 
 > **Protege la contraseña**  
-> No fotografíes, grabes, copies en un chat ni compartas la contraseña. Si Chrome ofrece guardarla, Carlos decide si acepta. Este manual nunca contiene contraseñas.
+> No fotografíes, grabes, copies en un chat ni compartas la contraseña. Si Chrome ofrece guardarla, sigue la política de credenciales de la organización. Este manual nunca contiene contraseñas.
 
 ![Figura 1. Portal Central de InfinityAtlas. 1: marca; 2: idioma; 3: estado de servicios; 4: acceso público; 5: acceso institucional; 6: aviso de prototipo; 7: frontera de datos.](images/fig-01-portal-central-numerado.png)
 
@@ -526,9 +525,9 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 
 [Volver al índice](#indice)
 
-![Figura 4. Registro pendiente y acciones. 1: selección; 2: evidencia; 3: puntaje disponible o ausente; 4: aviso metodológico; 5: comentario; 6: decisiones; 7: historial.](images/fig-07-admin-validacion-numerado.png)
+![Figura 4. Vista administrativa final de un registro: evidencia, puntaje metodológico, aviso de límites, control exclusivo de eliminación lógica con motivo obligatorio e historial preservado.](images/fig-07-admin-validacion-numerado.png)
 
-*Figura 4. Registro pendiente y acciones. 1: selección; 2: evidencia; 3: puntaje disponible o ausente; 4: aviso metodológico; 5: comentario; 6: decisiones; 7: historial.*
+*Figura 4. Vista administrativa final de un registro: evidencia, puntaje metodológico, aviso de límites, control exclusivo de eliminación lógica con motivo obligatorio e historial preservado.*
 
 ### Ficha: Comentario de revisión
 
@@ -637,11 +636,109 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 10. Lee el mensaje de éxito.
 11. Revisa el historial.
 
-<div style="page-break-after: always;"></div>
-
 <a id="chapter-9"></a>
 
-# 9. Historial de trazabilidad
+# 9. Eliminación lógica de una observación
+
+[Volver al índice](#indice)
+
+> **Control exclusivo del Administrador**
+> Eliminar un registro de forma lógica lo retira de las vistas operativas, pero no borra físicamente la evidencia, las validaciones, los puntajes de riesgo ni los eventos append-only de auditoría.
+
+### Ficha: Eliminar registro institucional
+
+| Elemento | Explicación |
+| --- | --- |
+| Nombre exacto en español | Eliminar registro institucional |
+| Nombre exacto en inglés | Delete institutional record |
+| Tipo de elemento | Botón o acción |
+| ¿Para qué sirve? | Inicia la eliminación lógica de la observación seleccionada. |
+| ¿Qué debe escribir o seleccionar el usuario? | Comprueba el ID y el título antes de continuar. |
+| Ejemplo correcto | Registro controlado duplicado. |
+| Ejemplo incorrecto | Eliminar para ocultar una decisión incómoda. |
+| ¿Es obligatorio? | No |
+| ¿Qué sucede si se deja vacío? | No es un campo para llenar. Si no se pulsa, la operación asociada no se ejecuta y no cambia ningún registro. |
+| ¿Quién puede verlo? | Administrador |
+| ¿Contiene información privada? | Sí: acción institucional restringida. |
+| Publicación pública | No aplica: no es un dato territorial publicable. |
+| Error común | Buscar este control como Monitor. |
+| Cómo corregirlo | Solo el backend autoriza al Administrador. |
+
+### Ficha: Motivo de eliminación
+
+| Elemento | Explicación |
+| --- | --- |
+| Nombre exacto en español | Motivo de eliminación |
+| Nombre exacto en inglés | Deletion reason |
+| Tipo de elemento | Campo obligatorio |
+| ¿Para qué sirve? | Explica por qué el registro debe salir de las vistas operativas. |
+| ¿Qué debe escribir o seleccionar el usuario? | Escribe una razón factual de 3 a 500 caracteres. |
+| Ejemplo correcto | Registro de prueba controlada duplicado. |
+| Ejemplo incorrecto | Borrar. |
+| ¿Es obligatorio? | Sí |
+| ¿Qué sucede si se deja vacío? | InfinityAtlas detiene el guardado o la acción y señala este campo para que el usuario lo complete. |
+| ¿Quién puede verlo? | Administrador |
+| ¿Contiene información privada? | Sí: queda en la auditoría institucional. |
+| ¿Puede incluirse en una publicación pública? | No en su forma institucional. Requiere autorización, sanitización y una revisión de privacidad. |
+| Error común | Dejar el motivo vacío. |
+| Cómo corregirlo | Describe la causa concreta sin datos personales. |
+
+### Ficha: Confirmación de eliminación
+
+| Elemento | Explicación |
+| --- | --- |
+| Nombre exacto en español | Confirmación de eliminación |
+| Nombre exacto en inglés | Deletion confirmation |
+| Tipo de elemento | Campo obligatorio |
+| ¿Para qué sirve? | Evita retirar el registro equivocado. |
+| ¿Qué debe escribir o seleccionar el usuario? | Lee el ID y el título; confirma solo si coinciden. |
+| Ejemplo correcto | Eliminar registro #8 — Prueba controlada duplicada. |
+| Ejemplo incorrecto | Confirmar sin leer. |
+| ¿Es obligatorio? | Sí para completar |
+| ¿Qué sucede si se deja vacío? | InfinityAtlas detiene el guardado o la acción y señala este campo para que el usuario lo complete. |
+| ¿Quién puede verlo? | Administrador |
+| ¿Contiene información privada? | No aplica: no es un dato territorial publicable. |
+| ¿Puede incluirse en una publicación pública? | Solo después de revisión, autorización y sanitización; nunca de forma automática. |
+| Error común | Aceptar por costumbre. |
+| Cómo corregirlo | Cancela y vuelve a seleccionar el registro correcto. |
+
+### Ficha: Observación eliminada de forma lógica
+
+| Elemento | Explicación |
+| --- | --- |
+| Nombre exacto en español | Observación eliminada de forma lógica |
+| Nombre exacto en inglés | Observation soft-deleted |
+| Tipo de elemento | Indicador informativo |
+| ¿Para qué sirve? | Confirma que la auditoría conservó el retiro institucional. |
+| ¿Qué debe escribir o seleccionar el usuario? | Consulta el evento en Auditoría. |
+| Ejemplo correcto | Actor, rol, fecha UTC y motivo conservados. |
+| Ejemplo incorrecto | Esperar que desaparezca la auditoría. |
+| ¿Es obligatorio? | Automático |
+| ¿Qué sucede si se deja vacío? | El usuario no lo escribe. Si no aparece, debe comprobar la fuente o el estado del servicio y no suponer un valor. |
+| ¿Quién puede verlo? | Administrador |
+| ¿Contiene información privada? | Sí: evento institucional restringido. |
+| ¿Puede incluirse en una publicación pública? | No en su forma institucional. Requiere autorización, sanitización y una revisión de privacidad. |
+| Error común | Pensar que fue un borrado físico. |
+| Cómo corregirlo | Comprueba que la evidencia y el historial siguen preservados. |
+
+1. Abre Cola de revisión y selecciona el registro correcto.
+2. Comprueba el número y el nombre corto.
+3. Ubica Eliminar registro institucional.
+4. Escribe un motivo factual de eliminación.
+5. Presiona Eliminar registro.
+6. Lee la confirmación con el ID y el título.
+7. Confirma únicamente si corresponde al registro elegido.
+8. Comprueba que desaparece de listas, dashboards, mapas, filtros, PDF y CSV institucionales.
+9. Abre Auditoría y verifica el evento Observación eliminada de forma lógica.
+
+> **Frontera con el Dashboard Público**
+> La eliminación lógica en la base institucional no modifica ni retira automáticamente datos del conjunto demostrativo separado y de solo lectura en Cloudflare D1. Un flujo futuro de publicación autorizada deberá incluir retiro o despublicación explícita, sanitizada y auditada.
+
+<div style="page-break-after: always;"></div>
+
+<a id="chapter-10"></a>
+
+# 10. Historial de trazabilidad
 
 [Volver al índice](#indice)
 
@@ -658,10 +755,11 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 | Nombre del registro actualizado | Se cambió el nombre corto y se guardó el valor anterior. |
 | Inicio de sesión exitoso/fallido | Se registró un intento de acceso. |
 | Cierre de sesión | Se revocó la sesión. |
+| Observación eliminada de forma lógica | Se retiró el registro de vistas operativas y se conservaron actor, fecha y motivo. |
 
-<a id="chapter-10"></a>
+<a id="chapter-11"></a>
 
-# 10. Auditoría: campo por campo
+# 11. Auditoría: campo por campo
 
 [Volver al índice](#indice)
 
@@ -878,9 +976,9 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 | Error común | Perder el contexto. |
 | Cómo corregirlo | Usa el botón de la auditoría. |
 
-<a id="section-10-1"></a>
+<a id="section-11-1"></a>
 
-## 10.1 Ejemplo: buscar todos los eventos del registro número 6
+## 11.1 Ejemplo: buscar todos los eventos del registro número 6
 
 1. Abre Auditoría.
 2. Escribe #6.
@@ -889,9 +987,9 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 5. Lee la línea de tiempo.
 6. Presiona Volver a la actividad global.
 
-<a id="chapter-11"></a>
+<a id="chapter-12"></a>
 
-# 11. Usuarios demo y Validador inactivo
+# 12. Usuarios demo y Validador inactivo
 
 [Volver al índice](#indice)
 
@@ -902,9 +1000,9 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 > **No hay contraseñas en esta pantalla**  
 > La pantalla muestra nombre, identificador, rol y estado. No muestra ni permite copiar contraseñas. demo-validator no debe mostrarse como opción operativa.
 
-<a id="chapter-12"></a>
+<a id="chapter-13"></a>
 
-# 12. Panel de publicación pública
+# 13. Panel de publicación pública
 
 [Volver al índice](#indice)
 
@@ -967,9 +1065,9 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 | Error común | Esperar cambio automático del Dashboard. |
 | Cómo corregirlo | La fase financiada requerirá autorización y sanitización. |
 
-<a id="chapter-13"></a>
+<a id="chapter-14"></a>
 
-# 13. Qué permanece privado
+# 14. Qué permanece privado
 
 [Volver al índice](#indice)
 
@@ -983,9 +1081,9 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 - Datos de niños.
 - Documentación confidencial.
 
-<a id="chapter-14"></a>
+<a id="chapter-15"></a>
 
-# 14. Ejercicio completo del Administrador
+# 15. Ejercicio completo del Administrador
 
 [Volver al índice](#indice)
 
@@ -1004,29 +1102,29 @@ cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 10. Abre Auditoría y confirma todos los eventos.
 11. Comprueba que el Monitor no tuvo controles de validación.
 12. Comprueba que demo-validator permanece inactivo y oculto.
+13. Para practicar la eliminación, usa únicamente otro registro controlado duplicado y comprueba el evento de auditoría.
 
-<a id="chapter-15"></a>
+<a id="chapter-16"></a>
 
-# 15. Cómo cerrar sesión y apagar el sistema
+# 16. Cómo cerrar sesión y apagar el sistema
 
 [Volver al índice](#indice)
 
 1. Presiona el botón Cerrar sesión del encabezado.
 2. Confirma que regresaste al Portal Central.
 3. No dejes una sesión institucional abierta en un equipo compartido.
-4. Abre PowerShell cuando termine la demostración.
-5. Ejecuta los comandos siguientes.
+4. Abre PowerShell en la raíz del repositorio cuando termine la demostración.
+5. Ejecuta el comando siguiente.
 
 ```powershell
-cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 .\stop-local.ps1
 ```
 
 Cerrar la pestaña no siempre revoca la sesión de la misma forma que el botón Cerrar sesión. Usa primero el botón y después apaga los servicios.
 
-<a id="chapter-16"></a>
+<a id="chapter-17"></a>
 
-# 16. Errores frecuentes del Administrador
+# 17. Errores frecuentes del Administrador
 
 [Volver al índice](#indice)
 
@@ -1045,16 +1143,18 @@ Cerrar la pestaña no siempre revoca la sesión de la misma forma que el botón 
 | API no conectada | Comprueba /health. |
 | Se confunde validación con publicación | Lee Estado de publicación pública. |
 | Se espera cambio automático del Dashboard | No existe sincronización automática con D1. |
+| No aparece Eliminar registro | Confirma que la sesión corresponde al Administrador; Monitor y Público no tienen este permiso. |
+| La eliminación es rechazada | Comprueba el motivo obligatorio, la sesión y si el registro ya fue eliminado. |
 
 <div style="page-break-after: always;"></div>
 
-<a id="chapter-17"></a>
+<a id="chapter-18"></a>
 
-# 17. Apéndice A. Cómo presentar InfinityAtlas en una demostración en vivo
+# 18. Apéndice A. Cómo presentar InfinityAtlas en una demostración en vivo
 
 [Volver al índice](#indice)
 
-Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pueden ser leídas por Carlos durante la presentación.
+Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pueden ser utilizadas por la persona presentadora.
 
 | Minuto | Qué mostrar | Frase exacta sugerida |
 | --- | --- | --- |
@@ -1066,9 +1166,9 @@ Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pue
 
 <div style="page-break-after: always;"></div>
 
-<a id="chapter-18"></a>
+<a id="chapter-19"></a>
 
-# 18. Apéndice B. Solución de problemas
+# 19. Apéndice B. Solución de problemas
 
 [Volver al índice](#indice)
 
@@ -1079,7 +1179,7 @@ Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pue
 | Backend no disponible | La API no inició. | Abre <http://127.0.0.1:8000/health>. Reinicia con stop-local.ps1 y start-local.ps1. | Si /health no responde 200. |
 | Frontend no disponible | El Portal Central no inició. | Abre <http://127.0.0.1:5173/>. Reinicia los servicios. | Si la página sigue en blanco. |
 | API desconectada | El Portal no recibe respuesta del backend. | Comprueba /health y espera 20 segundos. | Si el estado sigue rojo. |
-| Contraseña antigua | Chrome guardó una clave anterior. | Borra la entrada antigua del administrador de contraseñas y usa la clave local actual. | Si Carlos no conoce la clave local vigente. |
+| Contraseña antigua | Chrome guardó una clave anterior. | Borra la entrada antigua del administrador de contraseñas y usa la clave local actual. | Si la persona autorizada no dispone de la credencial local vigente. |
 | Usuario inactivo | La cuenta fue desactivada. | Pide al Administrador que compruebe Usuarios demo. | Si la cuenta correcta sigue inactiva. |
 | Token expirado | La sesión terminó. | Vuelve al acceso institucional e inicia sesión otra vez. | Si ocurre inmediatamente después de ingresar. |
 | Error 401 | Falta sesión o la sesión expiró. | Cierra sesión, vuelve a entrar y repite la acción. | Si ocurre con una sesión nueva. |

@@ -1,8 +1,7 @@
 # InfinityAtlas English User Guides
 
-These guides describe the functioning controlled prototype on the UNICEF RFPS-NYH-2026-503931
-submission closure branch. They do not publish passwords, tokens, `.env` values or confidential
-documents.
+These guides describe the functioning controlled prototype prepared as final submission
+documentation. They do not publish passwords, tokens, `.env` values or confidential documents.
 
 | Guide | File | Audience |
 | --- | --- | --- |
@@ -14,7 +13,11 @@ documents.
 
 - Product: **InfinityAtlas Climate & Health MRV Toolkit**
 - Owner and operator: **INFINITYGAIA S.A.S. B.I.C.**
-- System status: functioning controlled prototype under structured UAT
+- Prepared by: **INFINITYGAIA S.A.S. B.I.C. — Product & Technical Team**
+- Approved by: **INFINITYGAIA S.A.S. B.I.C.**
+- Document version: **1.0 — Submission closure**
+- Final release tag: `unicef-rfps-503931-submission-2026-08-08-final`
+- System status: functioning controlled prototype documented for submission closure
 - Language: English
 - Date: 8 August 2026
 - Notice: Prototype / controlled test — Not a validated field pilot

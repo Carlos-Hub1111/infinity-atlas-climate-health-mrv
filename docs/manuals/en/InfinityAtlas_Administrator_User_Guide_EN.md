@@ -4,6 +4,8 @@
 
 **Product:** InfinityAtlas Climate & Health MRV Toolkit<br>
 **Owner and operator:** INFINITYGAIA S.A.S. B.I.C.<br>
+**Prepared by:** INFINITYGAIA S.A.S. B.I.C. — Product & Technical Team<br>
+**Approved by:** INFINITYGAIA S.A.S. B.I.C.<br>
 **Document version:** 1.0 — Submission closure<br>
 **Date:** 8 August 2026
 
@@ -36,10 +38,9 @@ append-only audit events and cannot automatically publish or withdraw records fr
 
 # 2. Start and sign in
 
-Start local services:
+Open PowerShell in the repository root and run:
 
 ```powershell
-cd "C:\Users\carlo\OneDrive\Documentos\InfinityAtlas_GitHub_Publication"
 .\start-local.ps1
 ```
 
@@ -205,6 +206,6 @@ identifying children.
 - **4–6:** Use Administrator to review, validate and show append-only audit history.
 - **6–7:** Explain the explicit publication boundary and privacy controls. Mention soft deletion only as an audited administrative safeguard, not as public withdrawal.
 
-Stop local services with `\.\stop-local.ps1` from the repository root.
+From the repository root, stop local services with `.\stop-local.ps1`.
 
 [Back to the English guides index](README.md)

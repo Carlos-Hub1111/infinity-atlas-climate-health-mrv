@@ -4,6 +4,8 @@
 
 **Product:** InfinityAtlas Climate & Health MRV Toolkit<br>
 **Owner and operator:** INFINITYGAIA S.A.S. B.I.C.<br>
+**Prepared by:** INFINITYGAIA S.A.S. B.I.C. — Product & Technical Team<br>
+**Approved by:** INFINITYGAIA S.A.S. B.I.C.<br>
 **Document version:** 1.0 — Submission closure<br>
 **Date:** 8 August 2026
 

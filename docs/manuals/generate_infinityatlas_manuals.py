@@ -34,17 +34,16 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "docs" / "manuals" / "es"
 IMAGES = OUT / "images"
 LOGO = ROOT / "frontend" / "public" / "brand" / "infinityatlas-logo-official.png"
-REFERENCE_COMMIT = "2543f7b3bd57598f22698f175b9eb50a671c59e0"
-BRANCH = "feature/sprint-1d-b-unified-demo-flow"
-CREATION_DATE = "30 de julio de 2026"
-SYSTEM_VERSION = "Sprint 1D - Portal unificado y frontera de publicación"
-DOCUMENT_VERSION = "1.0 - Borrador para UAT"
+RELEASE_TAG = "unicef-rfps-503931-submission-2026-08-08-final"
+CREATION_DATE = "8 de agosto de 2026"
+SYSTEM_VERSION = "Prototipo funcional controlado - Cierre de entrega"
+DOCUMENT_VERSION = "1.0 — Cierre de entrega"
 DOCUMENT_CHANGE = (
-    "Segunda edición corregida: ortografía, localización visible, fichas específicas, "
-    "índice navegable, enlaces internos y marcadores PDF."
+    "Edición institucional final: control documental actualizado, referencias personales eliminadas "
+    "y comportamiento funcional sincronizado con el cierre de entrega."
 )
-DOCUMENT_PREPARED_BY = "Ciro (Codex) para INFINITYGAIA S.A.S. B.I.C."
-DOCUMENT_APPROVED_BY = "Pendiente de aprobación final de Carlos y Nova"
+DOCUMENT_PREPARED_BY = "INFINITYGAIA S.A.S. B.I.C. — Product & Technical Team"
+DOCUMENT_APPROVED_BY = "INFINITYGAIA S.A.S. B.I.C."
 
 NAVY = colors.HexColor("#082A3A")
 PETROL = colors.HexColor("#064E5B")
@@ -100,6 +99,7 @@ def classify_element(name_es: str, required: str) -> str:
         "validar",
         "observar",
         "rechazar",
+        "eliminar registro",
         "volver a la actividad",
     )
     navigation_terms = (
@@ -355,16 +355,12 @@ def add_access_and_start(manual: Manual, role_name: str, username: str) -> None:
         [
             "Presiona la tecla Windows.",
             "Escribe PowerShell.",
-            "Abre Windows PowerShell.",
-            "Copia el primer comando y presiona Enter.",
-            "Copia el segundo comando y presiona Enter.",
+            "Abre Windows PowerShell en la raíz del repositorio.",
+            "Copia el comando y presiona Enter.",
             "Espera hasta que aparezcan las direcciones de los servicios.",
         ]
     )
-    manual.code(
-        'cd "C:\\Users\\carlo\\OneDrive\\Documentos\\InfinityAtlas_GitHub_Publication"\n'
-        ".\\start-local.ps1"
-    )
+    manual.code(".\\start-local.ps1")
     manual.note(
         "Resultado esperado",
         "El Portal Central debe responder en http://127.0.0.1:5173/ y la API debe responder en "
@@ -387,7 +383,7 @@ def add_access_and_start(manual: Manual, role_name: str, username: str) -> None:
     manual.note(
         "Protege la contraseña",
         "No fotografíes, grabes, copies en un chat ni compartas la contraseña. Si Chrome ofrece guardarla, "
-        "Carlos decide si acepta. Este manual nunca contiene contraseñas.",
+        "sigue la política de credenciales de la organización. Este manual nunca contiene contraseñas.",
     )
     manual.figure(
         "fig-01-portal-central-numerado.png",
@@ -433,8 +429,8 @@ def add_live_demo(manual: Manual) -> None:
     manual.pagebreak()
     manual.h1("Apéndice A. Cómo presentar InfinityAtlas en una demostración en vivo")
     manual.p(
-        "Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pueden ser leídas por "
-        "Carlos durante la presentación."
+        "Este recorrido dura aproximadamente siete minutos. Las frases entre comillas pueden ser utilizadas "
+        "por la persona presentadora."
     )
     manual.table(
         ["Minuto", "Qué mostrar", "Frase exacta sugerida"],
@@ -481,7 +477,7 @@ TROUBLESHOOTING = [
     ["Backend no disponible", "La API no inició.", "Abre http://127.0.0.1:8000/health. Reinicia con stop-local.ps1 y start-local.ps1.", "Si /health no responde 200."],
     ["Frontend no disponible", "El Portal Central no inició.", "Abre http://127.0.0.1:5173/. Reinicia los servicios.", "Si la página sigue en blanco."],
     ["API desconectada", "El Portal no recibe respuesta del backend.", "Comprueba /health y espera 20 segundos.", "Si el estado sigue rojo."],
-    ["Contraseña antigua", "Chrome guardó una clave anterior.", "Borra la entrada antigua del administrador de contraseñas y usa la clave local actual.", "Si Carlos no conoce la clave local vigente."],
+    ["Contraseña antigua", "Chrome guardó una clave anterior.", "Borra la entrada antigua del administrador de contraseñas y usa la clave local actual.", "Si la persona autorizada no dispone de la credencial local vigente."],
     ["Usuario inactivo", "La cuenta fue desactivada.", "Pide al Administrador que compruebe Usuarios demo.", "Si la cuenta correcta sigue inactiva."],
     ["Token expirado", "La sesión terminó.", "Vuelve al acceso institucional e inicia sesión otra vez.", "Si ocurre inmediatamente después de ingresar."],
     ["Error 401", "Falta sesión o la sesión expiró.", "Cierra sesión, vuelve a entrar y repite la acción.", "Si ocurre con una sesión nueva."],
@@ -521,14 +517,11 @@ def add_shutdown(manual: Manual) -> None:
             "Presiona el botón Cerrar sesión del encabezado.",
             "Confirma que regresaste al Portal Central.",
             "No dejes una sesión institucional abierta en un equipo compartido.",
-            "Abre PowerShell cuando termine la demostración.",
-            "Ejecuta los comandos siguientes.",
+            "Abre PowerShell en la raíz del repositorio cuando termine la demostración.",
+            "Ejecuta el comando siguiente.",
         ]
     )
-    manual.code(
-        'cd "C:\\Users\\carlo\\OneDrive\\Documentos\\InfinityAtlas_GitHub_Publication"\n'
-        ".\\stop-local.ps1"
-    )
+    manual.code(".\\stop-local.ps1")
     manual.p(
         "Cerrar la pestaña no siempre revoca la sesión de la misma forma que el botón Cerrar sesión. Usa primero "
         "el botón y después apaga los servicios."
@@ -554,7 +547,7 @@ def build_monitor() -> Manual:
         "Cierre de sesión y límites del rol",
     ]
     m.limitations = [
-        "El Monitor no valida, observa metodológicamente ni rechaza registros.",
+        "El Monitor no valida, observa metodológicamente, rechaza ni elimina registros.",
         "La evidencia se registra como referencia URL; no existe carga pública de archivos en este flujo.",
         "Los registros institucionales no se publican automáticamente en D1 ni en el Dashboard Público.",
         "No existe recuperación avanzada de contraseña, MFA ni SSO en el prototipo.",
@@ -577,6 +570,7 @@ def build_monitor() -> Manual:
             "No escribe comentarios metodológicos de decisión.",
             "No modifica la auditoría.",
             "No administra usuarios.",
+            "No elimina registros.",
             "No publica directamente en el Dashboard Público.",
             "Solo consulta los registros permitidos por su rol.",
         ]
@@ -636,7 +630,7 @@ def build_monitor() -> Manual:
         ("Ubicación en el mapa público", "Public map location", "Define la geoprivacidad pública.", "Elige Exacta, Aproximada, Agregada u Oculta.", "Coordenada aproximada.", "Exacta para un lugar sensible.", "Sí", "Monitor y Administrador; el modo puede ser público.", "Sí si se elige exacta.", "Usar exacta sin autorización.", "Usa Aproximada como opción segura."),
         ("Usar coordenadas del territorio", "Use territory coordinates", "Rellena latitud y longitud de San Cristóbal.", "Presiona si no necesitas un punto distinto.", "-0.9002, -89.6127.", "Presionar y luego afirmar que es una ubicación exacta del evento.", "No", "Monitor", "No", "Creer que confirma el evento.", "Aclara que son coordenadas de referencia."),
         ("Fuente de la observación", "Observation source", "Explica de dónde salió la información.", "Escribe una fuente general y comprobable.", "Visita de monitoreo territorial.", "Me dijeron algo.", "Sí", "Monitor y Administrador", "No debe incluir nombres personales.", "Fuente demasiado vaga.", "Describe el tipo de actividad o documento."),
-        ("Rol o equipo responsable", "Responsible role or team", "Identifica el equipo, no una persona.", "Escribe un rol o unidad.", "Equipo de monitoreo territorial.", "Carlos Cifuentes, teléfono...", "Sí", "Monitor y Administrador", "Sí si se escribe un nombre; no lo hagas.", "Usar nombre personal.", "Sustituye por el rol o equipo."),
+        ("Rol o equipo responsable", "Responsible role or team", "Identifica el equipo, no una persona.", "Escribe un rol o unidad.", "Equipo de monitoreo territorial.", "Nombre personal + teléfono.", "Sí", "Monitor y Administrador", "Sí si se escribe un nombre; no lo hagas.", "Usar nombre personal.", "Sustituye por el rol o equipo."),
         ("Tipo de evidencia", "Evidence type", "Clasifica la referencia.", "Elige web, fotográfica o documental.", "Referencia web.", "Archivo clínico.", "Sí", "Monitor y Administrador", "Puede ser sensible según la fuente.", "Tipo no coincide con el enlace.", "Selecciona el tipo real."),
         ("Fecha y hora de evidencia", "Evidence date and time", "Registra cuándo fue producida o consultada la evidencia.", "Selecciona la fecha correcta.", "30/07/2026 10:05.", "Fecha futura accidental.", "Sí", "Monitor y Administrador", "No", "Copiar una fecha incorrecta.", "Verifica la fuente original."),
         ("URL de evidencia", "Evidence URL", "Guarda una referencia sin subir archivos al repositorio.", "Escribe una URL completa que empiece por https://.", "https://github.com/Carlos-Hub1111/infinity-atlas-climate-health-mrv", "example.local o una ruta privada.", "Sí", "Monitor y Administrador", "Puede revelar información; usa solo enlaces autorizados.", "Dejarla vacía o sin https://.", "Usa una referencia pública controlada."),
@@ -761,12 +755,14 @@ def build_admin() -> Manual:
         "Observación, validación y rechazo metodológico",
         "Consulta de evidencia y puntaje",
         "Trazabilidad y auditoría navegable",
+        "Eliminación lógica exclusiva del Administrador",
         "Usuarios demo y estado de cuentas",
         "Panel de frontera de publicación pública",
     ]
     m.limitations = [
         "Validar no publica un registro en el Dashboard Público.",
         "No existe sincronización automática con D1 remota.",
+        "La eliminación lógica institucional no retira automáticamente registros de la D1 pública separada.",
         "demo-validator permanece oculto e inactivo; su arquitectura se conserva para el futuro.",
         "No existe un botón funcional de publicación pública.",
         "No existe administración empresarial completa de organizaciones o identidades.",
@@ -781,6 +777,7 @@ def build_admin() -> Manual:
             ["Observar", "Pedir aclaraciones o correcciones antes de validar."],
             ["Validar", "Confirmar integridad y consistencia metodológica."],
             ["Rechazar", "Cerrar el flujo porque no cumple requisitos mínimos."],
+            ["Eliminar de forma lógica", "Retirar un registro de las vistas operativas sin borrar evidencia, decisiones, puntajes ni auditoría."],
             ["Publicar", "Transferir información autorizada a una superficie pública. Esta función no está habilitada."],
             ["Auditar", "Consultar quién hizo cada acción, cuándo y con qué cambio."],
         ],
@@ -853,8 +850,8 @@ def build_admin() -> Manual:
     m.h1("Flujo paso a paso de validación")
     m.figure(
         "fig-07-admin-validacion-numerado.png",
-        "Figura 4. Registro pendiente y acciones. 1: selección; 2: evidencia; 3: puntaje disponible o ausente; "
-        "4: aviso metodológico; 5: comentario; 6: decisiones; 7: historial.",
+        "Figura 4. Vista administrativa final de un registro: evidencia, puntaje metodológico, aviso de límites, "
+        "control exclusivo de eliminación lógica con motivo obligatorio e historial preservado.",
     )
     action_cards = [
         ("Comentario de revisión", "Review comment", "Explica la decisión.", "Escribe una frase clara. Es obligatorio al Observar o Rechazar.", "La referencia necesita una descripción más clara.", "Corregir.", "Condicional", "Administrador", "Sí: comentario interno.", "Comentario vacío al observar.", "Explica qué falta y por qué."),
@@ -881,6 +878,40 @@ def build_admin() -> Manual:
         ]
     )
 
+    m.h1("Eliminación lógica de una observación")
+    m.note(
+        "Control exclusivo del Administrador",
+        "Eliminar un registro de forma lógica lo retira de las vistas operativas, pero no borra físicamente "
+        "la evidencia, las validaciones, los puntajes de riesgo ni los eventos append-only de auditoría.",
+    )
+    deletion_cards = [
+        ("Eliminar registro institucional", "Delete institutional record", "Inicia la eliminación lógica de la observación seleccionada.", "Comprueba el ID y el título antes de continuar.", "Registro controlado duplicado.", "Eliminar para ocultar una decisión incómoda.", "No", "Administrador", "Sí: acción institucional restringida.", "Buscar este control como Monitor.", "Solo el backend autoriza al Administrador."),
+        ("Motivo de eliminación", "Deletion reason", "Explica por qué el registro debe salir de las vistas operativas.", "Escribe una razón factual de 3 a 500 caracteres.", "Registro de prueba controlada duplicado.", "Borrar.", "Sí", "Administrador", "Sí: queda en la auditoría institucional.", "Dejar el motivo vacío.", "Describe la causa concreta sin datos personales."),
+        ("Confirmación de eliminación", "Deletion confirmation", "Evita retirar el registro equivocado.", "Lee el ID y el título; confirma solo si coinciden.", "Eliminar registro #8 — Prueba controlada duplicada.", "Confirmar sin leer.", "Sí para completar", "Administrador", "No aplica: no es un dato territorial publicable.", "Aceptar por costumbre.", "Cancela y vuelve a seleccionar el registro correcto."),
+        ("Observación eliminada de forma lógica", "Observation soft-deleted", "Confirma que la auditoría conservó el retiro institucional.", "Consulta el evento en Auditoría.", "Actor, rol, fecha UTC y motivo conservados.", "Esperar que desaparezca la auditoría.", "Automático", "Administrador", "Sí: evento institucional restringido.", "Pensar que fue un borrado físico.", "Comprueba que la evidencia y el historial siguen preservados."),
+    ]
+    for card in deletion_cards:
+        m.field_card(*card)
+    m.steps(
+        [
+            "Abre Cola de revisión y selecciona el registro correcto.",
+            "Comprueba el número y el nombre corto.",
+            "Ubica Eliminar registro institucional.",
+            "Escribe un motivo factual de eliminación.",
+            "Presiona Eliminar registro.",
+            "Lee la confirmación con el ID y el título.",
+            "Confirma únicamente si corresponde al registro elegido.",
+            "Comprueba que desaparece de listas, dashboards, mapas, filtros, PDF y CSV institucionales.",
+            "Abre Auditoría y verifica el evento Observación eliminada de forma lógica.",
+        ]
+    )
+    m.note(
+        "Frontera con el Dashboard Público",
+        "La eliminación lógica en la base institucional no modifica ni retira automáticamente datos del "
+        "conjunto demostrativo separado y de solo lectura en Cloudflare D1. Un flujo futuro de publicación "
+        "autorizada deberá incluir retiro o despublicación explícita, sanitizada y auditada.",
+    )
+
     m.pagebreak()
     m.h1("Historial de trazabilidad")
     m.figure(
@@ -898,6 +929,7 @@ def build_admin() -> Manual:
             ["Nombre del registro actualizado", "Se cambió el nombre corto y se guardó el valor anterior."],
             ["Inicio de sesión exitoso/fallido", "Se registró un intento de acceso."],
             ["Cierre de sesión", "Se revocó la sesión."],
+            ["Observación eliminada de forma lógica", "Se retiró el registro de vistas operativas y se conservaron actor, fecha y motivo."],
         ],
         [54 * mm, 118 * mm],
     )
@@ -995,6 +1027,7 @@ def build_admin() -> Manual:
             "Abre Auditoría y confirma todos los eventos.",
             "Comprueba que el Monitor no tuvo controles de validación.",
             "Comprueba que demo-validator permanece inactivo y oculto.",
+            "Para practicar la eliminación, usa únicamente otro registro controlado duplicado y comprueba el evento de auditoría.",
         ]
     )
     add_shutdown(m)
@@ -1015,6 +1048,8 @@ def build_admin() -> Manual:
             ["API no conectada", "Comprueba /health."],
             ["Se confunde validación con publicación", "Lee Estado de publicación pública."],
             ["Se espera cambio automático del Dashboard", "No existe sincronización automática con D1."],
+            ["No aparece Eliminar registro", "Confirma que la sesión corresponde al Administrador; Monitor y Público no tienen este permiso."],
+            ["La eliminación es rechazada", "Comprueba el motivo obligatorio, la sesión y si el registro ya fue eliminado."],
         ],
         [62 * mm, 110 * mm],
     )
@@ -1043,7 +1078,7 @@ def build_public() -> Manual:
         "Diccionario público de datos",
     ]
     m.limitations = [
-        "La superficie pública es de solo lectura y no crea ni modifica registros.",
+        "La superficie pública es de solo lectura y no crea, edita, valida, rechaza ni elimina registros.",
         "La versión pública estable puede no contener cambios locales aún no desplegados.",
         "El clima depende de Open-Meteo y puede mostrar un fallback claramente desactualizado.",
         "La ubicación oculta no aparece como punto.",
@@ -1053,7 +1088,8 @@ def build_public() -> Manual:
     m.note(
         "Qué contiene esta demostración",
         "Los seis registros son datos públicos controlados: prueba controlada, dato público real o demo sintética. "
-        "No contienen nombres personales, comentarios internos ni auditoría privada.",
+        "No contienen nombres personales, comentarios internos ni auditoría privada. La superficie pública no "
+        "puede crear, editar, validar, rechazar ni eliminar observaciones.",
     )
     m.h1("Cómo entrar")
     m.steps(
@@ -1068,7 +1104,7 @@ def build_public() -> Manual:
     m.table(
         ["Versión", "Qué significa"],
         [
-            ["Local", "Se ejecuta en el equipo de Carlos. Puede documentar cambios aún no publicados."],
+            ["Local", "Se ejecuta en un entorno local autorizado. Puede documentar cambios aún no publicados."],
             ["Pública de Internet", "Worker HTTPS activo, de solo lectura, conectado a D1 controlada."],
             ["Preview", "Versión temporal de Cloudflare para UAT; no necesariamente recibe tráfico estable."],
             ["Versión activa", "Versión que responde en la URL workers.dev estable."],
@@ -1409,8 +1445,7 @@ def write_markdown(manual: Manual) -> None:
         f"**Propiedad y operación:** INFINITYGAIA S.A.S. B.I.C.  ",
         f"**Versión del manual:** {DOCUMENT_VERSION}  ",
         f"**Fecha:** {CREATION_DATE}  ",
-        f"**Commit documentado:** `{REFERENCE_COMMIT}`  ",
-        f"**Rama:** `{BRANCH}`",
+        f"**Etiqueta de entrega:** `{RELEASE_TAG}`",
         "",
         "> Prototipo / prueba controlada - No constituye un piloto territorial validado.",
         "",
@@ -1488,7 +1523,7 @@ def write_markdown(manual: Manual) -> None:
 
 
 def rich_text(value: str) -> str:
-    value = value.replace("—", "-").replace("–", "-").replace("…", "...")
+    value = value.replace("…", "...")
     parts: list[str] = []
     cursor = 0
     for match in re.finditer(r"https?://[A-Za-z0-9][^\s<>()]*", value):
@@ -1623,12 +1658,15 @@ def get_styles():
     }
 
 
-def image_flowable(filename: str, max_width: float, max_height: float):
-    path = IMAGES / filename
+def path_image_flowable(path: Path, max_width: float, max_height: float):
     with PILImage.open(path) as im:
         width, height = im.size
     scale = min(max_width / width, max_height / height)
     return Image(str(path), width=width * scale, height=height * scale)
+
+
+def image_flowable(filename: str, max_width: float, max_height: float):
+    return path_image_flowable(IMAGES / filename, max_width, max_height)
 
 
 def pdf_table(headers, rows, widths, styles):
@@ -1673,7 +1711,7 @@ def build_pdf(manual: Manual) -> None:
     )
     story = []
     story.append(Spacer(1, 8 * mm))
-    story.append(image_flowable(LOGO.name, 50 * mm, 35 * mm) if (IMAGES / LOGO.name).exists() else Image(str(LOGO), width=45 * mm, height=28 * mm))
+    story.append(path_image_flowable(LOGO, 50 * mm, 35 * mm))
     story.append(Spacer(1, 8 * mm))
     cover_title = Paragraph(rich_text(manual.title), styles["cover_title"])
     cover_title._bookmarkName = "portada"
@@ -1687,7 +1725,7 @@ def build_pdf(manual: Manual) -> None:
         ["Audiencia", manual.audience],
         ["Versión del manual", DOCUMENT_VERSION],
         ["Fecha", CREATION_DATE],
-        ["Commit documentado", REFERENCE_COMMIT],
+        ["Etiqueta de entrega", RELEASE_TAG],
         ["Propiedad y operación", "INFINITYGAIA S.A.S. B.I.C."],
     ]
     story.append(pdf_table(["Elemento", "Valor"], cover_rows, [48 * mm, 124 * mm], styles))
@@ -1723,8 +1761,8 @@ def build_pdf(manual: Manual) -> None:
     story.append(Spacer(1, 6 * mm))
     story.append(
         Paragraph(
-            "Este documento conserva la versión 1.0 mientras permanece en revisión UAT. "
-            "La aprobación final se registrará después de la revisión de Carlos y Nova.",
+            "Este documento corresponde al cierre institucional de entrega de la versión 1.0. "
+            "La etiqueta indicada identifica el estado final de la documentación pública.",
             styles["body"],
         )
     )
@@ -1797,22 +1835,15 @@ def build_pdf(manual: Manual) -> None:
     doc.multiBuild(story)
 
 
-def copy_logo_for_manuals() -> None:
-    target = IMAGES / LOGO.name
-    if not target.exists():
-        target.write_bytes(LOGO.read_bytes())
-
-
 def build_readme(manuals: list[Manual], summaries: dict) -> None:
     lines = [
         "# Manuales oficiales de uso - InfinityAtlas",
         "",
         f"- Fecha de creación: {CREATION_DATE}",
-        f"- Commit de referencia: `{REFERENCE_COMMIT}`",
-        f"- Rama documentada: `{BRANCH}`",
+        f"- Etiqueta de entrega final: `{RELEASE_TAG}`",
         f"- Versión del sistema: {SYSTEM_VERSION}",
         f"- Versión documental: {DOCUMENT_VERSION}",
-        f"- Estado: borradores locales para revisión de Carlos y Nova",
+        f"- Estado: documentación institucional final de entrega",
         "",
         "## Reproducción documental",
         "",
@@ -1840,8 +1871,9 @@ def build_readme(manuals: list[Manual], summaries: dict) -> None:
     lines += [
         "## Limitaciones conocidas",
         "",
-        "- Los manuales describen exactamente el commit de referencia y no inventan funciones futuras.",
+        "- Los manuales describen el prototipo funcional controlado identificado por la etiqueta de entrega y no inventan funciones futuras.",
         "- Los registros institucionales no se publican automáticamente en el Dashboard Público.",
+        "- La eliminación lógica institucional es exclusiva del Administrador y no retira automáticamente datos de D1 pública.",
         "- `demo-validator` permanece inactivo y oculto; la arquitectura del rol se conserva.",
         "- La evidencia institucional se registra mediante referencia URL en el flujo documentado.",
         "- La versión pública de Internet puede diferir de cambios locales que aún no hayan sido desplegados.",
@@ -1850,6 +1882,7 @@ def build_readme(manuals: list[Manual], summaries: dict) -> None:
         "- La interfaz visible normaliza el territorio como `San Cristóbal` sin modificar valores legacy de la base.",
         "- La cuenta `demo-admin` se presenta como `Demo Administrador` en español y `Demo Administrator` en inglés.",
         "- Los PDF incluyen tabla de contenidos, marcadores, enlaces internos y URLs web clicables.",
+        "- Las guías Markdown en inglés están disponibles en `../en/README.md`.",
         "",
         "## Seguridad y confidencialidad",
         "",
@@ -1857,9 +1890,8 @@ def build_readme(manuals: list[Manual], summaries: dict) -> None:
         "bases de datos, documentos UNICEF, información clínica ni datos personales. Las contraseñas aparecen "
         "ocultas visualmente y no se incluyen en Markdown, PDF o metadatos.",
         "",
-        "Se modificó únicamente la capa de presentación local para normalizar `San Cristóbal` y el nombre visible "
-        "del Administrador en español. No se modificaron arquitectura, permisos, bases de datos ni comportamiento "
-        "funcional. No se realizó commit, push, merge, PR adicional, redeploy ni escritura en D1 remota.",
+        "Esta edición actualiza exclusivamente la documentación institucional. No modifica arquitectura, permisos, "
+        "bases de datos ni comportamiento funcional, y no introduce escrituras en D1 remota.",
         "",
     ]
     (OUT / "README.md").write_text("\n".join(lines), encoding="utf-8")
@@ -1868,7 +1900,6 @@ def build_readme(manuals: list[Manual], summaries: dict) -> None:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     IMAGES.mkdir(parents=True, exist_ok=True)
-    copy_logo_for_manuals()
     manuals = [build_monitor(), build_admin(), build_public()]
     summaries = {}
     for manual in manuals:
@@ -1884,18 +1915,6 @@ def main() -> None:
             "limitations": manual.limitations,
         }
     build_readme(manuals, summaries)
-    (OUT / "generation-summary.json").write_text(
-        json.dumps(
-            {
-                "reference_commit": REFERENCE_COMMIT,
-                "branch": BRANCH,
-                "manuals": summaries,
-            },
-            ensure_ascii=False,
-            indent=2,
-        ),
-        encoding="utf-8",
-    )
     print(json.dumps(summaries, ensure_ascii=False, indent=2))
 
 

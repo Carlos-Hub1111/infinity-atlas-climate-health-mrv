@@ -1,11 +1,10 @@
 # Manuales oficiales de uso - InfinityAtlas
 
-- Fecha de creación: 30 de julio de 2026
-- Commit de referencia: `2543f7b3bd57598f22698f175b9eb50a671c59e0`
-- Rama documentada: `feature/sprint-1d-b-unified-demo-flow`
-- Versión del sistema: Sprint 1D - Portal unificado y frontera de publicación
-- Versión documental: 1.0 - Borrador para UAT
-- Estado: borradores locales para revisión de Carlos y Nova
+- Fecha de creación: 8 de agosto de 2026
+- Etiqueta de entrega final: `unicef-rfps-503931-submission-2026-08-08-final`
+- Versión del sistema: Prototipo funcional controlado - Cierre de entrega
+- Versión documental: 1.0 — Cierre de entrega
+- Estado: documentación institucional final de entrega
 
 ## Reproducción documental
 
@@ -15,9 +14,9 @@ El generador versionado se encuentra en `../generate_infinityatlas_manuals.py`. 
 
 | Manual | Fuente editable | PDF | Páginas | Campos explicados | SHA-256 |
 | --- | --- | --- | ---: | ---: | --- |
-| Manual de Usuario Monitor | `InfinityAtlas_Manual_Monitor_ES.md` | `InfinityAtlas_Manual_Monitor_ES.pdf` | 60 | 44 | `7b17b7cdafe58709baf2608cf923ab285d31cba10c45f4ad8f2962c760620784` |
-| Manual de Usuario Administrador | `InfinityAtlas_Manual_Administrador_ES.md` | `InfinityAtlas_Manual_Administrador_ES.pdf` | 54 | 37 | `a92c1b50737d7a8076e33356c943b2f9619e18359cae8db7c1aeb0425742b73e` |
-| Manual del Dashboard Público | `InfinityAtlas_Manual_Dashboard_Publico_ES.md` | `InfinityAtlas_Manual_Dashboard_Publico_ES.pdf` | 92 | 79 | `a964c61faf1ec1cf89200e5d0f13dac81830e2daef7f4e0d5dc7133335dc4f41` |
+| Manual de Usuario Monitor | `InfinityAtlas_Manual_Monitor_ES.md` | `InfinityAtlas_Manual_Monitor_ES.pdf` | 60 | 44 | `dd493ca7013fa79881891235ce269fa10c4fcb926fe117bb8483de2ceccc7ebc` |
+| Manual de Usuario Administrador | `InfinityAtlas_Manual_Administrador_ES.md` | `InfinityAtlas_Manual_Administrador_ES.pdf` | 57 | 41 | `a020a966ccba3b91f938f6597c0fc1f99f13d9d9b278fb042b31102e3dd6773b` |
+| Manual del Dashboard Público | `InfinityAtlas_Manual_Dashboard_Publico_ES.md` | `InfinityAtlas_Manual_Dashboard_Publico_ES.pdf` | 92 | 79 | `bc8e64d7bb1b333fbc4a9b9de11a305c278b58531cbe496cfb0bc81006885090` |
 
 ## Capturas utilizadas
 
@@ -50,8 +49,9 @@ El generador versionado se encuentra en `../generate_infinityatlas_manuals.py`. 
 
 ## Limitaciones conocidas
 
-- Los manuales describen exactamente el commit de referencia y no inventan funciones futuras.
+- Los manuales describen el prototipo funcional controlado identificado por la etiqueta de entrega y no inventan funciones futuras.
 - Los registros institucionales no se publican automáticamente en el Dashboard Público.
+- La eliminación lógica institucional es exclusiva del Administrador y no retira automáticamente datos de D1 pública.
 - `demo-validator` permanece inactivo y oculto; la arquitectura del rol se conserva.
 - La evidencia institucional se registra mediante referencia URL en el flujo documentado.
 - La versión pública de Internet puede diferir de cambios locales que aún no hayan sido desplegados.
@@ -60,9 +60,10 @@ El generador versionado se encuentra en `../generate_infinityatlas_manuals.py`. 
 - La interfaz visible normaliza el territorio como `San Cristóbal` sin modificar valores legacy de la base.
 - La cuenta `demo-admin` se presenta como `Demo Administrador` en español y `Demo Administrator` en inglés.
 - Los PDF incluyen tabla de contenidos, marcadores, enlaces internos y URLs web clicables.
+- Las guías Markdown en inglés están disponibles en `../en/README.md`.
 
 ## Seguridad y confidencialidad
 
 Se verificó que los manuales y capturas no contienen contraseñas visibles, tokens, archivos `.env`, bases de datos, documentos UNICEF, información clínica ni datos personales. Las contraseñas aparecen ocultas visualmente y no se incluyen en Markdown, PDF o metadatos.
 
-Se modificó únicamente la capa de presentación local para normalizar `San Cristóbal` y el nombre visible del Administrador en español. No se modificaron arquitectura, permisos, bases de datos ni comportamiento funcional. No se realizó commit, push, merge, PR adicional, redeploy ni escritura en D1 remota.
+Esta edición actualiza exclusivamente la documentación institucional. No modifica arquitectura, permisos, bases de datos ni comportamiento funcional, y no introduce escrituras en D1 remota.
