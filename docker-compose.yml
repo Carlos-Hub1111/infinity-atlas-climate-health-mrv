@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-infinityatlas}
+      POSTGRES_USER: ${POSTGRES_USER:-infinityatlas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - infinityatlas_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-infinityatlas} -d ${POSTGRES_DB:-infinityatlas}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+pg8000://${POSTGRES_USER:-infinityatlas}:${POSTGRES_PASSWORD:-change-me}@db:5432/${POSTGRES_DB:-infinityatlas}
+      APP_ENV: docker
+      AUTO_CREATE_TABLES: "false"
+      AUTO_SEED_DEMO_DATA: "false"
+      CLIMATE_API_TIMEOUT_SECONDS: "8"
+      CLIMATE_CACHE_TTL_SECONDS: "900"
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set locally}
+      JWT_ALGORITHM: "HS256"
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      JWT_ISSUER: "infinityatlas-docker"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      VITE_API_BASE_URL: http://127.0.0.1:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  infinityatlas_db:

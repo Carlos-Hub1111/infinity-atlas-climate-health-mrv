@@ -1,0 +1,9 @@
+react-server-dom-webpack@19.2.8
+├─┬ @vitejs/plugin-rsc@0.5.26
+│ ├── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+│ └─┬ vinext@0.0.50
+│   └── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+├── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+└── vinext@0.0.50 [deduped]
+
+Found 1 version of react-server-dom-webpack

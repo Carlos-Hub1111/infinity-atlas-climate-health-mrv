@@ -1,0 +1,71 @@
+brace-expansion@1.1.16
+└─┬ minimatch@3.1.5
+  ├─┬ @eslint/config-array@0.21.2
+  │ └─┬ eslint@9.39.4
+  │   ├─┬ @eslint-community/eslint-utils@4.10.1
+  │   │ ├─┬ @typescript-eslint/utils@8.65.0
+  │   │ │ ├─┬ @typescript-eslint/eslint-plugin@8.65.0
+  │   │ │ │ └─┬ typescript-eslint@8.65.0
+  │   │ │ │   └─┬ eslint-config-next@16.2.6
+  │   │ │ │     └── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+  │   │ │ ├─┬ @typescript-eslint/type-utils@8.65.0
+  │   │ │ │ └── @typescript-eslint/eslint-plugin@8.65.0 [deduped]
+  │   │ │ └── typescript-eslint@8.65.0 [deduped]
+  │   │ └── eslint@9.39.4 [circular]
+  │   ├── @typescript-eslint/eslint-plugin@8.65.0 [deduped]
+  │   ├─┬ @typescript-eslint/parser@8.65.0
+  │   │ ├── @typescript-eslint/eslint-plugin@8.65.0 [deduped]
+  │   │ ├─┬ eslint-module-utils@2.14.0
+  │   │ │ └─┬ eslint-plugin-import@2.32.0
+  │   │ │   ├── eslint-config-next@16.2.6 [deduped]
+  │   │ │   └─┬ eslint-import-resolver-typescript@3.10.1
+  │   │ │     ├── eslint-config-next@16.2.6 [deduped]
+  │   │ │     └── eslint-module-utils@2.14.0 [circular]
+  │   │ ├── eslint-plugin-import@2.32.0 [deduped]
+  │   │ └── typescript-eslint@8.65.0 [deduped]
+  │   ├── @typescript-eslint/type-utils@8.65.0 [deduped]
+  │   ├── @typescript-eslint/utils@8.65.0 [deduped]
+  │   ├── eslint-config-next@16.2.6 [deduped]
+  │   ├── eslint-import-resolver-typescript@3.10.1 [deduped]
+  │   ├── eslint-module-utils@2.14.0 [deduped]
+  │   ├── eslint-plugin-import@2.32.0 [deduped]
+  │   ├─┬ eslint-plugin-jsx-a11y@6.10.2
+  │   │ └── eslint-config-next@16.2.6 [deduped]
+  │   ├─┬ eslint-plugin-react@7.37.5
+  │   │ └── eslint-config-next@16.2.6 [deduped]
+  │   ├─┬ eslint-plugin-react-hooks@7.1.1
+  │   │ └── eslint-config-next@16.2.6 [deduped]
+  │   ├── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+  │   └── typescript-eslint@8.65.0 [deduped]
+  ├─┬ @eslint/eslintrc@3.3.6
+  │ └── eslint@9.39.4 [deduped]
+  ├── eslint@9.39.4 [deduped]
+  ├── eslint-plugin-import@2.32.0 [deduped]
+  ├── eslint-plugin-jsx-a11y@6.10.2 [deduped]
+  └── eslint-plugin-react@7.37.5 [deduped]
+
+brace-expansion@5.0.8
+└─┬ minimatch@10.2.6
+  └─┬ @typescript-eslint/typescript-estree@8.65.0
+    ├─┬ @typescript-eslint/parser@8.65.0
+    │ ├─┬ @typescript-eslint/eslint-plugin@8.65.0
+    │ │ └─┬ typescript-eslint@8.65.0
+    │ │   └─┬ eslint-config-next@16.2.6
+    │ │     └── infinityatlas-public-demo@0.4.0-sprint-1c (devDependencies)
+    │ ├─┬ eslint-module-utils@2.14.0
+    │ │ └─┬ eslint-plugin-import@2.32.0
+    │ │   ├── eslint-config-next@16.2.6 [deduped]
+    │ │   └─┬ eslint-import-resolver-typescript@3.10.1
+    │ │     ├── eslint-config-next@16.2.6 [deduped]
+    │ │     └── eslint-module-utils@2.14.0 [circular]
+    │ ├── eslint-plugin-import@2.32.0 [deduped]
+    │ └── typescript-eslint@8.65.0 [deduped]
+    ├─┬ @typescript-eslint/type-utils@8.65.0
+    │ └── @typescript-eslint/eslint-plugin@8.65.0 [deduped]
+    ├─┬ @typescript-eslint/utils@8.65.0
+    │ ├── @typescript-eslint/eslint-plugin@8.65.0 [deduped]
+    │ ├── @typescript-eslint/type-utils@8.65.0 [deduped]
+    │ └── typescript-eslint@8.65.0 [deduped]
+    └── typescript-eslint@8.65.0 [deduped]
+
+Found 2 versions of brace-expansion

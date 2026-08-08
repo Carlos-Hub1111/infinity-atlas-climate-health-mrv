@@ -1,0 +1,302 @@
+.territoryMapSection {
+  padding: 18px;
+  border: 1px solid #bac7ca;
+  background: #fff;
+}
+
+.territoryMapSection > header,
+.territoryMapSection > header > div,
+.mapLegend h3 {
+  display: flex;
+  align-items: center;
+}
+
+.territoryMapSection > header {
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 13px;
+}
+
+.territoryMapSection > header > div {
+  gap: 9px;
+}
+
+.territoryMapSection > header svg {
+  color: #007f78;
+}
+
+.territoryMapSection > header p {
+  margin: 2px 0 0;
+  color: #64747a;
+  font-size: 0.73rem;
+}
+
+.territoryMapSection > header > span {
+  color: #52636a;
+  font-size: 0.73rem;
+  font-weight: 800;
+}
+
+.mapLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  min-height: 480px;
+  border: 1px solid #aebcc0;
+}
+
+.mapCanvas,
+.mapCanvas .leaflet-container {
+  width: 100%;
+  min-height: 480px;
+}
+
+.mapCanvas {
+  position: relative;
+  min-width: 0;
+}
+
+.mapCanvas .leaflet-container {
+  z-index: 0;
+  background: #dce8e6;
+}
+
+.mapCenterButton {
+  position: absolute;
+  z-index: 900;
+  top: 82px;
+  left: 10px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  background: #fff;
+  color: #24464d;
+}
+
+.mapCenterButton:focus-visible {
+  outline: 3px solid #007f78;
+  outline-offset: 2px;
+}
+
+.mapLegend {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  padding: 15px;
+  border-left: 1px solid #aebcc0;
+  background: #f7f9f9;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.mapLegend h3 {
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.mapLegend > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mapLegend hr {
+  width: 100%;
+  margin: 3px 0;
+  border: 0;
+  border-top: 1px solid #cbd5d7;
+}
+
+.legendRisk,
+.legendShape {
+  display: inline-grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+.legendShape {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #4b6167;
+  background: #fff;
+}
+
+.legendShape.real {
+  border-radius: 50%;
+}
+
+.legendShape.controlled {
+  transform: rotate(45deg);
+}
+
+.legendShape.synthetic {
+  border-style: dashed;
+}
+
+.infinityMapMarkerHost {
+  background: transparent;
+}
+
+.infinityMapMarker {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  background: var(--marker-color);
+  box-shadow: 0 2px 6px rgba(17, 38, 44, 0.35);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 900;
+  transform: rotate(-45deg);
+}
+
+.infinityMapMarker b {
+  display: block;
+  font-weight: 900;
+  transform: rotate(45deg);
+}
+
+.infinityMapMarker.controlled {
+  border-radius: 2px 50% 50% 50%;
+}
+
+.infinityMapMarker.synthetic {
+  border-style: dashed;
+}
+
+.mapPopup {
+  min-width: 220px;
+}
+
+.mapPopup > strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.mapPopup dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: 0.74rem;
+}
+
+.mapPopup p {
+  margin: 9px 0 0;
+  padding: 7px;
+  border: 1px solid #d59a5f;
+  background: #fff5e8;
+  color: #744217;
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.mapAccessibleList {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #c5d0d2;
+  background: #f8faf9;
+}
+
+.mapAccessibleList h3 {
+  margin-bottom: 8px;
+}
+
+.mapAccessibleList ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapAccessibleList li {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-left: 3px solid #58767a;
+  background: #fff;
+  font-size: 0.73rem;
+}
+
+.mapAccessibleList li span {
+  color: #56676c;
+}
+
+.mapAccessibleList li em {
+  color: #8a3c35;
+  font-style: normal;
+  font-weight: 750;
+}
+
+.territoryMapSection > footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 10px;
+  color: #64747a;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.mapEmpty {
+  display: grid;
+  min-height: 140px;
+  place-items: center;
+  border: 1px dashed #b6c3c5;
+  color: #607177;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+@media (max-width: 820px) {
+  .mapLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .mapLegend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid #aebcc0;
+    border-left: 0;
+  }
+
+  .mapLegend h3,
+  .mapLegend hr {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 440px) {
+  .territoryMapSection {
+    padding: 14px;
+  }
+
+  .territoryMapSection > header,
+  .territoryMapSection > footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mapCanvas,
+  .mapCanvas .leaflet-container {
+    min-height: 390px;
+  }
+
+  .mapLegend {
+    grid-template-columns: 1fr;
+  }
+
+  .mapLegend h3,
+  .mapLegend hr {
+    grid-column: auto;
+  }
+}

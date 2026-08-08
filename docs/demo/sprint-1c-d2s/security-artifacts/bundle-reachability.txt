@@ -1,0 +1,42 @@
+InfinityAtlas Sprint 1C-D2S bundle reachability
+================================================
+
+Build command:
+  pnpm test
+
+Dry-run command:
+  pnpm run deploy:dry-run
+
+Deployment package:
+  8 Worker modules
+  Worker modules total: 907.68 KiB
+  Total upload: 2590.41 KiB
+  Gzip upload: 622.55 KiB
+  Assets: 18 files
+  Bindings: env.DB and env.ASSETS
+
+Bundled security-sensitive runtime:
+  react-server-dom-webpack 19.2.8
+  Evidence: production server and client edge modules are embedded in
+  dist/server/index.js and dist/server/ssr/index.js.
+
+Not bundled:
+  brace-expansion
+  esbuild
+  miniflare
+  undici
+  vite
+  wrangler
+  ws
+
+The names "undici" and "miniflare" occur only in explanatory comments about
+Request behavior; no package module marker for either dependency exists in the
+deployment modules. No package module markers for the other tooling packages
+exist in the Worker or SSR module set.
+
+The dry run exposes only:
+  env.DB (infinityatlas-public-demo-db)
+  env.ASSETS
+
+No authentication, user, audit, evidence, write or administrative binding is
+present.

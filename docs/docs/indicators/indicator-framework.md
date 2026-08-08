@@ -1,6 +1,6 @@
 # Climate-Health MRV Indicator Framework
 
-This document presents an initial indicator framework for the Infinity Atlas Climate & Health MRV Toolkit.
+This document presents an initial indicator framework for the InfinityAtlas Climate & Health MRV Toolkit.
 
 The indicators are designed to help local actors monitor climate-related environmental risks affecting children’s health.
 

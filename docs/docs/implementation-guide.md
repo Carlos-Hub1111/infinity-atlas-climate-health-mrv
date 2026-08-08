@@ -1,6 +1,6 @@
 # Implementation Guide
 
-This guide describes how municipalities, communities, schools and implementing partners can use the Infinity Atlas Climate & Health MRV Toolkit.
+This guide describes how municipalities, communities, schools and implementing partners can use the InfinityAtlas Climate & Health MRV Toolkit.
 
 ## Step 1: Define the local climate-health challenge
 

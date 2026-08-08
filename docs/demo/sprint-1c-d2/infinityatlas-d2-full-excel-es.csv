@@ -1,0 +1,7 @@
+﻿"N.º público";"ID técnico";"Nombre corto del registro";"Categoría";"Estado de revisión";"Puntaje de riesgo";"Nivel de riesgo";"Procedencia del dato";"Fecha observada UTC";"Latitud pública";"Longitud pública";"Modo de ubicación pública";"Versión metodológica"
+"1";"101";"Observación controlada de ruta de agua";"Agua";"Pendiente";"7";"Moderado";"Prueba controlada";"2026-07-21T15:00:00Z";"-0.9";"-89.613";"Ubicación pública aproximada";"climate-health-risk-v0.1"
+"2";"102";"Revisión controlada de exposición al calor";"Calor";"Validado";"11";"Crítico";"Prueba controlada";"2026-07-22T17:15:00Z";"-0.906";"-89.609";"Ubicación pública aproximada";"climate-health-risk-v0.1"
+"3";"103";"Observación controlada de manejo de residuos";"Residuos";"Observado";"8";"Moderado";"Prueba controlada";"2026-07-23T14:30:00Z";"-0.895";"-89.617";"Ubicación pública aproximada";"climate-health-risk-v0.1"
+"4";"104";"Marcador ambiental sintético";"Contaminación ambiental";"Rechazado";"5";"Bajo";"Demo sintética";"2026-07-24T19:00:00Z";"";"";"Ubicación pública oculta";"climate-health-risk-v0.1"
+"5";"105";"Referencia pública de contexto climático";"Calor";"Validado";"6";"Moderado";"Dato público real";"2026-07-25T16:45:00Z";"-0.901";"-89.612";"Ubicación pública agregada";"climate-health-risk-v0.1"
+"6";"106";"Seguimiento controlado de ruta de calor";"Calor";"Pendiente";"9";"Alto";"Prueba controlada";"2026-07-26T18:20:00Z";"-0.897";"-89.606";"Ubicación pública aproximada";"climate-health-risk-v0.1"

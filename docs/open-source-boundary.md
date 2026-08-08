@@ -1,38 +1,48 @@
-# Open-Source Boundary
+# Open-Source and Brand Boundary
 
-This repository represents the public-good open-source module of the broader Infinity Atlas vision.
+## Complete funded solution
 
-## What is open-source in this repository
+The licensing commitment for the proposed workplan is:
 
-The open-source components may include:
+> The UNICEF-funded InfinityAtlas Climate & Health MRV Toolkit is a complete and independently
+> deployable open-source solution.
 
-- climate-health risk taxonomy;
-- data collection templates;
-- basic MRV indicators;
-- dashboard wireframes;
-- implementation guidance;
-- community and municipal reporting templates;
-- documentation for local adaptation;
-- future lightweight API or data structures.
+This is a prospective commitment for the submitted workplan and does not claim current UNICEF
+selection, funding, endorsement or partnership.
 
-These resources are intended to help municipalities, communities, schools, NGOs, health authorities and implementing partners monitor climate-related environmental risks affecting children’s health.
+All software code, deployment scripts, data schemas, APIs, technical documentation and user
+documentation developed through the UNICEF-funded workplan are intended to remain openly available
+under the applicable open licenses. No proprietary architecture or separately licensed core module
+may be required for the funded solution to operate as a complete independent whole.
 
-## What remains under InfinityGaia ownership
+The current repository already includes the executable prototype, migrations, local and public
+deployment configuration, API, user interfaces, automated tests, technical documentation and user
+manuals. The repository's `LICENSE` applies to software code unless a file explicitly states another
+applicable open license.
 
-InfinityGaia S.A.S. B.I.C. retains ownership of:
+## Ownership retained by INFINITYGAIA S.A.S. B.I.C.
 
-- the InfinityGaia and Infinity Atlas brands;
-- advanced platform architecture;
-- client-specific configurations;
-- commercial dashboards;
-- private integrations;
-- implementation methodology and advisory services;
-- MRV-as-a-Service model;
-- project-specific deployments;
-- proprietary know-how and strategic frameworks.
+INFINITYGAIA S.A.S. B.I.C. retains ownership of:
 
-## Purpose of the boundary
+- the InfinityGaia and InfinityAtlas trademarks;
+- trade names;
+- logos and corporate brand assets; and
+- general business know-how.
 
-The purpose of this boundary is to create a useful open-source public-good toolkit while preserving the long-term sustainability of InfinityGaia’s business model.
+The software license does not transfer trademark or logo rights. See [BRAND.md](../BRAND.md).
 
-This allows the project to support open innovation and digital public goods while also enabling professional implementation, customization, maintenance, training and long-term scaling through InfinityGaia.
+## Independently developed future work
+
+Future products or modules developed independently outside the UNICEF-funded workplan may use
+separate ownership or licensing arrangements, provided they are not required for the funded
+open-source solution to function as a complete and independently deployable whole.
+
+Professional implementation, configuration, maintenance and training services may be offered without
+changing the open-source completeness of the funded software deliverables.
+
+## Public and institutional data boundary
+
+Open-source licensing does not remove privacy, security or data-governance controls. The current
+public demonstration is read-only and separated from the institutional database. An institutional
+validation does not automatically publish a record. Any future public-release workflow must include
+explicit authorization, sanitization, audit, publication and safe withdrawal controls.
